@@ -2,7 +2,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
 
-      get 'routes/mta', to: 'bus_routes#mta_bus_list'
+      get 'mta/routes', to: 'bus_routes#mta_bus_list'
+      get 'mta/routes/:id', to: 'bus_routes#show'
 
 
     end
