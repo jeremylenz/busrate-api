@@ -3,12 +3,13 @@ class Api::V1::BusRoutesController < ApplicationController
   def mta_bus_list
     mta = HTTParty.get(LIST_OF_MTA_BUS_ROUTES_URL)
     nyct = HTTParty.get(LIST_OF_NYCT_BUS_ROUTES_URL)
+    response = mta
 
     if response.code == 200 && mta['data'] && nyct['data']
       bus_list = mta['data']['list'] + nyct['data']['list']
       render json: bus_list
     else
-      render json: {body: {error: 'MTA API returned no data; perhaps API key is incorrect', body: response.body}}, status: 422
+      render json: {body: {error: 'MTA API returned no data; perhaps API key is incorrect', response: JSON.parse(response.body)}}, status: response.code
     end
   end
 
