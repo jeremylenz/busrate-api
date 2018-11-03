@@ -1,5 +1,7 @@
 class Api::V1::BusRoutesController < ApplicationController
 
+  # This controller handles all the MTA API calls and data pass-thru
+
   def mta_bus_list
     mta = HTTParty.get(LIST_OF_MTA_BUS_ROUTES_URL)
     nyct = HTTParty.get(LIST_OF_NYCT_BUS_ROUTES_URL)
@@ -13,7 +15,7 @@ class Api::V1::BusRoutesController < ApplicationController
     end
   end
 
-  def show
+  def stop_list_for_route
     route_id = params[:id]
     base_url = "http://bustime.mta.info/api/where/stops-for-route/"
     list_of_stops = "#{route_id}.json?key=#{MTA_BUS_API_KEY}&includePolylines=false&version=2"
