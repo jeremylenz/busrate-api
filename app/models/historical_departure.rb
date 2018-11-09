@@ -1,0 +1,2 @@
+class HistoricalDeparture < ApplicationRecord
+end
