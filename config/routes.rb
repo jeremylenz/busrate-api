@@ -5,6 +5,7 @@ Rails.application.routes.draw do
       get 'mta/routes', to: 'bus_routes#mta_bus_list'
       get 'mta/stoplists/:id', to: 'bus_routes#stop_list_for_route'
       get 'mta/vehicles_for_stop/:id', to: 'bus_routes#vehicles_for_stop'
+      get 'mta/vehicles_for_route/:id', to: 'bus_routes#vehicles_for_route'
 
     end
   end

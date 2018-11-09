@@ -48,4 +48,19 @@ class Api::V1::BusRoutesController < ApplicationController
 
   end
 
+  def vehicles_for_route
+    route_id = params[:id]
+    url_addon = ERB::Util.url_encode(stop_id)
+    url = LIST_OF_VEHICLES_URL + "&VehicleRef=" + url_addon
+    puts url
+
+    response = HTTParty.get(url)
+
+    if response.code == 200
+      render json: response
+    else
+      render json: {error: 'MTA API returned no data', response: JSON.parse(response.body)}, status: response.code
+    end
+  end
+
 end
