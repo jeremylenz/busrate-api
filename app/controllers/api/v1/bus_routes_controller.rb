@@ -23,12 +23,12 @@ class Api::V1::BusRoutesController < ApplicationController
     list_of_stops = base_url + list_of_stops
     puts list_of_stops
     # byebug
-    route_data = HTTParty.get(list_of_stops)
+    response = HTTParty.get(list_of_stops)
 
-    if route_data.code == 200
-      render json: route_data
+    if response.code == 200
+      render json: response
     else
-      render json: {error: 'MTA API returned no data', response: JSON.parse(route_data.body)}, status: route_data.code
+      render json: {error: 'MTA API returned no data', response: JSON.parse(response.body)}, status: response.code
     end
   end
 
