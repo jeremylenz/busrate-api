@@ -1,4 +1,4 @@
-class Api::V1::BusRoutesController < ApplicationController
+class Api::V1::MtaBusRoutesController < ApplicationController
 
   # This controller handles all the MTA API calls and data pass-thru
 
@@ -50,8 +50,8 @@ class Api::V1::BusRoutesController < ApplicationController
 
   def vehicles_for_route
     route_id = params[:id]
-    url_addon = ERB::Util.url_encode(stop_id)
-    url = LIST_OF_VEHICLES_URL + "&VehicleRef=" + url_addon
+    url_addon = ERB::Util.url_encode(route_id)
+    url = LIST_OF_VEHICLES_URL + "&LineRef=" + url_addon
     puts url
 
     response = HTTParty.get(url)
