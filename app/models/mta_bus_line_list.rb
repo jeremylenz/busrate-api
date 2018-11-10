@@ -1,0 +1,2 @@
+class MtaBusLineList < ApplicationRecord
+end
