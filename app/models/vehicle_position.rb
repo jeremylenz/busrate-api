@@ -1,0 +1,2 @@
+class VehiclePosition < ApplicationRecord
+end
