@@ -86,22 +86,6 @@ class HistoricalDeparture < ApplicationRecord
     departure
   end
 
-  def self.tick(wait)
-    puts 'getting first position...'
-    pos1 = grab_vehicle_positions("MTABC_Q39")
-    at_stop = pos1.select { |pos| pos[:arrival_text] == "at stop" }
-    return [] if at_stop.blank?
-    sleep(wait)
-    puts 'getting second position...'
-    pos2 = grab_vehicle_positions("MTABC_Q39")
-    deps = scrape_departures(pos1, pos2)
-
-    {
-      at_stop: at_stop,
-      deps: deps,
-    }
-  end
-
   def self.grab_all_by_line
     mta = HTTParty.get(ApplicationController::LIST_OF_MTA_BUS_ROUTES_URL)
     nyct = HTTParty.get(ApplicationController::LIST_OF_NYCT_BUS_ROUTES_URL)
