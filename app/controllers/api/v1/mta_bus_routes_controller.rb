@@ -3,15 +3,25 @@ class Api::V1::MtaBusRoutesController < ApplicationController
   # This controller handles all the MTA API calls and data pass-thru
 
   def mta_bus_list
-    mta = HTTParty.get(LIST_OF_MTA_BUS_ROUTES_URL)
-    nyct = HTTParty.get(LIST_OF_NYCT_BUS_ROUTES_URL)
-    response = mta
+    memoized_bus_list = MtaBusLineList.latest
+    if memoized_bus_list.blank? || memoized_bus_list.created_at < 21.days.ago
+      logger.info "Fetching new bus list"
+      mta = HTTParty.get(LIST_OF_MTA_BUS_ROUTES_URL)
+      nyct = HTTParty.get(LIST_OF_NYCT_BUS_ROUTES_URL)
+      response = mta
 
-    if response.code == 200 && mta['data'] && nyct['data']
-      bus_list = mta['data']['list'] + nyct['data']['list']
-      render json: bus_list
+      if response.code == 200 && mta['data'] && nyct['data']
+        bus_list = mta['data']['list'] + nyct['data']['list']
+        MtaBusLineList.create(
+          response: JSON.generate(bus_list)
+        )
+        render json: bus_list
+      else
+        render json: {body: {error: 'MTA API returned no data; perhaps API key is incorrect', response: JSON.parse(response.body)}}, status: response.code
+      end
     else
-      render json: {body: {error: 'MTA API returned no data; perhaps API key is incorrect', response: JSON.parse(response.body)}}, status: response.code
+      logger.info "Using memoized_bus_list"
+      render json: memoized_bus_list.response
     end
   end
 
