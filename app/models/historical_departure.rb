@@ -4,15 +4,17 @@ class HistoricalDeparture < ApplicationRecord
     # Get all vehicle positions for a given bus line
     url_addon = ERB::Util.url_encode(route_id)
     url = ApplicationController::LIST_OF_VEHICLES_URL + "&LineRef=" + url_addon
-    puts url
     response = HTTParty.get(url)
 
     # Format the data
-    vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
+    return {} unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
+    vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
     vehicle_positions = vehicle_activity.map do |data|
+      next unless data['MonitoredVehicleJourney'].present?
       vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
       line_ref = data['MonitoredVehicleJourney']['LineRef']
+      next unless data['MonitoredVehicleJourney']['MonitoredCall'].present?
       arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
       feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
       stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
@@ -32,9 +34,14 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
     departures = []
+    new_vehicle_positions.compact! # remove all nil elements
     old_vehicle_positions.each do |old_vehicle_position|
+      next unless old_vehicle_position.present?
       # find the corresponding new_vehicle_position
-      next_position = new_vehicle_positions.find { |new_vehicle_position| new_vehicle_position[:vehicle_ref] == old_vehicle_position[:vehicle_ref] }
+      next_position = new_vehicle_positions.find do |new_vehicle_position|
+        new_vehicle_position[:vehicle_ref] == old_vehicle_position[:vehicle_ref]
+      end
+      next unless next_position.present?
       if is_departure?(old_vehicle_position, next_position)
         comparison = {
           old: old_vehicle_position,
@@ -84,6 +91,42 @@ class HistoricalDeparture < ApplicationRecord
       at_stop: at_stop,
       deps: deps,
     }
+  end
+
+  def self.grab_everything
+    mta = HTTParty.get(ApplicationController::LIST_OF_MTA_BUS_ROUTES_URL)
+    nyct = HTTParty.get(ApplicationController::LIST_OF_NYCT_BUS_ROUTES_URL)
+    response = mta
+    data_list = mta['data']['list'] + nyct['data']['list']
+    bus_line_list = data_list.map { |el| el["id"] }
+    count = 0
+
+    vehicle_positions_a = {}
+    puts "round 1"
+    bus_line_list.each do |route_id|
+      $stdout.flush
+      print "#{route_id}\r"
+      $stdout.flush
+      vehicle_positions_a[route_id] = grab_vehicle_positions(route_id)
+    end
+    puts "\nround 2"
+    vehicle_positions_b = {}
+    bus_line_list.each do |route_id|
+      $stdout.flush
+      print "#{route_id}\r"
+      $stdout.flush
+      vehicle_positions_b[route_id] = grab_vehicle_positions(route_id)
+    end
+
+    puts "scraping..."
+    vehicle_positions_a.keys.each do |route_id|
+      new_departures = scrape_departures(vehicle_positions_a[route_id], vehicle_positions_b[route_id])
+      next if new_departures.blank?
+      count += new_departures.length
+    end
+
+    puts "#{count} HistoricalDepartures created."
+
   end
 
 end
