@@ -79,9 +79,9 @@ class HistoricalDeparture < ApplicationRecord
     # TODO: stop_ref changes to the NEXT stop on the route (not just any stop)
 
     departure = true
-    departure = false if new_vehicle_position[:vehicle_ref] != old_vehicle_position[:vehicle_ref]
-    departure = false if old_vehicle_position[:arrival_text] != "at stop"
-    departure = false if new_vehicle_position[:stop_ref] == old_vehicle_position[:stop_ref]
+    departure = false if new_vehicle_position.vehicle_ref != old_vehicle_position.vehicle_ref
+    departure = false if old_vehicle_position.arrival_text != "at stop"
+    departure = false if new_vehicle_position.stop_ref == old_vehicle_position.stop_ref
 
     departure
   end
