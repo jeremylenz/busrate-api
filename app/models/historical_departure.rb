@@ -14,24 +14,30 @@ class HistoricalDeparture < ApplicationRecord
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return {} unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
-    vehicle_positions = vehicle_activity.map do |data|
+    vehicle_activity.each do |data|
       next unless data['MonitoredVehicleJourney'].present?
       vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
       line_ref = data['MonitoredVehicleJourney']['LineRef']
+      next unless vehicle_ref.present? && line_ref.present?
       next unless data['MonitoredVehicleJourney']['MonitoredCall'].present?
       arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
       feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
       stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
+      vehicle = Vehicle.find_by_or_create(vehicle_ref: vehicle_ref)
+      line = BusLine.find_by(line_ref: line_ref)
 
-      {
-        vehicle_ref: vehicle_ref,
-        line_ref: line_ref,
-        arrival_text: arrival_text,
-        feet_from_stop: feet_from_stop,
-        stop_ref: stop_ref,
-        timestamp: timestamp,
-      }
-    end.compact
+      VehiclePosition.create(
+
+          vehicle: vehicle,
+          line: line,
+          vehicle_ref: vehicle_ref,
+          line_ref: line_ref,
+          arrival_text: arrival_text,
+          feet_from_stop: feet_from_stop,
+          stop_ref: stop_ref,
+          timestamp: timestamp,
+        )
+    end
   end
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
