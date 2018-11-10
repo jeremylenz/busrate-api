@@ -1,0 +1,2 @@
+class BusLine < ApplicationRecord
+end
