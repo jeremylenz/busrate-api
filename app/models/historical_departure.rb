@@ -42,12 +42,11 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
     departures = []
-    # new_vehicle_positions.compact! # remove all nil elements
     old_vehicle_positions.each do |old_vehicle_position|
       next unless old_vehicle_position.present?
       # find the corresponding new_vehicle_position
       next_position = new_vehicle_positions.find do |new_vehicle_position|
-        new_vehicle_position[:vehicle_ref] == old_vehicle_position[:vehicle_ref]
+        new_vehicle_position.vehicle_ref == old_vehicle_position.vehicle_ref
       end
       next unless next_position.present?
       if is_departure?(old_vehicle_position, next_position)
@@ -56,12 +55,11 @@ class HistoricalDeparture < ApplicationRecord
           new: next_position,
           departed_at: next_position[:timestamp]
         }
-        puts "FOUND DEPARTURE"
         departures << comparison
         HistoricalDeparture.create(
-          stop_ref: comparison[:new][:stop_ref],
-          line_ref: comparison[:new][:line_ref],
-          vehicle_ref: comparison[:new][:vehicle_ref],
+          stop_ref: comparison[:new].stop_ref,
+          line_ref: comparison[:new].line_ref,
+          vehicle_ref: comparison[:new].vehicle_ref,
           departure_time: comparison[:departed_at]
         )
       end
