@@ -7,6 +7,10 @@ class HistoricalDeparture < ApplicationRecord
     response = HTTParty.get(url)
 
     # Format the data
+    extract_vehicle_positions(response)
+  end
+
+  def self.extract_vehicle_positions(response)
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return {} unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
@@ -27,14 +31,12 @@ class HistoricalDeparture < ApplicationRecord
         stop_ref: stop_ref,
         timestamp: timestamp,
       }
-    end
-
-
+    end.compact
   end
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
     departures = []
-    new_vehicle_positions.compact! # remove all nil elements
+    # new_vehicle_positions.compact! # remove all nil elements
     old_vehicle_positions.each do |old_vehicle_position|
       next unless old_vehicle_position.present?
       # find the corresponding new_vehicle_position
@@ -53,6 +55,7 @@ class HistoricalDeparture < ApplicationRecord
         HistoricalDeparture.create(
           stop_ref: comparison[:new][:stop_ref],
           line_ref: comparison[:new][:line_ref],
+          vehicle_ref: comparison[:new][:vehicle_ref],
           departure_time: comparison[:departed_at]
         )
       end
@@ -93,7 +96,7 @@ class HistoricalDeparture < ApplicationRecord
     }
   end
 
-  def self.grab_everything
+  def self.grab_all_by_line
     mta = HTTParty.get(ApplicationController::LIST_OF_MTA_BUS_ROUTES_URL)
     nyct = HTTParty.get(ApplicationController::LIST_OF_NYCT_BUS_ROUTES_URL)
     response = mta
@@ -127,6 +130,56 @@ class HistoricalDeparture < ApplicationRecord
 
     puts "#{count} HistoricalDepartures created."
 
+  end
+
+  def self.grab_all
+    existing_count = HistoricalDeparture.all.count
+    puts "round 1"
+    response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
+    # byebug
+    vehicle_positions_a = extract_vehicle_positions(response)
+    puts "waiting"
+    sleep(33)
+    puts "round 2"
+    response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
+    vehicle_positions_b = extract_vehicle_positions(response)
+
+    puts "extracting"
+    scrape_departures(vehicle_positions_a, vehicle_positions_b)
+
+    new_count = HistoricalDeparture.all.count - existing_count
+    puts "#{new_count} historical departures created."
+  end
+
+  def self.grab_all_smart
+    existing_count = HistoricalDeparture.all.count
+
+    puts "round 1"
+    response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
+    # byebug
+    vehicle_positions_a = extract_vehicle_positions(response)
+    puts "waiting"
+    sleep(10)
+
+    puts "round 2"
+    vehicles_at_stop = vehicle_positions_a.select { |vp| vp[:arrival_text] == "at stop" }
+    lines_to_check = vehicles_at_stop.map { |veh| veh[:line_ref] }.compact.uniq
+    puts "Checking #{vehicles_at_stop.length} of #{vehicle_positions_a.length} vehicles"
+    puts "Checking #{lines_to_check.length} lines"
+    vehicle_positions_b = []
+    lines_to_check.each do |route_id|
+      $stdout.flush
+      print "#{route_id}\r"
+      $stdout.flush
+      vehicle_positions_b << grab_vehicle_positions(route_id)
+    end
+    vehicle_positions_b.flatten!
+    vehicle_positions_b.compact!
+    puts "extracting"
+    scrape_departures(vehicle_positions_a, vehicle_positions_b)
+
+    new_count = HistoricalDeparture.all.count - existing_count
+    puts "#{new_count} historical departures created."
   end
 
 end
