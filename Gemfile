@@ -28,6 +28,8 @@ gem 'bootsnap', '>= 1.1.0', require: false
 # I like to party
 gem 'httparty'
 
+gem 'fast_inserter'
+
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
 

@@ -51,6 +51,8 @@ GEM
     crass (1.0.4)
     diff-lcs (1.3)
     erubi (1.7.1)
+    fast_inserter (0.1.6)
+      activerecord (>= 4.1.0)
     ffi (1.9.25)
     globalid (0.4.1)
       activesupport (>= 4.2.0)
@@ -157,6 +159,7 @@ PLATFORMS
 DEPENDENCIES
   bootsnap (>= 1.1.0)
   byebug
+  fast_inserter
   httparty
   listen (>= 3.0.5, < 3.2)
   pg (>= 0.18, < 2.0)

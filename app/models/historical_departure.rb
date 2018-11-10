@@ -14,7 +14,7 @@ class HistoricalDeparture < ApplicationRecord
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return {} unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
-    vehicle_activity.map do |data|
+    new_vehicle_position_params = vehicle_activity.map do |data|
       next unless data['MonitoredVehicleJourney'].present?
       vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
       line_ref = data['MonitoredVehicleJourney']['LineRef']
@@ -25,19 +25,35 @@ class HistoricalDeparture < ApplicationRecord
       stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
       vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
       bus_line = BusLine.find_by(line_ref: line_ref)
+      next unless vehicle.present? && bus_line.present?
 
-      VehiclePosition.create(
-
-          vehicle: vehicle,
-          bus_line: bus_line,
+      {
+          vehicle_id: vehicle.id,
+          bus_line_id: bus_line.id,
           vehicle_ref: vehicle_ref,
           line_ref: line_ref,
           arrival_text: arrival_text,
           feet_from_stop: feet_from_stop,
           stop_ref: stop_ref,
           timestamp: timestamp,
-        )
+      }
     end.compact
+    return {} if new_vehicle_position_params.empty?
+
+    fast_inserter_variable_columns = new_vehicle_position_params.first.keys.map(&:to_s)
+    fast_inserter_values = new_vehicle_position_params.map { |nvpp| nvpp.values }
+    fast_inserter_params = {
+      table: 'vehicle_positions',
+      static_columns: {},
+      options: {
+        timestamps: true,
+        group_size: 2_000,
+      },
+      variable_columns: fast_inserter_variable_columns,
+      values: fast_inserter_values,
+    }
+    inserter = FastInserter::Base.new(fast_inserter_params)
+    inserter.fast_insert
   end
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
