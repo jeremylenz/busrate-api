@@ -170,4 +170,27 @@ class HistoricalDeparture < ApplicationRecord
     puts "#{new_count} historical departures created."
   end
 
+  def self.smart_survey
+    existing_count = HistoricalDeparture.all.count
+
+    stale_vehicle_positions = VehiclePosition.at_stop.older_than(30).newer_than(300)
+    vehicles_to_check = stale_vehicle_positions.map { |vp| vp.vehicle }
+    vehicle_positions_to_check = vehicles_to_check.map { |vehicle| vehicle.latest_position }
+    new_vehicle_positions = []
+    vehicle_positions_to_check.each do |vp|
+      url_addon = ERB::Util.url_encode(vp.vehicle_ref)
+      url = ApplicationController::LIST_OF_VEHICLES_URL + "&VehicleRef=" + url_addon
+      response = HTTParty.get(url)
+      # Format the data
+      new_vehicle_positions << extract_vehicle_positions(response)
+
+    end
+    new_vehicle_positions.flatten!
+    new_vehicle_positions.compact!
+    scrape_departures(vehicle_positions_to_check, new_vehicle_positions)
+
+    new_count = HistoricalDeparture.all.count - existing_count
+    puts "#{new_count} historical departures created."
+  end
+
 end
