@@ -150,8 +150,8 @@ class HistoricalDeparture < ApplicationRecord
     sleep(10)
 
     puts "round 2"
-    vehicles_at_stop = vehicle_positions_a.select { |vp| vp[:arrival_text] == "at stop" }
-    lines_to_check = vehicles_at_stop.map { |veh| veh[:line_ref] }.compact.uniq
+    vehicles_at_stop = vehicle_positions_a.select { |vp| vp.arrival_text == "at stop" }
+    lines_to_check = vehicles_at_stop.map { |veh| veh.line_ref }.compact.uniq
     puts "Checking #{vehicles_at_stop.length} of #{vehicle_positions_a.length} vehicles"
     puts "Checking #{lines_to_check.length} lines"
     vehicle_positions_b = []
