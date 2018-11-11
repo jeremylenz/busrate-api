@@ -52,7 +52,7 @@ class HistoricalDeparture < ApplicationRecord
       values: fast_inserter_values,
     }
     inserter = FastInserter::Base.new(fast_inserter_params)
-    last_id = VehiclePosition.order(id: :desc).first.id
+    last_id = VehiclePosition.order(id: :desc).first&.id || 0
     inserter.fast_insert
     VehiclePosition.where(['id > ?', last_id])
   end
@@ -102,7 +102,8 @@ class HistoricalDeparture < ApplicationRecord
     return false if old_vehicle_position.blank? || new_vehicle_position.blank?
     # If all of the following rules apply, we consider it a departure:
     # vehicle_ref is the same
-    # arrival_text goes from 'at stop' to something else
+    # arrival_text for old_vehicle_position is 'at stop'
+    # the two vehicle positions are less than 2 minutes apart
     # stop_ref changes
     # TODO: stop_ref changes to the NEXT stop on the route (not just any stop)
 
@@ -110,6 +111,8 @@ class HistoricalDeparture < ApplicationRecord
     departure = false if new_vehicle_position.vehicle_ref != old_vehicle_position.vehicle_ref
     departure = false if old_vehicle_position.arrival_text != "at stop"
     departure = false if new_vehicle_position.stop_ref == old_vehicle_position.stop_ref
+    byebug
+    departure = false if new_vehicle_position.timestamp - old_vehicle_position.timestamp > 2.minutes
 
     departure
   end
