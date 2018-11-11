@@ -11,6 +11,8 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.extract_vehicle_positions(response)
+    start_time = Time.current
+    existing_count = VehiclePosition.all.count
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
@@ -38,11 +40,21 @@ class HistoricalDeparture < ApplicationRecord
       }
     end.compact
     return [] if new_vehicle_position_params.empty?
+    last_id = VehiclePosition.order(id: :desc).first&.id || 0
 
-    fast_inserter_variable_columns = new_vehicle_position_params.first.keys.map(&:to_s)
-    fast_inserter_values = new_vehicle_position_params.map { |nvpp| nvpp.values }
+    fast_insert_objects('vehicle_positions', new_vehicle_position_params)
+
+    logger.info "#{VehiclePosition.all.count - existing_count} VehiclePositions created"
+    logger.info "extract_vehicle_positions complete in #{Time.current - start_time} seconds"
+    VehiclePosition.where(['id > ?', last_id])
+  end
+
+  def self.fast_insert_objects(table_name, object_list)
+    fast_inserter_start_time = Time.current
+    fast_inserter_variable_columns = object_list.first.keys.map(&:to_s)
+    fast_inserter_values = object_list.map { |nvpp| nvpp.values }
     fast_inserter_params = {
-      table: 'vehicle_positions',
+      table: table_name,
       static_columns: {},
       options: {
         timestamps: true,
@@ -52,12 +64,12 @@ class HistoricalDeparture < ApplicationRecord
       values: fast_inserter_values,
     }
     inserter = FastInserter::Base.new(fast_inserter_params)
-    last_id = VehiclePosition.order(id: :desc).first&.id || 0
     inserter.fast_insert
-    VehiclePosition.where(['id > ?', last_id])
+    logger.info "#{table_name} fast_inserter complete in #{Time.current - fast_inserter_start_time} seconds"
   end
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
+    start_time = Time.current
     departures = []
     old_vehicle_positions.each do |old_vehicle_position|
       next unless old_vehicle_position.present?
@@ -76,7 +88,9 @@ class HistoricalDeparture < ApplicationRecord
         departures << new_departure
       end
     end
+    logger.info "scrape_departures ready for fast inserter after #{Time.current - start_time} seconds"
 
+    fast_inserter_start_time = Time.current
     fast_inserter_variable_columns = ['stop_ref', 'line_ref', 'vehicle_ref', 'departure_time']
     fast_inserter_values = departures.map do |dep|
       [dep[:stop_ref], dep[:line_ref], dep[:vehicle_ref], dep[:departure_time]]
@@ -94,6 +108,8 @@ class HistoricalDeparture < ApplicationRecord
     inserter = FastInserter::Base.new(fast_inserter_params)
     inserter.fast_insert
 
+    logger.info "scrape_departures fast inserter complete in #{Time.current - start_time} seconds"
+    logger.info "scrape_departures complete in #{Time.current - start_time} seconds"
     departures
 
   end
@@ -111,13 +127,16 @@ class HistoricalDeparture < ApplicationRecord
     departure = false if new_vehicle_position.vehicle_ref != old_vehicle_position.vehicle_ref
     departure = false if old_vehicle_position.arrival_text != "at stop"
     departure = false if new_vehicle_position.stop_ref == old_vehicle_position.stop_ref
-    byebug
     departure = false if new_vehicle_position.timestamp - old_vehicle_position.timestamp > 2.minutes
 
+    if new_vehicle_position.timestamp - old_vehicle_position.timestamp > 2.minutes
+      logger.info "Departure not created; intervening time is #{new_vehicle_position.timestamp - old_vehicle_position.timestamp} seconds"
+    end
     departure
   end
 
   def self.grab_all_by_line
+    start_time = Time.current
     mta = HTTParty.get(ApplicationController::LIST_OF_MTA_BUS_ROUTES_URL)
     nyct = HTTParty.get(ApplicationController::LIST_OF_NYCT_BUS_ROUTES_URL)
     response = mta
@@ -149,17 +168,23 @@ class HistoricalDeparture < ApplicationRecord
       count += new_departures.length
     end
 
+    logger.info "grab_all_by_line complete in #{Time.current - start_time} seconds"
     puts "#{count} HistoricalDepartures created."
 
   end
 
   def self.grab_all
+    start_time = Time.current
     existing_count = HistoricalDeparture.all.count
     response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
     vehicle_positions_a = extract_vehicle_positions(response)
+
+    logger.info "grab_all complete in #{Time.current - start_time} seconds."
+    vehicle_positions_a
   end
 
   def self.grab_all_smart
+    start_time = Time.current
     existing_count = HistoricalDeparture.all.count
 
     puts "round 1"
@@ -188,16 +213,19 @@ class HistoricalDeparture < ApplicationRecord
 
     new_count = HistoricalDeparture.all.count - existing_count
     puts "#{new_count} historical departures created."
+    logger.info "grab_all_smart complete in #{Time.current - start_time} seconds."
   end
 
   def self.smart_survey
-    stale_vehicle_positions = VehiclePosition.at_stop.older_than(30).newer_than(300)
+    stale_vehicle_positions = VehiclePosition.at_stop.older_than(30).newer_than(120)
     survey(stale_vehicle_positions)
   end
 
   def self.survey(stale_vehicle_positions)
+    start_time = Time.current
     return if stale_vehicle_positions.blank?
     existing_count = HistoricalDeparture.all.count
+    existing_vp_count = VehiclePosition.all.count
 
     vehicles_to_check = stale_vehicle_positions.map { |vp| vp.vehicle }
     vehicle_positions_to_check = vehicles_to_check.map { |vehicle| vehicle.latest_position }.compact
@@ -216,7 +244,9 @@ class HistoricalDeparture < ApplicationRecord
     scrape_departures(vehicle_positions_to_check, new_vehicle_positions)
 
     new_count = HistoricalDeparture.all.count - existing_count
-    puts "#{new_count} historical departures created."
+    logger.info "#{new_count} historical departures created."
+    logger.info "#{VehiclePosition.all.count - existing_vp_count} VehiclePositions created."
+    logger.info "survey complete in #{Time.current - start_time} seconds."
   end
 
 end
