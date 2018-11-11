@@ -188,9 +188,14 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.smart_survey
+    stale_vehicle_positions = VehiclePosition.at_stop.older_than(30).newer_than(300)
+    survey(stale_vehicle_positions)
+  end
+
+  def self.survey(stale_vehicle_positions)
+    return if stale_vehicle_positions.blank?
     existing_count = HistoricalDeparture.all.count
 
-    stale_vehicle_positions = VehiclePosition.at_stop.older_than(30).newer_than(300)
     vehicles_to_check = stale_vehicle_positions.map { |vp| vp.vehicle }
     vehicle_positions_to_check = vehicles_to_check.map { |vehicle| vehicle.latest_position }.compact
     new_vehicle_positions = []
