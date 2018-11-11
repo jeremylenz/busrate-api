@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_11_10_183402) do
+ActiveRecord::Schema.define(version: 2018_11_11_184916) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -44,7 +44,6 @@ ActiveRecord::Schema.define(version: 2018_11_10_183402) do
     t.string "line_ref"
     t.string "arrival_text"
     t.string "feet_from_stop"
-    t.string "integer"
     t.string "stop_ref"
     t.datetime "timestamp"
     t.datetime "created_at", null: false
