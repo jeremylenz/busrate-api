@@ -7,7 +7,8 @@ class HistoricalDeparture < ApplicationRecord
     response = HTTParty.get(url)
 
     # Format the data
-    extract_vehicle_positions(response)
+    vehicle_positions_a = extract_vehicle_positions(response)
+    fast_insert_objects('vehicle_positions', vehicle_positions_a)
   end
 
   def self.extract_vehicle_positions(response)
@@ -40,16 +41,12 @@ class HistoricalDeparture < ApplicationRecord
       }
     end.compact
     return [] if new_vehicle_position_params.empty?
-    last_id = VehiclePosition.order(id: :desc).first&.id || 0
-
-    fast_insert_objects('vehicle_positions', new_vehicle_position_params)
-
-    logger.info "#{VehiclePosition.all.count - existing_count} VehiclePositions created"
     logger.info "extract_vehicle_positions complete in #{Time.current - start_time} seconds"
-    VehiclePosition.where(['id > ?', last_id])
+    new_vehicle_position_params
   end
 
   def self.fast_insert_objects(table_name, object_list)
+    return if object_list.blank?
     fast_inserter_start_time = Time.current
     fast_inserter_variable_columns = object_list.first.keys.map(&:to_s)
     fast_inserter_values = object_list.map { |nvpp| nvpp.values }
@@ -63,12 +60,18 @@ class HistoricalDeparture < ApplicationRecord
       variable_columns: fast_inserter_variable_columns,
       values: fast_inserter_values,
     }
+    model = table_name.classify.constantize # get Rails model class from table name
+    last_id = model.order(id: :desc).first&.id || 0
+
     inserter = FastInserter::Base.new(fast_inserter_params)
     inserter.fast_insert
     logger.info "#{table_name} fast_inserter complete in #{Time.current - fast_inserter_start_time} seconds"
+    # Return an ActiveRecord relation with the objects just created
+    model.where(['id > ?', last_id])
   end
 
   def self.scrape_departures(old_vehicle_positions, new_vehicle_positions)
+    existing_count = HistoricalDeparture.all.count
     start_time = Time.current
     departures = []
     old_vehicle_positions.each do |old_vehicle_position|
@@ -90,25 +93,8 @@ class HistoricalDeparture < ApplicationRecord
     end
     logger.info "scrape_departures ready for fast inserter after #{Time.current - start_time} seconds"
 
-    fast_inserter_start_time = Time.current
-    fast_inserter_variable_columns = ['stop_ref', 'line_ref', 'vehicle_ref', 'departure_time']
-    fast_inserter_values = departures.map do |dep|
-      [dep[:stop_ref], dep[:line_ref], dep[:vehicle_ref], dep[:departure_time]]
-    end
-    fast_inserter_params = {
-      table: 'historical_departures',
-      static_columns: {},
-      options: {
-        timestamps: true,
-        group_size: 2_000,
-      },
-      variable_columns: fast_inserter_variable_columns,
-      values: fast_inserter_values,
-    }
-    inserter = FastInserter::Base.new(fast_inserter_params)
-    inserter.fast_insert
-
-    logger.info "scrape_departures fast inserter complete in #{Time.current - start_time} seconds"
+    fast_insert_objects('historical_departures', departures.compact)
+    logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
     logger.info "scrape_departures complete in #{Time.current - start_time} seconds"
     departures
 
@@ -176,11 +162,30 @@ class HistoricalDeparture < ApplicationRecord
   def self.grab_all
     start_time = Time.current
     existing_count = HistoricalDeparture.all.count
+    previous_call = VehiclePosition.order(timestamp: :desc).first
+    if previous_call.present? && previous_call.timestamp > 30.seconds.ago
+      logger.info "grab_all aborted; must wait at least 30 seconds between API calls"
+      logger.info "most recent timestamp: #{previous_call.timestamp}"
+      return []
+    end
     response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
-    vehicle_positions_a = extract_vehicle_positions(response)
+    object_list = extract_vehicle_positions(response)
+    new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
 
     logger.info "grab_all complete in #{Time.current - start_time} seconds."
-    vehicle_positions_a
+    logger.info "most recent timestamp: #{Time.current - previous_call&.timestamp} seconds ago"
+
+    new_vehicle_positions
+  end
+
+  def self.grab_and_go(wait_time = 15)
+    start_time = Time.current
+    pos1 = grab_all
+    puts "waiting..."
+    sleep(wait_time)
+    pos2 = grab_all
+    scrape_departures(pos1, pos2)
+    puts "grab_and_go complete in #{Time.current - start_time} seconds"
   end
 
   def self.grab_all_smart
@@ -190,7 +195,8 @@ class HistoricalDeparture < ApplicationRecord
     puts "round 1"
     response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
     # byebug
-    vehicle_positions_a = extract_vehicle_positions(response)
+    veh_pos_object_list = extract_vehicle_positions(response)
+    vehicle_positions_a = fast_insert_objects('vehicle_positions', veh_pos_object_list)
     puts "waiting"
     sleep(10)
 
@@ -216,9 +222,8 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "grab_all_smart complete in #{Time.current - start_time} seconds."
   end
 
-  def self.smart_survey
-    stale_vehicle_positions = VehiclePosition.at_stop.older_than(30).newer_than(120)
-    survey(stale_vehicle_positions)
+  def self.dumb_survey
+    survey(VehiclePosition.active)
   end
 
   def self.survey(stale_vehicle_positions)
@@ -229,18 +234,20 @@ class HistoricalDeparture < ApplicationRecord
 
     vehicles_to_check = stale_vehicle_positions.map { |vp| vp.vehicle }
     vehicle_positions_to_check = vehicles_to_check.map { |vehicle| vehicle.latest_position }.compact
-    new_vehicle_positions = []
+    new_veh_pos_object_list = []
     vehicle_positions_to_check.each do |vp|
       next if vp.blank?
       url_addon = ERB::Util.url_encode(vp.vehicle_ref)
       url = ApplicationController::LIST_OF_VEHICLES_URL + "&VehicleRef=" + url_addon
       response = HTTParty.get(url)
       # Format the data
-      new_vehicle_positions << extract_vehicle_positions(response)
+      new_veh_pos_object_list << extract_vehicle_positions(response)
 
     end
-    new_vehicle_positions.flatten!
-    new_vehicle_positions.compact!
+    new_veh_pos_object_list.flatten!
+    new_veh_pos_object_list.compact!
+    logger.info "creating vehicle positions..."
+    new_vehicle_positions = fast_insert_objects('vehicle_positions', new_veh_pos_object_list)
     scrape_departures(vehicle_positions_to_check, new_vehicle_positions)
 
     new_count = HistoricalDeparture.all.count - existing_count
