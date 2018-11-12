@@ -47,11 +47,13 @@ class VehiclePosition < ApplicationRecord
     logger.info "Filtering #{vehicle_positions.length} vehicles"
     vehicle_positions.delete_if { |k, v| v.length < 2 }
     logger.info "Filtered to #{vehicle_positions.length} vehicles with 2 positions"
+    ids_to_purge = []
     vehicle_positions.each do |line_ref, vp_list|
       sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that old_vehicle_position is on the left
       old_vehicle_position = sorted_vps[0]
       new_vehicle_position = sorted_vps[1]
       if is_departure?(old_vehicle_position, new_vehicle_position)
+        ids_to_purge << old_vehicle_position.id
         new_departure = {
           stop_ref: new_vehicle_position.stop_ref,
           line_ref: new_vehicle_position.line_ref,
@@ -65,7 +67,10 @@ class VehiclePosition < ApplicationRecord
     logger.info "scrape_all_departures ready for fast inserter after #{Time.current - start_time} seconds"
 
     HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact)
+    VehiclePosition.delete(ids_to_purge)
+
     logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
+    logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "scrape_all_departures complete in #{Time.current - start_time} seconds"
     departures
 
