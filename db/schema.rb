@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_11_11_184916) do
+ActiveRecord::Schema.define(version: 2018_11_12_160254) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -29,6 +29,11 @@ ActiveRecord::Schema.define(version: 2018_11_11_184916) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "vehicle_ref"
+  end
+
+  create_table "mta_api_call_records", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "mta_bus_line_lists", force: :cascade do |t|
