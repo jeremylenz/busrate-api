@@ -21,4 +21,54 @@ class VehiclePosition < ApplicationRecord
     self.delete(ids)
   end
 
+  def self.is_departure?(old_vehicle_position, new_vehicle_position)
+    return false if old_vehicle_position.blank? || new_vehicle_position.blank?
+    # If all of the following rules apply, we consider it a departure:
+    # vehicle_ref is the same
+    # arrival_text for old_vehicle_position is 'at stop'
+    # the two vehicle positions are less than 2 minutes apart
+    # stop_ref changes
+    # TODO: stop_ref changes to the NEXT stop on the route (not just any stop)
+
+    return false if new_vehicle_position.vehicle_ref != old_vehicle_position.vehicle_ref
+    return false if new_vehicle_position.timestamp - old_vehicle_position.timestamp > 2.minutes
+    return false if old_vehicle_position.arrival_text != "at stop"
+    return false if new_vehicle_position.stop_ref == old_vehicle_position.stop_ref
+
+    true
+  end
+
+  def self.scrape_all_departures
+    existing_count = HistoricalDeparture.all.count
+    start_time = Time.current
+    departures = []
+
+    vehicle_positions = VehiclePosition.newer_than(240).group_by(&:vehicle_ref)
+    logger.info "Filtering #{vehicle_positions.length} vehicles"
+    vehicle_positions.delete_if { |k, v| v.length < 2 }
+    logger.info "Filtered to #{vehicle_positions.length} vehicles with 2 positions"
+    vehicle_positions.each do |line_ref, vp_list|
+      sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that old_vehicle_position is on the left
+      old_vehicle_position = sorted_vps[0]
+      new_vehicle_position = sorted_vps[1]
+      if is_departure?(old_vehicle_position, new_vehicle_position)
+        new_departure = {
+          stop_ref: new_vehicle_position.stop_ref,
+          line_ref: new_vehicle_position.line_ref,
+          vehicle_ref: new_vehicle_position.vehicle_ref,
+          departure_time: new_vehicle_position.timestamp,
+        }
+        departures << new_departure
+      end
+    end
+
+    logger.info "scrape_all_departures ready for fast inserter after #{Time.current - start_time} seconds"
+
+    HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact)
+    logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
+    logger.info "scrape_all_departures complete in #{Time.current - start_time} seconds"
+    departures
+
+  end
+
 end

@@ -163,7 +163,7 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
     existing_count = HistoricalDeparture.all.count
     previous_call = VehiclePosition.order(timestamp: :desc).first
-    if previous_call.present? && previous_call.timestamp > 30.seconds.ago
+    if previous_call.present? && previous_call.created_at > 30.seconds.ago
       logger.info "grab_all aborted; must wait at least 30 seconds between API calls"
       logger.info "most recent timestamp: #{previous_call.timestamp}"
       return []
@@ -178,13 +178,13 @@ class HistoricalDeparture < ApplicationRecord
     new_vehicle_positions
   end
 
-  def self.grab_and_go(wait_time = 15)
+  def self.grab_and_go(wait_time = 30)
     start_time = Time.current
     pos1 = grab_all
     puts "waiting..."
     sleep(wait_time)
     pos2 = grab_all
-    scrape_departures(pos1, pos2)
+    VehiclePosition.scrape_all_departures
     puts "grab_and_go complete in #{Time.current - start_time} seconds"
   end
 
@@ -248,7 +248,7 @@ class HistoricalDeparture < ApplicationRecord
     new_veh_pos_object_list.compact!
     logger.info "creating vehicle positions..."
     new_vehicle_positions = fast_insert_objects('vehicle_positions', new_veh_pos_object_list)
-    scrape_departures(vehicle_positions_to_check, new_vehicle_positions)
+    VehiclePosition.scrape_all_departures
 
     new_count = HistoricalDeparture.all.count - existing_count
     logger.info "#{new_count} historical departures created."
