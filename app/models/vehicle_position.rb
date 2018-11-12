@@ -92,8 +92,9 @@ class VehiclePosition < ApplicationRecord
     end
 
     ids_to_purge.uniq!
+    logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures"
 
-    HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact)
+    HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact.uniq)
     VehiclePosition.delete(ids_to_purge.take(65_536))
 
     logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
