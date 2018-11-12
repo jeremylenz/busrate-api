@@ -17,7 +17,7 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.purge_older_than(seconds)
-    records_to_purge = self.older_than(seconds).ids
+    records_to_purge = self.older_than(seconds).ids.take(65_536)
     self.delete(ids)
   end
 
@@ -67,7 +67,7 @@ class VehiclePosition < ApplicationRecord
     logger.info "scrape_all_departures ready for fast inserter after #{Time.current - start_time} seconds"
 
     HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact)
-    VehiclePosition.delete(ids_to_purge)
+    VehiclePosition.delete(ids_to_purge.take(65_536))
 
     logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
