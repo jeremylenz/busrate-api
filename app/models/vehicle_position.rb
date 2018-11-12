@@ -41,6 +41,16 @@ class VehiclePosition < ApplicationRecord
     true
   end
 
+  def self.expired_dep?(old_vp, new_vp)
+    if new_vp.timestamp - old_vp.timestamp > 90.seconds &&
+      new_vp.vehicle_ref == old_vp.vehicle_ref &&
+      old_vp.arrival_text == "at_stop" &&
+      new_vp.stop_ref != old_vp.stop_ref
+      return true
+    end
+    false
+  end
+
   def self.scrape_all_departures
     existing_count = HistoricalDeparture.all.count
     start_time = Time.current
@@ -53,6 +63,7 @@ class VehiclePosition < ApplicationRecord
     logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
     ids_to_purge = []
     addl_count = 0
+    expired_count = 0
     vehicle_positions.each do |line_ref, vp_list|
       sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that the oldest vehicle_position is first
 
@@ -61,6 +72,7 @@ class VehiclePosition < ApplicationRecord
         old_vehicle_position = sorted_vps.shift
         # Compare it with every other position to see if we can make a departure
         sorted_vps.each do |new_vehicle_position|
+          expired_count += 1 if expired_dep?(old_vehicle_position, new_vehicle_position)
           if is_departure?(old_vehicle_position, new_vehicle_position)
             new_departure = {
               stop_ref: new_vehicle_position.stop_ref,
@@ -81,13 +93,12 @@ class VehiclePosition < ApplicationRecord
 
     ids_to_purge.uniq!
 
-    logger.info "scrape_all_departures ready for fast inserter after #{Time.current - start_time} seconds"
-
     HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact)
     VehiclePosition.delete(ids_to_purge.take(65_536))
 
-    logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
+    logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
     logger.info "including #{addl_count} additional historical departures"
+    logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "scrape_all_departures complete in #{Time.current - start_time} seconds"
