@@ -4,8 +4,14 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     line_ref = BusLine.find_by(line_ref: params[:line_ref])&.line_ref
     stop_ref = BusStop.find_by(stop_ref: params[:bus_stop_id])&.stop_ref
 
-    if stop_ref.blank? || line_ref.blank?
-      render json: {error: "You must specify both a line_ref and a stop_ref"}, status: 422
+    if params[:bus_stop_id].blank? || params[:line_ref].blank?
+      render json: {error: "You must specify both a stop_ref and a line_ref"}, status: 422
+      return
+    elsif stop_ref.blank?
+      render json: {error: "stop_ref #{params[:bus_stop_id]} not found"}, status: 422
+      return
+    elsif line_ref.blank?
+      render json: {error: "line_ref #{params[:line_ref]} not found"}, status: 422
       return
     end
 
