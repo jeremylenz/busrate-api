@@ -1,5 +1,7 @@
 class HistoricalDeparture < ApplicationRecord
 
+  belongs_to :bus_stop
+
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
 
   def self.for_route_and_stop(line_ref, stop_ref)
@@ -19,7 +21,8 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.extract_vehicle_positions(response)
     start_time = Time.current
-    existing_count = VehiclePosition.all.count
+    existing_vehicle_count = Vehicle.all.count
+    existing_stop_count = BusStop.all.count
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
@@ -51,6 +54,11 @@ class HistoricalDeparture < ApplicationRecord
       }
     end.compact
     return [] if new_vehicle_position_params.empty?
+
+    new_vehicle_count = Vehicle.all.count - existing_vehicle_count
+    new_stop_count = BusStop.all.count - existing_stop_count
+    logger.info "#{new_vehicle_count} Vehicles created" if new_vehicle_count > 0
+    logger.info "#{new_stop_count} BusStops created" if new_stop_count > 0
     logger.info "extract_vehicle_positions complete in #{Time.current - start_time} seconds"
     new_vehicle_position_params
   end

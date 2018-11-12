@@ -74,7 +74,11 @@ class VehiclePosition < ApplicationRecord
         sorted_vps.each do |new_vehicle_position|
           expired_count += 1 if expired_dep?(old_vehicle_position, new_vehicle_position)
           if is_departure?(old_vehicle_position, new_vehicle_position)
+            bus_stop = BusStop.find_or_create_by(stop_ref: new_vehicle_position.stop_ref)
+            puts "bus_stop not found" if bus_stop.blank?
+            next unless bus_stop.present?
             new_departure = {
+              bus_stop_id: bus_stop.id,
               stop_ref: new_vehicle_position.stop_ref,
               line_ref: new_vehicle_position.line_ref,
               vehicle_ref: new_vehicle_position.vehicle_ref,

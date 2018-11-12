@@ -9,6 +9,10 @@ Rails.application.routes.draw do
       get 'mta/vehicles_for_stop/:id', to: 'mta_bus_routes#vehicles_for_stop'
       get 'mta/vehicles_for_route/:id', to: 'mta_bus_routes#vehicles_for_route'
 
+      resources :bus_stops, only: [] do
+        resources :historical_departures, only: [:index]
+      end
+
     end
   end
 
