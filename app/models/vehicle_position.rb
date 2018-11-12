@@ -47,9 +47,10 @@ class VehiclePosition < ApplicationRecord
     departures = []
 
     vehicle_positions = VehiclePosition.newer_than(240).group_by(&:vehicle_ref)
+    # "MTABC_3742"=>[#<VehiclePosition ...>, #<VehiclePosition ...>, #<VehiclePosition ...>]
     logger.info "Filtering #{vehicle_positions.length} vehicles"
     vehicle_positions.delete_if { |k, v| v.length < 2 }
-    logger.info "Filtered to #{vehicle_positions.length} vehicles with 2 positions"
+    logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
     ids_to_purge = []
     addl_count = 0
     vehicle_positions.each do |line_ref, vp_list|
@@ -61,17 +62,18 @@ class VehiclePosition < ApplicationRecord
         # Compare it with every other position to see if we can make a departure
         sorted_vps.each do |new_vehicle_position|
           if is_departure?(old_vehicle_position, new_vehicle_position)
-            # Purge these vehicle positions so they can't be used to make duplicate departures
-            ids_to_purge << old_vehicle_position.id
-            ids_to_purge << new_vehicle_position.id
             new_departure = {
               stop_ref: new_vehicle_position.stop_ref,
               line_ref: new_vehicle_position.line_ref,
               vehicle_ref: new_vehicle_position.vehicle_ref,
               departure_time: new_vehicle_position.timestamp,
             }
+            # Purge these vehicle positions so they can't be used in the future to make duplicate departures
+            ids_to_purge << old_vehicle_position.id
+            ids_to_purge << new_vehicle_position.id
             addl_count += 1 if sorted_vps.length > 1
             departures << new_departure
+            break # don't make any additional departures from these two vehicle_positions
           end
         end
       end
