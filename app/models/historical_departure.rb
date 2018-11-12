@@ -1,5 +1,9 @@
 class HistoricalDeparture < ApplicationRecord
 
+  def self.for_route_and_stop(line_ref, stop_ref)
+    self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
+  end
+
   def self.grab_vehicle_positions_for_route(route_id)
     # Get all vehicle positions for a given bus line
     url_addon = ERB::Util.url_encode(route_id)
