@@ -87,7 +87,7 @@ class HistoricalDeparture < ApplicationRecord
       return self.grab_all
     end
     logger.info "Making MTA API call to ALL_VEHICLES_URL at #{Time.current.in_time_zone("EST")}"
-    MtaApiCallRecord.create()
+    MtaApiCallRecord.create() # no fields needed; just uses created_at timestamp
     response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
     object_list = extract_vehicle_positions(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
@@ -108,40 +108,6 @@ class HistoricalDeparture < ApplicationRecord
     pos2 = grab_all
     VehiclePosition.scrape_all_departures
     logger.info "grab_and_go complete in #{Time.current - start_time} seconds"
-  end
-
-  def self.dumb_survey
-    survey_by_vehicle(VehiclePosition.active)
-  end
-
-  def self.survey_by_vehicle(stale_vehicle_positions)
-    start_time = Time.current
-    return if stale_vehicle_positions.blank?
-    existing_count = HistoricalDeparture.all.count
-    existing_vp_count = VehiclePosition.all.count
-
-    vehicles_to_check = stale_vehicle_positions.map { |vp| vp.vehicle }
-    vehicle_positions_to_check = vehicles_to_check.map { |vehicle| vehicle.latest_position }.compact
-    new_veh_pos_object_list = []
-    vehicle_positions_to_check.each do |vp|
-      next if vp.blank?
-      url_addon = ERB::Util.url_encode(vp.vehicle_ref)
-      url = ApplicationController::LIST_OF_VEHICLES_URL + "&VehicleRef=" + url_addon
-      response = HTTParty.get(url)
-      # Format the data
-      new_veh_pos_object_list << extract_vehicle_positions(response)
-
-    end
-    new_veh_pos_object_list.flatten!
-    new_veh_pos_object_list.compact!
-    logger.info "creating vehicle positions..."
-    new_vehicle_positions = fast_insert_objects('vehicle_positions', new_veh_pos_object_list)
-    VehiclePosition.scrape_all_departures
-
-    new_count = HistoricalDeparture.all.count - existing_count
-    logger.info "#{new_count} historical departures created."
-    logger.info "#{VehiclePosition.all.count - existing_vp_count} VehiclePositions created."
-    logger.info "survey complete in #{Time.current - start_time} seconds."
   end
 
 end
