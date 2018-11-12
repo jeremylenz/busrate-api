@@ -18,3 +18,13 @@
 # end
 
 # Learn more: http://github.com/javan/whenever
+set :output, '/Users/jeremylenz/code/personal/busrate-api/log/cron-jobs.log'
+set :environment, 'development'
+
+every 4.minutes do
+  runner "VehiclePosition.clean_up"
+end
+
+every 1.minute do
+  runner "HistoricalDeparture.grab_and_go"
+end

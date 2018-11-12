@@ -13,12 +13,15 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.clean_up
+    logger.info "VehiclePosition.clean_up"
     purge_older_than(240)
   end
 
   def self.purge_older_than(seconds)
     records_to_purge = self.older_than(seconds).ids.take(65_536)
-    self.delete(ids)
+    logger.info "Purging #{records_to_purge.length} VehiclePositions"
+    self.delete(records_to_purge)
+    logger.info "#{VehiclePosition.all.count} VehiclePositions remaining in database"
   end
 
   def self.is_departure?(old_vehicle_position, new_vehicle_position)
@@ -70,6 +73,7 @@ class VehiclePosition < ApplicationRecord
     VehiclePosition.delete(ids_to_purge.take(65_536))
 
     logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
+    logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "scrape_all_departures complete in #{Time.current - start_time} seconds"
     departures
