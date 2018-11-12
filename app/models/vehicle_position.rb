@@ -62,7 +62,6 @@ class VehiclePosition < ApplicationRecord
     vehicle_positions.delete_if { |k, v| v.length < 2 }
     logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
     ids_to_purge = []
-    addl_count = 0
     expired_count = 0
     vehicle_positions.each do |line_ref, vp_list|
       sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that the oldest vehicle_position is first
@@ -83,7 +82,6 @@ class VehiclePosition < ApplicationRecord
             # Purge these vehicle positions so they can't be used in the future to make duplicate departures
             ids_to_purge << old_vehicle_position.id
             ids_to_purge << new_vehicle_position.id
-            addl_count += 1 if sorted_vps.length > 1
             departures << new_departure
             break # don't make any additional departures from these two vehicle_positions
           end
@@ -97,7 +95,6 @@ class VehiclePosition < ApplicationRecord
     VehiclePosition.delete(ids_to_purge.take(65_535))
 
     logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
-    logger.info "including #{addl_count} additional historical departures"
     logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures"
     logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
