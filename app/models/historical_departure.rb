@@ -74,6 +74,8 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_all
     start_time = Time.current
+    logger.info "Starting grab_all at #{start_time.in_time_zone("EST")}"
+
     existing_count = HistoricalDeparture.all.count
     previous_call = VehiclePosition.order(timestamp: :desc).first
 
@@ -97,12 +99,20 @@ class HistoricalDeparture < ApplicationRecord
     new_vehicle_positions
   end
 
-  def self.grab_and_go(wait_time = 30)
+  def self.grab_and_go
     start_time = Time.current
     logger.info "Starting grab_and_go at #{start_time.in_time_zone("EST")}"
     pos1 = grab_all
-    logger.info "waiting..."
-    sleep(wait_time)
+
+    previous_call = VehiclePosition.order(timestamp: :desc).first
+    if previous_call.present? && previous_call.created_at > 30.seconds.ago
+      wait_time = 30 - (Time.current - previous_call.created_at).to_i
+      logger.info "grab_and_go waiting..."
+      logger.info "Most recent timestamp: #{Time.current - previous_call&.created_at} seconds ago"
+      logger.info "Waiting an additional #{wait_time} seconds"
+      sleep(wait_time)
+    end
+
     logger.info "continuing after #{Time.current - start_time} seconds"
     pos2 = grab_all
     VehiclePosition.scrape_all_departures

@@ -44,6 +44,13 @@ Rails.application.configure do
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
 
+  # Use default logging formatter so that PID and timestamp are not suppressed.
+  config.log_formatter = ::Logger::Formatter.new
+
+  # Can't be having 1 GB / day log files
+  config.log_level = :info
+
+
 
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
