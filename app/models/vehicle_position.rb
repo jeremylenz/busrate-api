@@ -29,12 +29,12 @@ class VehiclePosition < ApplicationRecord
     # If all of the following rules apply, we consider it a departure:
     # vehicle_ref is the same
     # arrival_text for old_vehicle_position is 'at stop'
-    # the two vehicle positions are less than 2 minutes apart
+    # the two vehicle positions are less than 90 seconds apart
     # stop_ref changes
     # TODO: stop_ref changes to the NEXT stop on the route (not just any stop)
 
     return false if new_vehicle_position.vehicle_ref != old_vehicle_position.vehicle_ref
-    return false if new_vehicle_position.timestamp - old_vehicle_position.timestamp > 2.minutes
+    return false if new_vehicle_position.timestamp - old_vehicle_position.timestamp > 90.seconds
     return false if old_vehicle_position.arrival_text != "at stop"
     return false if new_vehicle_position.stop_ref == old_vehicle_position.stop_ref
 
@@ -51,21 +51,33 @@ class VehiclePosition < ApplicationRecord
     vehicle_positions.delete_if { |k, v| v.length < 2 }
     logger.info "Filtered to #{vehicle_positions.length} vehicles with 2 positions"
     ids_to_purge = []
+    addl_count = 0
     vehicle_positions.each do |line_ref, vp_list|
-      sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that old_vehicle_position is on the left
-      old_vehicle_position = sorted_vps[0]
-      new_vehicle_position = sorted_vps[1]
-      if is_departure?(old_vehicle_position, new_vehicle_position)
-        ids_to_purge << old_vehicle_position.id
-        new_departure = {
-          stop_ref: new_vehicle_position.stop_ref,
-          line_ref: new_vehicle_position.line_ref,
-          vehicle_ref: new_vehicle_position.vehicle_ref,
-          departure_time: new_vehicle_position.timestamp,
-        }
-        departures << new_departure
+      sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that the oldest vehicle_position is first
+
+      while sorted_vps.length > 1 do
+        # Remove the oldest vehicle position
+        old_vehicle_position = sorted_vps.shift
+        # Compare it with every other position to see if we can make a departure
+        sorted_vps.each do |new_vehicle_position|
+          if is_departure?(old_vehicle_position, new_vehicle_position)
+            # Purge these vehicle positions so they can't be used to make duplicate departures
+            ids_to_purge << old_vehicle_position.id
+            ids_to_purge << new_vehicle_position.id
+            new_departure = {
+              stop_ref: new_vehicle_position.stop_ref,
+              line_ref: new_vehicle_position.line_ref,
+              vehicle_ref: new_vehicle_position.vehicle_ref,
+              departure_time: new_vehicle_position.timestamp,
+            }
+            addl_count += 1 if sorted_vps.length > 1
+            departures << new_departure
+          end
+        end
       end
     end
+
+    ids_to_purge.uniq!
 
     logger.info "scrape_all_departures ready for fast inserter after #{Time.current - start_time} seconds"
 
@@ -73,6 +85,7 @@ class VehiclePosition < ApplicationRecord
     VehiclePosition.delete(ids_to_purge.take(65_536))
 
     logger.info "#{HistoricalDeparture.all.count - existing_count} historical departures created"
+    logger.info "including #{addl_count} additional historical departures"
     logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "scrape_all_departures complete in #{Time.current - start_time} seconds"
