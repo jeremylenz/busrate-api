@@ -1,5 +1,7 @@
 class HistoricalDeparture < ApplicationRecord
 
+  scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
+
   def self.for_route_and_stop(line_ref, stop_ref)
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
   end
@@ -30,12 +32,16 @@ class HistoricalDeparture < ApplicationRecord
       arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
       feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
       stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
+
       vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
       bus_line = BusLine.find_by(line_ref: line_ref)
-      next unless vehicle.present? && bus_line.present?
+      bus_stop = BusStop.find_or_create_by(stop_ref: stop_ref)
+
+      next unless vehicle.present? && bus_line.present? && bus_stop.present?
       {
           vehicle_id: vehicle.id,
           bus_line_id: bus_line.id,
+          bus_stop_id: bus_stop.id,
           vehicle_ref: vehicle_ref,
           line_ref: line_ref,
           arrival_text: arrival_text,
