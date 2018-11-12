@@ -18,7 +18,7 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.purge_older_than(seconds)
-    records_to_purge = self.older_than(seconds).ids.take(65_536)
+    records_to_purge = self.older_than(seconds).ids.take(65_535)
     logger.info "Purging #{records_to_purge.length} VehiclePositions"
     self.delete(records_to_purge)
     logger.info "#{VehiclePosition.all.count} VehiclePositions remaining in database"
@@ -92,13 +92,13 @@ class VehiclePosition < ApplicationRecord
     end
 
     ids_to_purge.uniq!
-    logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures"
 
     HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact.uniq)
-    VehiclePosition.delete(ids_to_purge.take(65_536))
+    VehiclePosition.delete(ids_to_purge.take(65_535))
 
     logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
     logger.info "including #{addl_count} additional historical departures"
+    logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures"
     logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
