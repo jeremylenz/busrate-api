@@ -119,6 +119,7 @@ class VehiclePosition < ApplicationRecord
             }
             # Purge the old_vehicle positions so they can't be used in the future to make duplicate departures
             ids_to_purge << old_vehicle_position.id
+            departures << new_departure
 
             break # don't make any additional departures from these two vehicle_positions
           end
