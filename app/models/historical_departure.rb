@@ -106,7 +106,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_all
     start_time = Time.current
-    identifier = start_time.to_i.to_s.last(3)
+    identifier = start_time.to_i.to_s.last(4)
     logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
 
     previous_call = MtaApiCallRecord.most_recent

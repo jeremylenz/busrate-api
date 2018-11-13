@@ -56,10 +56,8 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.count_duplicates
-    big_set = VehiclePosition.newer_than(240).map(&:skinny_attributes)
-    logger.info "Inspecting #{big_set.length} VehiclePositions..."
-    little_set = big_set.uniq
-    logger.info "#{big_set.length - little_set.length} duplicate VehiclePositions counted"
+    dup_count = self.duplicates.length
+    logger.info "#{dup_count} duplicate VehiclePositions counted"
   end
 
   def skinny_attributes
@@ -72,6 +70,12 @@ class VehiclePosition < ApplicationRecord
     skinny.delete "updated_at"
     skinny.delete "feet_from_stop"
     skinny
+  end
+
+  def self.duplicates
+    VehiclePosition.newer_than(240).select(:vehicle_ref, :line_ref, :arrival_text, :stop_ref, :timestamp)
+                                   .group(:vehicle_ref, :line_ref, :arrival_text, :stop_ref, :timestamp)
+                                   .having("count(*) > 1")
   end
 
   def self.scrape_all_departures
@@ -98,13 +102,6 @@ class VehiclePosition < ApplicationRecord
         # Compare it with every other position to see if we can make a departure
         sorted_vps.each do |new_vehicle_position|
           expired_count += 1 if expired_dep?(old_vehicle_position, new_vehicle_position)
-          # if vp_list.length > 2
-          #   puts "vp_list: #{vp_list.map(&:id)}"
-          #   puts "sorted_vps: #{sorted_vps.map(&:id)}"
-          #   puts "old_vehicle_position: #{old_vehicle_position.id}"
-          #   puts "new_vehicle_position: #{new_vehicle_position.id}"
-          #   puts "is_departure?: #{is_departure?(old_vehicle_position, new_vehicle_position)}"
-          # end
           if is_departure?(old_vehicle_position, new_vehicle_position)
             addl_count += 1 if old_vehicle_position.arrival_text != "at stop"
             bus_stop = BusStop.find_or_create_by(stop_ref: new_vehicle_position.stop_ref)
