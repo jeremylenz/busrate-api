@@ -21,7 +21,7 @@
 set :output, '/Users/jeremylenz/code/personal/busrate-api/log/cron-jobs.log'
 set :environment, 'development'
 
-every 4.minutes do
+every 8.minutes do
   runner "VehiclePosition.clean_up"
 end
 
