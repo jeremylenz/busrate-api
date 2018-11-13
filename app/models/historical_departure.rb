@@ -23,9 +23,14 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
     existing_vehicle_count = Vehicle.all.count
     existing_stop_count = BusStop.all.count
+    if BusLine.all.count == 0
+      logger.error "No BusLines in database"
+      return
+    end
     timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
+    # duplicates_avoided = 0
     new_vehicle_position_params = vehicle_activity.map do |data|
       next unless data['MonitoredVehicleJourney'].present?
       vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
@@ -35,6 +40,14 @@ class HistoricalDeparture < ApplicationRecord
       arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
       feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
       stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
+
+      # existing_vehicle_position = VehiclePosition.find_by(
+      #   vehicle_ref: vehicle_ref,
+      #   stop_ref: stop_ref,
+      #   timestamp: Time.zone.rfc3339(timestamp),
+      # )
+      # duplicates_avoided += 1 if existing_vehicle_position.present?
+      # next unless existing_vehicle_position.blank? # Avoid creating duplicate VehiclePositions
 
       vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
       bus_line = BusLine.find_by(line_ref: line_ref)
@@ -59,6 +72,7 @@ class HistoricalDeparture < ApplicationRecord
     new_stop_count = BusStop.all.count - existing_stop_count
     logger.info "#{new_vehicle_count} Vehicles created" if new_vehicle_count > 0
     logger.info "#{new_stop_count} BusStops created" if new_stop_count > 0
+    # logger.info "Avoided creating #{duplicates_avoided} duplicate VehiclePositions"
     logger.info "extract_vehicle_positions complete in #{Time.current - start_time} seconds"
     new_vehicle_position_params
   end
@@ -92,14 +106,17 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_all
     start_time = Time.current
-    logger.info "Starting grab_all at #{start_time.in_time_zone("EST")}"
+    identifier = start_time.to_i.to_s.last(3)
+    logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
 
     previous_call = MtaApiCallRecord.most_recent
+    if previous_call.present?
+      logger.info "most recent timestamp: #{Time.current - previous_call&.created_at} seconds ago"
+    end
 
     if previous_call.present? && previous_call.created_at > 30.seconds.ago
       wait_time = 30 - (Time.current - previous_call.created_at).to_i
       logger.info "grab_all called early; must wait at least 30 seconds between API calls"
-      logger.info "Most recent timestamp: #{Time.current - previous_call&.created_at} seconds ago"
       logger.info "Waiting an additional #{wait_time} seconds"
       sleep(wait_time)
       return self.grab_all
@@ -110,10 +127,7 @@ class HistoricalDeparture < ApplicationRecord
     object_list = extract_vehicle_positions(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
 
-    logger.info "grab_all complete in #{Time.current - start_time} seconds."
-    if previous_call.present?
-      logger.info "most recent timestamp: #{Time.current - previous_call&.created_at} seconds ago"
-    end
+    logger.info "grab_all # #{identifier} complete in #{Time.current - start_time} seconds."
 
     new_vehicle_positions
   end
