@@ -123,7 +123,9 @@ class HistoricalDeparture < ApplicationRecord
       return self.grab_all
     end
     logger.info "Making MTA API call to ALL_VEHICLES_URL at #{Time.current.in_time_zone("EST")}"
-    MtaApiCallRecord.create() # no fields needed; just uses created_at timestamp
+    MtaApiCallRecord.transaction do
+      MtaApiCallRecord.lock.create() # no fields needed; just uses created_at timestamp
+    end
     response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
     object_list = extract_vehicle_positions(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
