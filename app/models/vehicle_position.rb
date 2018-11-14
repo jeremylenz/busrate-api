@@ -80,6 +80,9 @@ class VehiclePosition < ApplicationRecord
 
   def self.scrape_all_departures
     start_time = Time.current
+    identifier = start_time.to_f.to_s.split(".")[1].first(4)
+    logger.info "Starting scrape_all_departures # #{identifier} at #{start_time.in_time_zone("EST")}"
+
     existing_count = HistoricalDeparture.all.count
     departures = []
     departure_ids = [] # keep track so we don't make duplicates
@@ -135,7 +138,7 @@ class VehiclePosition < ApplicationRecord
     logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
-    logger.info "scrape_all_departures complete in #{Time.current - start_time} seconds"
+    logger.info "scrape_all_departures # #{identifier} complete in #{Time.current - start_time} seconds"
     departures
 
   end
