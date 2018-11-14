@@ -115,7 +115,7 @@ class HistoricalDeparture < ApplicationRecord
     end
 
     if previous_call.present? && previous_call.created_at > 30.seconds.ago
-      wait_time = 30 - (Time.current - previous_call.created_at).to_i
+      wait_time = 32 - (Time.current - previous_call.created_at).to_i
       logger.info "grab_all called early; must wait at least 30 seconds between API calls"
       logger.info "Waiting an additional #{wait_time} seconds"
       sleep(wait_time)
