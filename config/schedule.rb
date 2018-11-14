@@ -28,3 +28,7 @@ end
 every 1.minute do
   runner "HistoricalDeparture.grab_and_go"
 end
+
+every 1.minute do
+  runner "VehiclePosition.scrape_all_departures"
+end

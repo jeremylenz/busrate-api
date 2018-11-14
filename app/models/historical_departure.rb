@@ -158,7 +158,6 @@ class HistoricalDeparture < ApplicationRecord
 
     logger.info "continuing grab_and_go # #{identifier} after #{elapsed_time} seconds"
     grab_all
-    VehiclePosition.scrape_all_departures
     logger.info "grab_and_go # #{identifier} complete in #{Time.current - start_time} seconds"
   end
 
