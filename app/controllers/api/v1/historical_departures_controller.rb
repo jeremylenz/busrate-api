@@ -1,7 +1,15 @@
 class Api::V1::HistoricalDeparturesController < ApplicationController
 
   def index
-    line_ref = BusLine.find_by(line_ref: params[:lineRef])&.line_ref
+    line_ref_param = request.url.split("=")[1]
+    if line_ref_param.present?
+      # Given a Select Bus Service lineRef such as "MTA NYCT_M15+", which comes in as "MTA%20NYCT_M15+",
+      # this is the only way I've found to remove the %20 but not remove the +.
+      # Rails sets params[:lineRef] to "MTA NYCT_M15 " (with a space instead of the +) which won't work.
+      line_ref_param = line_ref_param.gsub(/%20/," ")
+    end
+
+    line_ref = BusLine.find_by(line_ref: line_ref_param)&.line_ref
     stop_ref = BusStop.find_by(stop_ref: params[:bus_stop_id])&.stop_ref
 
     if params[:bus_stop_id].blank? || params[:lineRef].blank?
@@ -14,6 +22,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       render json: {error: "line_ref #{params[:line_ref]} not found"}, status: 422
       return
     end
+
 
     @historical_departures = HistoricalDeparture.for_route_and_stop(line_ref, stop_ref)
 
