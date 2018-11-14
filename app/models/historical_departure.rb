@@ -106,7 +106,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_all
     start_time = Time.current
-    identifier = start_time.to_i.to_s.last(4)
+    identifier = start_time.to_f.to_s.split(".")[1].first(4)
     logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
 
     previous_call = MtaApiCallRecord.most_recent
@@ -115,7 +115,8 @@ class HistoricalDeparture < ApplicationRecord
     end
 
     if previous_call.present? && previous_call.created_at > 30.seconds.ago
-      wait_time = 32 - (Time.current - previous_call.created_at).to_i
+      wait_time = 31 - (Time.current - previous_call.created_at).to_i
+      wait_time += 4 if wait_time == 30
       logger.info "grab_all called early; must wait at least 30 seconds between API calls"
       logger.info "Waiting an additional #{wait_time} seconds"
       sleep(wait_time)
