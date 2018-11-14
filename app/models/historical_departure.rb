@@ -122,11 +122,20 @@ class HistoricalDeparture < ApplicationRecord
       sleep(wait_time)
       return self.grab_all
     end
-    logger.info "Making MTA API call to ALL_VEHICLES_URL at #{Time.current.in_time_zone("EST")}"
+
+    last_id = previous_call.id
     MtaApiCallRecord.transaction do
       MtaApiCallRecord.lock.create() # no fields needed; just uses created_at timestamp
     end
-    response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
+    new_record = MtaApiCallRecord.most_recent
+    if new_record.present? && new_record.id > last_id
+      logger.info "Making MTA API call to ALL_VEHICLES_URL at #{Time.current.in_time_zone("EST")}"
+      response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
+    else
+      logger.info "Database lock encountered; skipping grab_all # #{identifier}"
+      return
+    end
+
     object_list = extract_vehicle_positions(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
 
@@ -137,12 +146,20 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_and_go
     start_time = Time.current
-    logger.info "Starting grab_and_go at #{start_time.in_time_zone("EST")}"
-    pos1 = grab_all
-    logger.info "continuing after #{Time.current - start_time} seconds"
-    pos2 = grab_all
+    identifier = start_time.to_f.to_s.split(".")[1].first(4)
+    logger.info "Starting grab_and_go # #{identifier} at #{start_time.in_time_zone("EST")}"
+    grab_all
+
+    elapsed_time = Time.current - start_time
+    if elapsed_time > 30.seconds
+      logger.info "First grab_all took #{elapsed_time} seconds; skipping second grab_all"
+      return
+    end
+
+    logger.info "continuing grab_and_go # #{identifier} after #{elapsed_time} seconds"
+    grab_all
     VehiclePosition.scrape_all_departures
-    logger.info "grab_and_go complete in #{Time.current - start_time} seconds"
+    logger.info "grab_and_go # #{identifier} complete in #{Time.current - start_time} seconds"
   end
 
 end
