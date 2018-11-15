@@ -60,6 +60,76 @@ class VehiclePosition < ApplicationRecord
     HistoricalDeparture.fast_insert_objects('vehicle_positions', vehicle_positions_a)
   end
 
+  def self.monitor_line(line_ref)
+    start_time = Time.current
+    end_time = 4.minutes.after(start_time)
+    logger.info "Monitoring line #{line_ref}"
+
+    until Time.current > end_time do
+      sleep(9)
+      self.spot_check_line(line_ref)
+    end
+    extract_spot_check(line_ref)
+  end
+
+  def self.spot_check_line(line_ref)
+    existing_count = VehiclePosition.all.count
+    # add character to line_ref
+    altered_line_ref = "#{line_ref}__trk"
+    # get vehicles for route
+    url_addon = ERB::Util.url_encode(line_ref)
+    url = ApplicationController::LIST_OF_VEHICLES_URL + "&LineRef=" + url_addon
+    response = HTTParty.get(url)
+    # extract vehicle positions
+    vehicle_position_data = VehiclePosition.extract_from_response(response)
+    # manually save positions with altered_line_ref
+    vehicle_position_data.each do |vp|
+      vp[:line_ref] = altered_line_ref
+      VehiclePosition.create(
+        line_ref: altered_line_ref,
+        vehicle_id: vp[:vehicle_id],
+        bus_line_id: vp[:bus_line_id],
+        bus_stop_id: vp[:bus_stop_id],
+        vehicle_ref: vp[:vehicle_ref],
+        arrival_text: vp[:arrival_text],
+        feet_from_stop: vp[:feet_from_stop],
+        stop_ref: vp[:stop_ref],
+        timestamp: vp[:timestamp],
+      )
+    end
+
+    new_count = VehiclePosition.all.count - existing_count
+    logger.info "spot_check_line: Created #{new_count} special VehiclePositions for #{line_ref}"
+  end
+
+  def self.extract_spot_check(line_ref)
+    logger.info "Scraping special departures for #{line_ref}"
+    HistoricalDeparture.scrape_all
+    altered_line_ref = "#{line_ref}__trk"
+
+    special_departures = HistoricalDeparture.newer_than(480).where(line_ref: altered_line_ref).order(departure_time: :desc)
+    to_time = special_departures.first.departure_time
+    from_time = special_departures.last.departure_time
+    regular_departures = HistoricalDeparture.where(["departure_time >= ? AND departure_time <= ?", from_time, to_time]).where(line_ref: line_ref).order(departure_time: :desc)
+    logger.info "#{special_departures.count} special departures and #{regular_departures.count} regular departures found"
+    num_missed = special_departures.count - regular_departures.count
+    logger.info "#{num_missed} extra departures found"
+    compare_spot_check(line_ref, regular_departures, special_departures)
+  end
+
+  def self.compare_spot_check(line_ref, regular_departures, special_departures)
+    altered_line_ref = "#{line_ref}__trk"
+
+    diffs = special_departures.select do |sd|
+      regular_departures.where(stop_ref: sd.stop_ref, vehicle_ref: sd.vehicle_ref).blank?
+    end
+    {
+      regular_departures: regular_departures,
+      special_departures: special_departures,
+      diffs: diffs,
+    }
+  end
+
   def self.extract_from_response(response)
     start_time = Time.current
     existing_vehicle_count = Vehicle.all.count
