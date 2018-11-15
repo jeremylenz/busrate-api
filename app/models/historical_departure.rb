@@ -162,7 +162,7 @@ class HistoricalDeparture < ApplicationRecord
               stop_ref: old_vehicle_position.stop_ref,
               line_ref: new_vehicle_position.line_ref,
               vehicle_ref: new_vehicle_position.vehicle_ref,
-              departure_time: new_vehicle_position.timestamp,
+              departure_time: old_vehicle_position.timestamp,
             }
             # Purge the old_vehicle positions so they can't be used in the future to make duplicate departures
             ids_to_purge << old_vehicle_position.id
