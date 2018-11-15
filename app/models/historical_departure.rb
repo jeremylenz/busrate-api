@@ -41,14 +41,6 @@ class HistoricalDeparture < ApplicationRecord
       feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
       stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
 
-      # existing_vehicle_position = VehiclePosition.find_by(
-      #   vehicle_ref: vehicle_ref,
-      #   stop_ref: stop_ref,
-      #   timestamp: Time.zone.rfc3339(timestamp),
-      # )
-      # duplicates_avoided += 1 if existing_vehicle_position.present?
-      # next unless existing_vehicle_position.blank? # Avoid creating duplicate VehiclePositions
-
       vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
       bus_line = BusLine.find_by(line_ref: line_ref)
       bus_stop = BusStop.find_or_create_by(stop_ref: stop_ref)
@@ -72,7 +64,6 @@ class HistoricalDeparture < ApplicationRecord
     new_stop_count = BusStop.all.count - existing_stop_count
     logger.info "#{new_vehicle_count} Vehicles created" if new_vehicle_count > 0
     logger.info "#{new_stop_count} BusStops created" if new_stop_count > 0
-    # logger.info "Avoided creating #{duplicates_avoided} duplicate VehiclePositions"
     logger.info "extract_vehicle_positions complete in #{Time.current - start_time} seconds"
     new_vehicle_position_params
   end
