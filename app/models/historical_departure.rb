@@ -8,66 +8,6 @@ class HistoricalDeparture < ApplicationRecord
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
   end
 
-  def self.grab_vehicle_positions_for_route(route_id)
-    # Get all vehicle positions for a given bus line
-    url_addon = ERB::Util.url_encode(route_id)
-    url = ApplicationController::LIST_OF_VEHICLES_URL + "&LineRef=" + url_addon
-    response = HTTParty.get(url)
-
-    # Format the data
-    vehicle_positions_a = extract_vehicle_positions(response)
-    fast_insert_objects('vehicle_positions', vehicle_positions_a)
-  end
-
-  def self.extract_vehicle_positions(response)
-    start_time = Time.current
-    existing_vehicle_count = Vehicle.all.count
-    existing_stop_count = BusStop.all.count
-    if BusLine.all.count == 0
-      logger.error "No BusLines in database"
-      return
-    end
-    timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
-    return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
-    vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
-    # duplicates_avoided = 0
-    new_vehicle_position_params = vehicle_activity.map do |data|
-      next unless data['MonitoredVehicleJourney'].present?
-      vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
-      line_ref = data['MonitoredVehicleJourney']['LineRef']
-      next unless vehicle_ref.present? && line_ref.present?
-      next unless data['MonitoredVehicleJourney']['MonitoredCall'].present?
-      arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
-      feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
-      stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
-
-      vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
-      bus_line = BusLine.find_by(line_ref: line_ref)
-      bus_stop = BusStop.find_or_create_by(stop_ref: stop_ref)
-
-      next unless vehicle.present? && bus_line.present? && bus_stop.present?
-      {
-          vehicle_id: vehicle.id,
-          bus_line_id: bus_line.id,
-          bus_stop_id: bus_stop.id,
-          vehicle_ref: vehicle_ref,
-          line_ref: line_ref,
-          arrival_text: arrival_text,
-          feet_from_stop: feet_from_stop,
-          stop_ref: stop_ref,
-          timestamp: Time.rfc3339(timestamp),
-      }
-    end.compact
-    return [] if new_vehicle_position_params.empty?
-
-    new_vehicle_count = Vehicle.all.count - existing_vehicle_count
-    new_stop_count = BusStop.all.count - existing_stop_count
-    logger.info "#{new_vehicle_count} Vehicles created" if new_vehicle_count > 0
-    logger.info "#{new_stop_count} BusStops created" if new_stop_count > 0
-    logger.info "extract_vehicle_positions complete in #{Time.current - start_time} seconds"
-    new_vehicle_position_params
-  end
-
   def self.fast_insert_objects(table_name, object_list)
     return if object_list.blank?
     fast_inserter_start_time = Time.current
@@ -127,7 +67,7 @@ class HistoricalDeparture < ApplicationRecord
       return
     end
 
-    object_list = extract_vehicle_positions(response)
+    object_list = VehiclePosition.extract_from_response(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
 
     logger.info "grab_all # #{identifier} complete in #{Time.current - start_time} seconds."
@@ -151,5 +91,104 @@ class HistoricalDeparture < ApplicationRecord
     grab_all
     logger.info "grab_and_go # #{identifier} complete in #{Time.current - start_time} seconds"
   end
+
+  def self.is_departure?(old_vehicle_position, new_vehicle_position)
+    return false if old_vehicle_position.blank? || new_vehicle_position.blank?
+    # If all of the following rules apply, we consider it a departure:
+    # timestamp for new_vehicle_position is after old_vehicle_position
+    # vehicle_ref is the same
+    # arrival_text for old_vehicle_position is 'at stop', 'approaching', or '< 1 stop away'
+    # the two vehicle positions are less than 90 seconds apart
+    # stop_ref changes
+    # TODO: stop_ref changes to the NEXT stop on the route (not just any stop)
+
+    return false unless new_vehicle_position.timestamp > old_vehicle_position.timestamp
+    return false unless new_vehicle_position.vehicle_ref == old_vehicle_position.vehicle_ref
+    return false unless (new_vehicle_position.timestamp - old_vehicle_position.timestamp) < 90.seconds
+    return false unless ["at stop", "approaching", "< 1 stop away"].include?(old_vehicle_position.arrival_text)
+    return false unless new_vehicle_position.stop_ref != old_vehicle_position.stop_ref
+
+    true
+  end
+
+  def self.expired_dep?(old_vp, new_vp)
+    if new_vp.timestamp - old_vp.timestamp > 90.seconds &&
+      new_vp.vehicle_ref == old_vp.vehicle_ref &&
+      ["at stop", "approaching", "< 1 stop away"].include?(old_vp.arrival_text) &&
+      new_vp.stop_ref != old_vp.stop_ref
+      return true
+    end
+    false
+  end
+
+  def self.scrape_all
+    self.scrape_from(VehiclePosition.newer_than(240))
+  end
+
+  def self.scrape_from(vehicle_positions)
+    start_time = Time.current
+    identifier = start_time.to_f.to_s.split(".")[1].first(4)
+    logger.info "Starting departure scrape # #{identifier} at #{start_time.in_time_zone("EST")}"
+
+    existing_count = HistoricalDeparture.all.count
+    departures = []
+    departure_ids = [] # keep track so we don't make duplicates
+
+    vehicle_positions = vehicle_positions.group_by(&:vehicle_ref)
+    # "MTABC_3742"=>[#<VehiclePosition ...>, #<VehiclePosition ...>, #<VehiclePosition ...>]
+    logger.info "Filtering #{vehicle_positions.length} vehicles"
+    vehicle_positions.delete_if { |k, v| v.length < 2 }
+    logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
+    ids_to_purge = []
+    expired_count = 0
+    addl_count = 0
+    vehicle_positions.each do |veh_ref, vp_list|
+      sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that the oldest vehicle_position is first
+
+      while sorted_vps.length > 1 do
+        # Remove the oldest vehicle position
+        old_vehicle_position = sorted_vps.shift
+
+        # Compare it with every other position to see if we can make a departure
+        sorted_vps.each do |new_vehicle_position|
+          expired_count += 1 if expired_dep?(old_vehicle_position, new_vehicle_position)
+          if is_departure?(old_vehicle_position, new_vehicle_position)
+            addl_count += 1 if old_vehicle_position.arrival_text != "at stop"
+            bus_stop = BusStop.find_or_create_by(stop_ref: new_vehicle_position.stop_ref)
+            puts "bus_stop not found" if bus_stop.blank?
+            next unless bus_stop.present?
+            new_departure = {
+              bus_stop_id: bus_stop.id,
+              stop_ref: old_vehicle_position.stop_ref,
+              line_ref: new_vehicle_position.line_ref,
+              vehicle_ref: new_vehicle_position.vehicle_ref,
+              departure_time: new_vehicle_position.timestamp,
+            }
+            # Purge the old_vehicle positions so they can't be used in the future to make duplicate departures
+            ids_to_purge << old_vehicle_position.id
+            departures << new_departure
+
+            break # don't make any additional departures from these two vehicle_positions
+          end
+        end
+      end
+    end
+
+    ids_to_purge.uniq!
+
+    HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact.uniq)
+    VehiclePosition.delete(ids_to_purge.take(65_535))
+
+    logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
+    logger.info "including #{addl_count} departures from approaching vehicles"
+    logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures by removing non-unique values"
+    logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
+    logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
+    logger.info "#{ids_to_purge.length} old vehicle positions purged"
+    logger.info "Departure scrape # #{identifier} complete in #{Time.current - start_time} seconds"
+
+  end
+
+
 
 end

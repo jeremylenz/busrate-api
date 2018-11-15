@@ -30,5 +30,5 @@ every 1.minute do
 end
 
 every 1.minute do
-  runner "VehiclePosition.scrape_all_departures"
+  runner "HistoricalDeparture.scrape_all"
 end
