@@ -41,8 +41,10 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
 
     previous_call = MtaApiCallRecord.most_recent
+    last_id = 0
     if previous_call.present?
       logger.info "most recent timestamp: #{Time.current - previous_call&.created_at} seconds ago"
+      last_id = previous_call.id
     end
 
     if previous_call.present? && previous_call.created_at > 30.seconds.ago
@@ -54,7 +56,6 @@ class HistoricalDeparture < ApplicationRecord
       return self.grab_all
     end
 
-    last_id = previous_call.id
     MtaApiCallRecord.transaction do
       MtaApiCallRecord.lock.create() # no fields needed; just uses created_at timestamp
     end
