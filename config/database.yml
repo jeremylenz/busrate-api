@@ -84,4 +84,4 @@ production:
   port: 5432
   database: busrate-api_production
   username: busrate-api
-  password: ''
+  password: <%= ENV['BUSRATE-API_DATABASE_PASSWORD'] %>
