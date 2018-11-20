@@ -26,11 +26,31 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
 
     @historical_departures = HistoricalDeparture.for_route_and_stop(line_ref, stop_ref)
 
-    times = @historical_departures.map { |hd| hd.departure_time }
+    # get most recent 8
+    today = Time.zone.now.in_time_zone("EST").strftime('%A')
+    recents = @historical_departures.first(8)
+
+    if today == "Monday"
+      compare_time = 72.hours.ago
+      prev_text = "Friday"
+    elsif today == "Sunday" || today == "Saturday"
+      compare_time = 7.days.ago
+      prev_text = "Last #{today}"
+    else
+      compare_time = 24.hours.ago
+      prev_text = "Yesterday"
+    end
+
+    prev_departures = @historical_departures.where(['departure_time < ?', compare_time]).first(8)
+
+    today_times = recents.map { |hd| hd.departure_time }
+    prev_times = prev_departures.map { |hd| hd.departure_time }
     render json: {
       line_ref: line_ref,
       stop_ref: stop_ref,
-      historical_departures: times,
+      historical_departures: today_times,
+      prev_departures: prev_times,
+      prev_departure_text: prev_text,
     }
 
   end
