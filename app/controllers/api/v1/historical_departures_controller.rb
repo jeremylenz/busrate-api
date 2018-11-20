@@ -41,6 +41,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       prev_text = "Yesterday"
     end
 
+    compare_time += 10.minutes # how late was the bus this time yesterday?
+
     prev_departures = @historical_departures.where(['departure_time < ?', compare_time]).first(8)
 
     today_times = recents.map { |hd| hd.departure_time }
