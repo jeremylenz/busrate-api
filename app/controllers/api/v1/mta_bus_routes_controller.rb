@@ -65,7 +65,6 @@ class Api::V1::MtaBusRoutesController < ApplicationController
     route_id = params[:id]
     url_addon = ERB::Util.url_encode(route_id)
     url = LIST_OF_VEHICLES_URL + "&LineRef=" + url_addon
-    puts url
 
     response = HTTParty.get(url)
 
