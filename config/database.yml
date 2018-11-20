@@ -84,4 +84,4 @@ production:
   <<: *default
   database: busrate-api_production
   username: busrate-api
-  password: <%= ENV['BUSRATE-API_DATABASE_PASSWORD'] %>
+  password: ''
