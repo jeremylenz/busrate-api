@@ -28,9 +28,9 @@ class HistoricalDeparture < ApplicationRecord
 
     inserter = FastInserter::Base.new(fast_inserter_params)
     inserter.fast_insert
-    logger.info "#{table_name} fast_inserter complete in #{Time.current - fast_inserter_start_time} seconds"
+    # logger.info "#{table_name} fast_inserter complete in #{Time.current - fast_inserter_start_time} seconds"
     model_name = table_name.classify
-    logger.info "#{fast_inserter_values.length} #{model_name}s fast-inserted"
+    # logger.info "#{fast_inserter_values.length} #{model_name}s fast-inserted"
     # Return an ActiveRecord relation with the objects just created
     model.where(['id > ?', last_id])
   end
@@ -50,7 +50,7 @@ class HistoricalDeparture < ApplicationRecord
     if previous_call.present? && previous_call.created_at > 30.seconds.ago
       wait_time = 31 - (Time.current - previous_call.created_at).to_i
       wait_time += 4 if wait_time == 31
-      logger.info "grab_all called early; must wait at least 30 seconds between API calls"
+      # logger.info "grab_all called early; must wait at least 30 seconds between API calls"
       logger.info "Waiting an additional #{wait_time} seconds"
       sleep(wait_time)
       return self.grab_all
@@ -137,9 +137,9 @@ class HistoricalDeparture < ApplicationRecord
 
     vehicle_positions = vehicle_positions.group_by(&:vehicle_ref)
     # "MTABC_3742"=>[#<VehiclePosition ...>, #<VehiclePosition ...>, #<VehiclePosition ...>]
-    logger.info "Filtering #{vehicle_positions.length} vehicles"
+    # logger.info "Filtering #{vehicle_positions.length} vehicles"
     vehicle_positions.delete_if { |k, v| v.length < 2 }
-    logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
+    # logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
     ids_to_purge = []
     expired_count = 0
     addl_count = 0
@@ -181,7 +181,7 @@ class HistoricalDeparture < ApplicationRecord
     VehiclePosition.delete(ids_to_purge.take(65_535))
 
     logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
-    logger.info "including #{addl_count} departures from approaching vehicles"
+    # logger.info "including #{addl_count} departures from approaching vehicles"
     logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures by removing non-unique values"
     logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
