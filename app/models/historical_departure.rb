@@ -30,7 +30,7 @@ class HistoricalDeparture < ApplicationRecord
     inserter.fast_insert
     # logger.info "#{table_name} fast_inserter complete in #{Time.current - fast_inserter_start_time} seconds"
     model_name = table_name.classify
-    # logger.info "#{fast_inserter_values.length} #{model_name}s fast-inserted"
+    logger.info "#{fast_inserter_values.length} #{model_name}s fast-inserted"
     # Return an ActiveRecord relation with the objects just created
     model.where(['id > ?', last_id])
   end
