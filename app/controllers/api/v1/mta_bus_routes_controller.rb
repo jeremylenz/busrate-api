@@ -44,7 +44,6 @@ class Api::V1::MtaBusRoutesController < ApplicationController
     stop_id = params[:id]
     url_addon = ERB::Util.url_encode(stop_id)
     url = VEHICLES_FOR_STOP_URL + "&MonitoringRef=" + url_addon
-    puts url
 
     response = HTTParty.get(url)
 
