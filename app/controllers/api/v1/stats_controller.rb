@@ -3,7 +3,7 @@ class Api::V1::StatsController < ApplicationController
   include ActionView::Helpers::NumberHelper
 
   def index
-    @mta_api_call_records_count = MtaApiCallRecord.where(['created_at < ?', 150.seconds.ago]).count
+    @mta_api_call_records_count = MtaApiCallRecord.where(['created_at > ?', 150.seconds.ago]).count
     @bus_line_count = BusLine.all.count
     @bus_stop_count = BusStop.all.count
     @historical_departure_count = HistoricalDeparture.all.count
@@ -16,7 +16,7 @@ class Api::V1::StatsController < ApplicationController
       @avg_vehicles_per_api_call = @vehicle_position_recent_count / @mta_api_call_records_count
       @avg_departures_per_api_call = @historical_departure_recent_count / @mta_api_call_records_count
     end
-    
+
     response = {
       mta_api_all_vehicles_calls: @mta_api_call_records_count,
       bus_lines: @bus_line_count,
