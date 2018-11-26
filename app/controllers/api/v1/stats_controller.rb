@@ -3,13 +3,13 @@ class Api::V1::StatsController < ApplicationController
   include ActionView::Helpers::NumberHelper
 
   def index
-    @mta_api_call_records_count = MtaApiCallRecord.where(['created_at > ?', 150.seconds.ago]).count
+    @mta_api_call_records_count = MtaApiCallRecord.where(['created_at > ?', 300.seconds.ago]).count
     @bus_line_count = BusLine.all.count
     @bus_stop_count = BusStop.all.count
     @historical_departure_count = HistoricalDeparture.all.count
-    @historical_departure_recent_count = HistoricalDeparture.newer_than(150).count
+    @historical_departure_recent_count = HistoricalDeparture.newer_than(300).count
     @vehicle_position_count = VehiclePosition.all.count
-    @vehicle_position_recent_count = VehiclePosition.newer_than(150).count
+    @vehicle_position_recent_count = VehiclePosition.newer_than(300).count
     @vehicle_count = Vehicle.all.count
 
     if @mta_api_call_records_count > 0
@@ -22,9 +22,9 @@ class Api::V1::StatsController < ApplicationController
       bus_lines: @bus_line_count,
       bus_stops: @bus_stop_count,
       historical_departures: number_with_delimiter(@historical_departure_count, delimiter: ','),
-      historical_departures_last_150_seconds: @historical_departure_recent_count,
+      historical_departures_last_300_seconds: @historical_departure_recent_count,
       vehicle_positions: @vehicle_position_count,
-      vehicle_positions_last_150_seconds: @vehicle_position_recent_count,
+      vehicle_positions_last_300_seconds: @vehicle_position_recent_count,
       vehicles: @vehicle_count,
       avg_vehicles_per_api_call: @avg_vehicles_per_api_call,
       avg_departures_per_api_call: @avg_departures_per_api_call,
