@@ -37,6 +37,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_all
     start_time = Time.current
+    logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
     logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
 
@@ -78,6 +79,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_and_go
     start_time = Time.current
+    logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
     logger.info "Starting grab_and_go # #{identifier} at #{start_time.in_time_zone("EST")}"
     grab_all
@@ -128,6 +130,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.scrape_from(vehicle_positions)
     start_time = Time.current
+    logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
     logger.info "Starting departure scrape # #{identifier} at #{start_time.in_time_zone("EST")}"
 
@@ -156,7 +159,7 @@ class HistoricalDeparture < ApplicationRecord
           if is_departure?(old_vehicle_position, new_vehicle_position)
             addl_count += 1 if old_vehicle_position.arrival_text != "at stop"
             bus_stop = BusStop.find_or_create_by(stop_ref: new_vehicle_position.stop_ref)
-            puts "bus_stop not found" if bus_stop.blank?
+            logger.error "bus_stop not found: #{new_vehicle_position.stop_ref}" if bus_stop.blank?
             next unless bus_stop.present?
             new_departure = {
               bus_stop_id: bus_stop.id,
