@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       resources :bus_stops, only: [] do
         resources :historical_departures, only: [:index]
       end
+      resources :stats, only: [:index]
 
     end
   end
