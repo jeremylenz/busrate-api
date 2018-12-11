@@ -71,7 +71,6 @@ class VehiclePosition < ApplicationRecord
     feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
     stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
     timestamp = data['RecordedAtTime']
-    logger.info("RecordedAtTime #{timestamp}")
 
     vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
     bus_line = BusLine.find_by(line_ref: line_ref)
