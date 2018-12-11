@@ -51,8 +51,7 @@ class Api::V1::MtaBusRoutesController < ApplicationController
       # Get vehicle position data to use for our own purposes before passing thru the MTA response
       # TODO: figure out why this is creating duplicate departures
       data = response['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit']
-      timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
-      new_vehicle_positions = data.map { |monitored_stop_visit| VehiclePosition.extract_single(monitored_stop_visit, timestamp) }.compact
+      new_vehicle_positions = data.map { |monitored_stop_visit| VehiclePosition.extract_single(monitored_stop_visit) }.compact
       # HistoricalDeparture.fast_insert_objects('vehicle_positions', new_vehicle_positions)
       render json: response
     else

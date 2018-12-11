@@ -60,7 +60,7 @@ class VehiclePosition < ApplicationRecord
     HistoricalDeparture.fast_insert_objects('vehicle_positions', vehicle_positions_a)
   end
 
-  def self.extract_single(data, timestamp)
+  def self.extract_single(data)
     # Pass in an object containing a single MonitoredVehicleJourney object
     return nil unless data['MonitoredVehicleJourney'].present?
     vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
@@ -70,6 +70,8 @@ class VehiclePosition < ApplicationRecord
     arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
     feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
     stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
+    timestamp = data['RecordedAtTime']
+    logger.info("RecordedAtTime #{timestamp}")
 
     vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
     bus_line = BusLine.find_by(line_ref: line_ref)
@@ -97,13 +99,12 @@ class VehiclePosition < ApplicationRecord
       logger.error "No BusLines in database"
       return
     end
-    timestamp = response['Siri']['ServiceDelivery']['ResponseTimestamp']
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'].present?
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
     # duplicates_avoided = 0
     new_vehicle_position_params = vehicle_activity.map do |data|
-      VehiclePosition.extract_single(data, timestamp)
+      VehiclePosition.extract_single(data)
     end.compact
     return [] if new_vehicle_position_params.empty?
 
