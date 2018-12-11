@@ -6,7 +6,12 @@ class Api::V1::StatsController < ApplicationController
     @mta_api_call_records_count = MtaApiCallRecord.where(['created_at > ?', 300.seconds.ago]).count
     @bus_line_count = BusLine.all.count
     @bus_stop_count = BusStop.all.count
-    @historical_departure_count = HistoricalDeparture.all.count
+
+    # @historical_departure_count = HistoricalDeparture.all.count
+    # doing this estimate instead of the above - it's way faster
+    sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='historical_departures';"
+    @historical_departure_count = ActiveRecord::Base.connection.execute(sql).first["estimate"]
+    
     @historical_departure_recent_count = HistoricalDeparture.newer_than(300).count
     @vehicle_position_count = VehiclePosition.all.count
     @vehicle_position_recent_count = VehiclePosition.newer_than(300).count
