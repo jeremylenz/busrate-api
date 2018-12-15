@@ -19,6 +19,7 @@ class HistoricalDeparture < ApplicationRecord
       options: {
         timestamps: true,
         group_size: 2_000,
+        check_for_existing: true,
       },
       variable_columns: fast_inserter_variable_columns,
       values: fast_inserter_values,
