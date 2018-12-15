@@ -36,3 +36,11 @@ end
 every 1.minute do
   runner "HistoricalDeparture.scrape_all"
 end
+
+every 29.minutes do
+  command "curl localhost:3000/api/v1/ping"
+end
+
+every 1.hour do
+  runner "HistoricalDeparture.purge_duplicates_older_than(3700)"
+end
