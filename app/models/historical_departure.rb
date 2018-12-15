@@ -192,6 +192,16 @@ class HistoricalDeparture < ApplicationRecord
 
   end
 
+  def self.duplicates
+    HistoricalDeparture.select(:vehicle_ref, :line_ref, :stop_ref, :departure_time)
+                                   .group(:vehicle_ref, :line_ref, :stop_ref, :departure_time)
+                                   .having("count(*) > 1")
+  end
 
+  def self.count_duplicates
+    dup_count = self.duplicates.length
+    logger.info "#{dup_count} duplicate HistoricalDepartures counted"
+    dup_count
+  end
 
 end

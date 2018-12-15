@@ -12,22 +12,26 @@ class Api::V1::StatsController < ApplicationController
     sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='historical_departures';"
     @historical_departure_count = ActiveRecord::Base.connection.execute(sql).first["estimate"]
 
-    @historical_departure_recent_count = HistoricalDeparture.newer_than(300).count
+    @historical_departure_recent_count = HistoricalDeparture.newer_than(300).count / 5
+    @historical_departures_per_day = @historical_departure_recent_count * 60 * 24
+    @historical_departure_dup_count = HistoricalDeparture.count_duplicates
     @vehicle_position_count = VehiclePosition.all.count
-    @vehicle_position_recent_count = VehiclePosition.newer_than(300).count
+    @vehicle_position_recent_count = VehiclePosition.newer_than(300).count / 5
     @vehicle_count = Vehicle.all.count
 
     if @mta_api_call_records_count > 0
-      @avg_vehicle_positions_per_api_call = @vehicle_position_recent_count / @mta_api_call_records_count
-      @avg_departures_per_api_call = @historical_departure_recent_count / @mta_api_call_records_count
+      @avg_vehicle_positions_per_api_call = @vehicle_position_recent_count * 5 / @mta_api_call_records_count
+      @avg_departures_per_api_call = @historical_departure_recent_count * 5 / @mta_api_call_records_count
     end
 
     response = {
       mta_api_all_vehicles_calls: @mta_api_call_records_count,
       historical_departures: number_with_delimiter(@historical_departure_count, delimiter: ','),
-      historical_departures_last_300_seconds: @historical_departure_recent_count,
+      historical_departures_per_minute: @historical_departure_recent_count,
+      historical_departures_per_day: @historical_departures_per_day,
+      historical_departures_duplicates: @historical_departure_dup_count,
       vehicle_positions: @vehicle_position_count,
-      vehicle_positions_last_300_seconds: @vehicle_position_recent_count,
+      vehicle_positions_per_minute: @vehicle_position_recent_count,
       bus_lines: @bus_line_count,
       bus_stops: @bus_stop_count,
       vehicles: @vehicle_count,
