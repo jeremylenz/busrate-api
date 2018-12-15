@@ -11,7 +11,7 @@ class Api::V1::StatsController < ApplicationController
     # doing this estimate instead of the above - it's way faster
     sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='historical_departures';"
     @historical_departure_count = ActiveRecord::Base.connection.execute(sql).first["estimate"]
-    
+
     @historical_departure_recent_count = HistoricalDeparture.newer_than(300).count
     @vehicle_position_count = VehiclePosition.all.count
     @vehicle_position_recent_count = VehiclePosition.newer_than(300).count
@@ -36,5 +36,23 @@ class Api::V1::StatsController < ApplicationController
       response_timestamp: Time.zone.now.in_time_zone("EST"),
     }
     render json: response
+  end
+
+  def ping
+    if Time.current.seconds_since_midnight.to_i < 21_600 # if it's before 6 am, skip this
+      logger.info "Skipping heroku ping"
+      render json: {response: "Skipping heroku ping; it's before 6 am"}
+      return
+    end
+
+    url = URI.encode("http://busrate.herokuapp.com/")
+    response = HTTParty.get(url)
+    if response.code == 200
+      logger.info "Pinged heroku app; OK"
+      render json: {response: "OK"}
+    else
+      logger.error "Pinged heroku app and received HTTP code #{response.code}"
+      render json: {response: response}
+    end
   end
 end
