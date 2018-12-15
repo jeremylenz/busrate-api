@@ -192,16 +192,16 @@ class HistoricalDeparture < ApplicationRecord
 
   end
 
-  def self.duplicates
-    HistoricalDeparture.select(:vehicle_ref, :line_ref, :stop_ref, :departure_time)
-                                   .group(:vehicle_ref, :line_ref, :stop_ref, :departure_time)
-                                   .having("count(*) > 1")
-  end
-
   def self.count_duplicates
-    dup_count = self.duplicates.length
-    logger.info "#{dup_count} duplicate HistoricalDepartures counted"
-    dup_count
+    sql = <<~HEREDOC
+      SELECT COUNT(*) from historical_departures T1, historical_departures T2
+      WHERE T1.id < T2.id
+      AND T1.departure_time = T2.departure_time
+      AND T1.stop_ref = T2.stop_ref
+      AND T1.vehicle_ref = T2.vehicle_ref
+      ;
+    HEREDOC
+    ActiveRecord::Base.connection.execute(sql).first
   end
 
 end
