@@ -184,10 +184,8 @@ class HistoricalDeparture < ApplicationRecord
     VehiclePosition.delete(ids_to_purge.take(65_535))
 
     logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
-    # logger.info "including #{addl_count} departures from approaching vehicles"
     logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures by removing non-unique values"
-    logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
-    logger.info "#{HistoricalDeparture.all.count} HistoricalDepartures now in database"
+    # logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "Departure scrape # #{identifier} complete in #{Time.current - start_time} seconds"
 
