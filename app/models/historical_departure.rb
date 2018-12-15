@@ -203,7 +203,8 @@ class HistoricalDeparture < ApplicationRecord
     ActiveRecord::Base.connection.execute(sql).first
   end
 
-  def self.purge_duplicates
+  def self.purge_duplicates_older_than(age_in_secs)
+    min_id = HistoricalDeparture.newer_than(age_in_secs).order(created_at: :desc).ids.first
     sql = <<~HEREDOC
       DELETE FROM historical_departures T1
       USING historical_departures T2
@@ -211,6 +212,7 @@ class HistoricalDeparture < ApplicationRecord
       AND T1.departure_time = T2.departure_time
       AND T1.stop_ref = T2.stop_ref
       AND T1.vehicle_ref = T2.vehicle_ref
+      AND T1.id > #{min_id}
       ;
     HEREDOC
     ActiveRecord::Base.connection.execute(sql).first
