@@ -229,6 +229,7 @@ class HistoricalDeparture < ApplicationRecord
     historical_departures = historical_departures.where(headway: nil)
     logger.info "Calculating #{historical_departures.length - 1} headways"
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC") # make sure it's sorted
+    successful_count = 0
     deps.each_with_index do |current_departure, idx|
       next if idx == deps.length - 1
 
@@ -244,9 +245,10 @@ class HistoricalDeparture < ApplicationRecord
       )
       if current_departure.errors.any?
         logger.info "Error updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
+      else
+        successful_count += 1
       end
     end
-    successful_count = deps.where.not(headway: nil).count
     logger.info "Updated #{successful_count} headways."
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
 
