@@ -130,6 +130,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.scrape_from(vehicle_positions)
+    # Take a list of vehicle_positions, compare them, and create departures
     start_time = Time.current
     logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
@@ -218,6 +219,34 @@ class HistoricalDeparture < ApplicationRecord
       ;
     HEREDOC
     ActiveRecord::Base.connection.execute(sql).first
+  end
+
+  def self.calculate_headways(historical_departures)
+    return if historical_departures.blank? || historical_departures.length < 2
+    return if historical_departures.length > 65_535
+    start_time = Time.current
+    logger.info "Calculating #{historical_departures.length - 1} headways"
+    deps = historical_departures.order(departure_time: :desc).to_a # make sure it's sorted.  Also convert to array so we can use shift
+    while deps.length > 1 do
+      current_departure = deps.shift
+      previous_departure = deps[0]
+
+      next unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
+
+      prev_id = previous_departure.id
+      headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
+      current_departure.update(
+        headway: headway,
+        previous_departure_id: prev_id,
+      )
+      if current_departure.errors.any?
+        logger.info "Error updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
+      end
+    end
+    successful_count = historical_departures.where.not(headway: nil).count
+    logger.info "Updated #{successful_count} headways."
+    logger.info "calculate_headways done after #{Time.current - start_time} seconds"
+
   end
 
 end
