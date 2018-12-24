@@ -235,6 +235,7 @@ class HistoricalDeparture < ApplicationRecord
         stop_ref: current_departure.stop_ref,
         line_ref: current_departure.line_ref,
       ).where.not(id: current_departure.id).order(departure_time: :desc).first
+      next if previous_departure.blank?
 
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
         failure_count += 1
