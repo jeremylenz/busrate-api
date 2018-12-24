@@ -1,6 +1,7 @@
 class HistoricalDeparture < ApplicationRecord
 
   belongs_to :bus_stop
+  belongs_to :previous_departure, class_name: "HistoricalDeparture"
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
 
