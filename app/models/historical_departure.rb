@@ -230,7 +230,7 @@ class HistoricalDeparture < ApplicationRecord
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC") # make sure it's sorted
     successful_count = 0
     failure_count = 0
-    deps.each do |current_departure|
+    deps.find_each do |current_departure|
       previous_departure = HistoricalDeparture.where(
         stop_ref: current_departure.stop_ref,
         line_ref: current_departure.line_ref,
