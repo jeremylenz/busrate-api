@@ -246,7 +246,7 @@ class HistoricalDeparture < ApplicationRecord
         logger.info "Error updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
       end
     end
-    successful_count = deps.reload.where.not(headway: nil).count
+    successful_count = deps.where.not(headway: nil).count
     logger.info "Updated #{successful_count} headways."
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
 
