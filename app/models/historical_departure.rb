@@ -231,7 +231,7 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     failure_count = 0
     deps.each do |current_departure|
-      previous_departure = deps.where(
+      previous_departure = historical_departures.where(
         stop_ref: current_departure.stop_ref,
         line_ref: current_departure.line_ref,
       ).where.not(id: current_departure.id).order(departure_time: :desc).first
