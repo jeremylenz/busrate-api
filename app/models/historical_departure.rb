@@ -227,7 +227,7 @@ class HistoricalDeparture < ApplicationRecord
     return if historical_departures.length > 65_535
     start_time = Time.current
     logger.info "Calculating #{historical_departures.length - 1} headways"
-    deps = historical_departures.order(departure_time: :desc).to_a # make sure it's sorted.  Also convert to array so we can use shift
+    deps = historical_departures.where(headway: nil).order("stop_ref, line_ref, departure_time DESC").to_a # make sure it's sorted.  Also convert to array so we can use shift
     while deps.length > 1 do
       current_departure = deps.shift
       previous_departure = deps[0]
