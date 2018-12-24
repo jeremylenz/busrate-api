@@ -252,6 +252,7 @@ class HistoricalDeparture < ApplicationRecord
         logger.info "Error updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
       else
         successful_count += 1
+        puts successful_count
       end
     end
     logger.info "Updated #{successful_count} headways."
