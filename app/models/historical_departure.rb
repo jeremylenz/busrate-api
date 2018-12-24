@@ -203,7 +203,7 @@ class HistoricalDeparture < ApplicationRecord
     ActiveRecord::Base.connection.execute(sql).first
   end
 
-  def self.purge_duplicates_older_than(age_in_secs)
+  def self.purge_duplicates_newer_than(age_in_secs)
     min_id = HistoricalDeparture.newer_than(age_in_secs).order(created_at: :desc).ids.first
     logger.info "Purging duplicate HistoricalDepartures with id > #{min_id}"
     sql = <<~HEREDOC

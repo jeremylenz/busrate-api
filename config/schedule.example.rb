@@ -42,5 +42,5 @@ every 29.minutes do
 end
 
 every 1.hour do
-  runner "HistoricalDeparture.purge_duplicates_older_than(3700)"
+  runner "HistoricalDeparture.purge_duplicates_newer_than(3700)"
 end
