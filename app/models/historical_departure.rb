@@ -230,6 +230,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Calculating #{historical_departures.length - 1} headways"
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC") # make sure it's sorted
     successful_count = 0
+    failure_count = 0
     deps.each_with_index do |current_departure, idx|
       next if idx == deps.length - 1
 
