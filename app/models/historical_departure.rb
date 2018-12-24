@@ -232,6 +232,9 @@ class HistoricalDeparture < ApplicationRecord
     failure_count = 0
     deps.each_with_index do |current_departure, idx|
       next if idx == deps.length - 1
+      if idx % 10_000 == 0
+        GC.start
+      end
 
       previous_departure = deps[idx + 1]
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
