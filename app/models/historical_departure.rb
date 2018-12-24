@@ -231,11 +231,6 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     failure_count = 0
     deps.each do |current_departure|
-      next if idx == deps.length - 1
-      if idx % 10_000 == 0
-        GC.start
-      end
-
       previous_departure = HistoricalDeparture.where(
         stop_ref: current_departure.stop_ref,
         line_ref: current_departure.line_ref,
