@@ -224,7 +224,6 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.calculate_headways(historical_departures)
     return if historical_departures.blank? || historical_departures.length < 2
-    return if historical_departures.length > 65_535
     start_time = Time.current
     historical_departures = historical_departures.where(headway: nil)
     logger.info "Calculating #{historical_departures.length - 1} headways"
