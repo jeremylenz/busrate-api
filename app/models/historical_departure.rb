@@ -230,29 +230,25 @@ class HistoricalDeparture < ApplicationRecord
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC") # make sure it's sorted
     successful_count = 0
     failure_count = 0
-    deps.each do |current_departure|
-      previous_departure = historical_departures.where(
-        stop_ref: current_departure.stop_ref,
-        line_ref: current_departure.line_ref,
-      ).where.not(id: current_departure.id).order(departure_time: :desc).first
-      next if previous_departure.blank?
+    deps.each_with_index do |current_departure, idx|
+      next if idx == deps.length - 1
 
+      previous_departure = deps[idx + 1]
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
         failure_count += 1
         next
       end
       prev_id = previous_departure.id
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
-
       current_departure.update(
         headway: headway,
         previous_departure_id: prev_id,
       )
+
       if current_departure.errors.any?
         logger.info "Error updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
       else
         successful_count += 1
-        puts successful_count
       end
     end
     logger.info "Updated #{successful_count} headways."
