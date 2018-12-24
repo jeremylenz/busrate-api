@@ -225,9 +225,9 @@ class HistoricalDeparture < ApplicationRecord
   def self.calculate_headways(historical_departures)
     return if historical_departures.blank? || historical_departures.length < 2
     start_time = Time.current
-    historical_departures = historical_departures.where(headway: nil).limit(5_000)
-    logger.info "Calculating #{historical_departures.length - 1} headways"
-    deps = historical_departures.order("stop_ref, line_ref, departure_time DESC") # make sure it's sorted
+    historical_departures = historical_departures.where(headway: nil)
+    deps = historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(5_000) # make sure it's sorted
+    logger.info "Calculating #{deps.length - 1} headways"
     successful_count = 0
     failure_count = 0
     deps.each_with_index do |current_departure, idx|
