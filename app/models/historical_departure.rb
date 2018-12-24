@@ -222,6 +222,11 @@ class HistoricalDeparture < ApplicationRecord
     ActiveRecord::Base.connection.execute(sql).first
   end
 
+  def self.doit
+    hds = HistoricalDeparture.newer_than(14_400).where(headway: nil)
+    HistoricalDeparture.calculate_headways(hds)
+  end
+
   def self.calculate_headways(historical_departures)
     return if historical_departures.blank? || historical_departures.length < 2
     start_time = Time.current
