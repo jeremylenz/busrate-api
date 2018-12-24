@@ -245,13 +245,14 @@ class HistoricalDeparture < ApplicationRecord
       end
       prev_id = previous_departure.id
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
+      headway = nil if headway == 0
       current_departure.update(
         headway: headway,
         previous_departure_id: prev_id,
       )
 
       if current_departure.errors.any?
-        logger.info "Error updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
+        logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
       else
         successful_count += 1
       end
