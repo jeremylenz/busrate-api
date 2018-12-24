@@ -2,6 +2,7 @@ class HistoricalDeparture < ApplicationRecord
 
   belongs_to :bus_stop
   belongs_to :previous_departure, class_name: "HistoricalDeparture"
+  validates :headway, numericality: {greater_than: 0, allow_nil: true}
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
 
@@ -235,6 +236,7 @@ class HistoricalDeparture < ApplicationRecord
 
       prev_id = previous_departure.id
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
+
       current_departure.update(
         headway: headway,
         previous_departure_id: prev_id,
