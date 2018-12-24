@@ -234,8 +234,10 @@ class HistoricalDeparture < ApplicationRecord
       next if idx == deps.length - 1
 
       previous_departure = deps[idx + 1]
-      next unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
-
+      unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
+        failure_count += 1
+        next
+      end
       prev_id = previous_departure.id
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
 
@@ -250,6 +252,8 @@ class HistoricalDeparture < ApplicationRecord
       end
     end
     logger.info "Updated #{successful_count} headways."
+    logger.info "Skipped #{failure_count} headways due to stop_ref/line_ref mismatch"
+    logger.info "Total #{successful_count + failure_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
 
   end
