@@ -3,7 +3,6 @@ class HistoricalDeparture < ApplicationRecord
   belongs_to :bus_stop
   belongs_to :previous_departure, class_name: "HistoricalDeparture"
   validates :headway, numericality: {greater_than: 0, allow_nil: true}
-  validates_uniqueness_of :previous_departure_id
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
 
@@ -240,7 +239,7 @@ class HistoricalDeparture < ApplicationRecord
       print "#{idx}\r"
       next if idx == last_index
       print "#{idx}: checking validity & presence\r"
-      next if current_departure.valid? && current_departure.headway.present?
+      next if current_departure.headway.present?
       print "#{idx}: getting previous dep           \r"
       previous_departure = deps[idx + 1]
       print "#{idx}: checking stop/line ref          \r"
