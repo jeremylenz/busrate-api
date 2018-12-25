@@ -227,17 +227,28 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds, skip_non_nils)
   end
 
-  def self.calculate_headways(historical_departures, skip_non_nils = true)
-    return if historical_departures.blank? || historical_departures.length < 2
+  def self.batch_headways(start_id = 1, limit = 20_000)
+    deps = HistoricalDeparture.where(["id >= ?", start_id]).order("stop_ref, line_ref, departure_time DESC").limit(limit)
+    process_headways(deps, false)
+    start_id + limit - 1
+  end
+
+  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true)
+    return if unsorted_historical_departures.blank? || unsorted_historical_departures.length < 2
+    deps = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(20_000) # make sure it's sorted
+    process_headways(deps, skip_non_nils)
+  end
+
+  def self.process_headways(sorted_deps, skip_non_nils = true)
+    return if sorted_deps.blank? || sorted_deps.length < 2
     start_time = Time.current
-    deps = historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(20_000) # make sure it's sorted
-    last_index = deps.count - 1
+    last_index = sorted_deps.count - 1
     logger.info "Calculating #{last_index} headways"
     successful_count = 0
     failure_count = 0
     error_count = 0
     non_nils_skipped = 0
-    deps.each_with_index do |current_departure, idx|
+    sorted_deps.each_with_index do |current_departure, idx|
       next if idx == last_index
       if skip_non_nils && current_departure.headway.present?
         # skip departures that already have a value for headway
@@ -271,7 +282,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Skipped #{non_nils_skipped} headways that were already present"
     logger.info "Update failed for #{error_count} headways"
     logger.info "Total #{successful_count + failure_count + error_count}"
-    logger.info "calculate_headways done after #{Time.current - start_time} seconds"
+    logger.info "process_headways done after #{Time.current - start_time} seconds"
 
   end
 
