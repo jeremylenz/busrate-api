@@ -223,8 +223,8 @@ class HistoricalDeparture < ApplicationRecord
     ActiveRecord::Base.connection.execute(sql).first
   end
 
-  def self.doit
-    hds = HistoricalDeparture.newer_than(14_400).where(headway: nil)
+  def self.doit(age_in_secs)
+    hds = HistoricalDeparture.newer_than(age_in_secs)
     HistoricalDeparture.calculate_headways(hds)
   end
 
