@@ -246,7 +246,7 @@ class HistoricalDeparture < ApplicationRecord
       print "#{idx}: checking stop/line ref          \r"
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
         failure_count += 1
-        puts "failure_count: #{failure_count}"
+        print "failure_count: #{failure_count}        \r"
         next
       end
       print "#{idx}: calculating headway           \r"
@@ -263,7 +263,7 @@ class HistoricalDeparture < ApplicationRecord
         logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
       else
         successful_count += 1
-        puts "successful_count: #{successful_count}"
+        print "successful_count: #{successful_count}\r"
       end
     end
     logger.info "Updated #{successful_count} headways."
