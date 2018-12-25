@@ -236,12 +236,14 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     failure_count = 0
     deps.each_with_index do |current_departure, idx|
+      print "#{idx}\r"
       next if idx == deps.length - 1
       next if current_departure.valid? && current_departure.headway.present?
 
       previous_departure = deps[idx + 1]
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
         failure_count += 1
+        puts "failure_count: #{failure_count}"
         next
       end
       prev_id = previous_departure.id
@@ -256,6 +258,7 @@ class HistoricalDeparture < ApplicationRecord
         logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
       else
         successful_count += 1
+        puts "successful_count: #{successful_count}"
       end
     end
     logger.info "Updated #{successful_count} headways."
