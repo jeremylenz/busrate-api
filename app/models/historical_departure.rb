@@ -255,7 +255,7 @@ class HistoricalDeparture < ApplicationRecord
         non_nils_skipped += 1
         next # thank u
       end
-      previous_departure = deps[idx + 1]
+      previous_departure = sorted_deps[idx + 1]
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
         failure_count += 1
         print "failure_count: #{failure_count}        \r"
