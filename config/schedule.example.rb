@@ -37,6 +37,10 @@ every 1.minute do
   runner "HistoricalDeparture.scrape_all"
 end
 
+every 1.minute do
+  runner "HistoricalDeparture.calculate_headways(HistoricalDeparture.newer_than(14_400))"
+end
+
 every 29.minutes do
   command "curl localhost:3000/api/v1/ping"
 end
