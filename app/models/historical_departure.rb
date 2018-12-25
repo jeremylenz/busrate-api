@@ -222,7 +222,7 @@ class HistoricalDeparture < ApplicationRecord
     ActiveRecord::Base.connection.execute(sql).first
   end
 
-  def self.doit(age_in_secs)
+  def self.doit(age_in_secs, skip_nils = true)
     hds = HistoricalDeparture.newer_than(age_in_secs)
     HistoricalDeparture.calculate_headways(hds)
   end
