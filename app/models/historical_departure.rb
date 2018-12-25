@@ -231,10 +231,11 @@ class HistoricalDeparture < ApplicationRecord
     return if historical_departures.blank? || historical_departures.length < 2
     start_time = Time.current
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(20_000) # make sure it's sorted
-    logger.info "Calculating #{deps.length - 1} headways"
+    last_index = deps.count - 1
+    logger.info "Calculating #{last_index} headways"
     successful_count = 0
     failure_count = 0
-    last_index = deps.count - 1
+    error_count = 0
     deps.each_with_index do |current_departure, idx|
       next if idx == last_index
       if skip_nils && current_departure.headway.present?
@@ -256,6 +257,7 @@ class HistoricalDeparture < ApplicationRecord
 
       if current_departure.errors.any?
         logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
+        error_count += 1
       else
         successful_count += 1
         print "successful_count: #{successful_count}\r"
@@ -263,7 +265,8 @@ class HistoricalDeparture < ApplicationRecord
     end
     logger.info "Updated #{successful_count} headways."
     logger.info "Skipped #{failure_count} headways due to stop_ref/line_ref mismatch"
-    logger.info "Total #{successful_count + failure_count}"
+    logger.info "Update failed for #{error_count} headways"
+    logger.info "Total #{successful_count + failure_count + error_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
 
   end
