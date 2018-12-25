@@ -3,6 +3,7 @@ class HistoricalDeparture < ApplicationRecord
   belongs_to :bus_stop
   belongs_to :previous_departure, class_name: "HistoricalDeparture"
   validates :headway, numericality: {greater_than: 0, allow_nil: true}
+  validates_uniqueness_of :previous_departure_id
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
 
@@ -230,7 +231,6 @@ class HistoricalDeparture < ApplicationRecord
   def self.calculate_headways(historical_departures)
     return if historical_departures.blank? || historical_departures.length < 2
     start_time = Time.current
-    historical_departures = historical_departures.where(headway: nil)
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(30_000) # make sure it's sorted
     logger.info "Calculating #{deps.length - 1} headways"
     successful_count = 0
