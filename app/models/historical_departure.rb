@@ -235,9 +235,10 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Calculating #{deps.length - 1} headways"
     successful_count = 0
     failure_count = 0
+    last_index = deps.count - 1
     deps.each_with_index do |current_departure, idx|
       print "#{idx}\r"
-      next if idx == deps.length - 1
+      next if idx == last_index
       next if current_departure.valid? && current_departure.headway.present?
 
       previous_departure = deps[idx + 1]
