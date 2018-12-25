@@ -227,7 +227,7 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds)
   end
 
-  def self.calculate_headways(historical_departures)
+  def self.calculate_headways(historical_departures, skip_nils = true)
     return if historical_departures.blank? || historical_departures.length < 2
     start_time = Time.current
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(20_000) # make sure it's sorted
@@ -236,19 +236,16 @@ class HistoricalDeparture < ApplicationRecord
     failure_count = 0
     last_index = deps.count - 1
     deps.each_with_index do |current_departure, idx|
-      print "#{idx}\r"
       next if idx == last_index
-      print "#{idx}: checking validity & presence\r"
-      next if current_departure.headway.present?
-      print "#{idx}: getting previous dep           \r"
+      if skip_nils && current_departure.headway.present?
+        next # thank u
+      end
       previous_departure = deps[idx + 1]
-      print "#{idx}: checking stop/line ref          \r"
       unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
         failure_count += 1
         print "failure_count: #{failure_count}        \r"
         next
       end
-      print "#{idx}: calculating headway           \r"
       prev_id = previous_departure.id
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
       headway = nil if headway == 0
@@ -256,7 +253,6 @@ class HistoricalDeparture < ApplicationRecord
         headway: headway,
         previous_departure_id: prev_id,
       )
-      print "#{idx}: done                           \r"
 
       if current_departure.errors.any?
         logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
