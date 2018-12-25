@@ -227,12 +227,6 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds, skip_non_nils)
   end
 
-  def self.batch_headways(start_id = 1, limit = 20_000)
-    deps = HistoricalDeparture.where(["id >= ?", start_id]).order("stop_ref, line_ref, departure_time DESC").limit(limit)
-    process_headways(deps, false)
-    start_id + limit - 1
-  end
-
   def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true)
     return if unsorted_historical_departures.blank? || unsorted_historical_departures.length < 2
     deps = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(20_000) # make sure it's sorted
