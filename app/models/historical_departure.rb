@@ -222,12 +222,12 @@ class HistoricalDeparture < ApplicationRecord
     ActiveRecord::Base.connection.execute(sql).first
   end
 
-  def self.doit(age_in_secs, skip_nils = true)
+  def self.doit(age_in_secs, skip_non_nils = true)
     hds = HistoricalDeparture.newer_than(age_in_secs)
-    HistoricalDeparture.calculate_headways(hds, skip_nils)
+    HistoricalDeparture.calculate_headways(hds, skip_non_nils)
   end
 
-  def self.calculate_headways(historical_departures, skip_nils = true)
+  def self.calculate_headways(historical_departures, skip_non_nils = true)
     return if historical_departures.blank? || historical_departures.length < 2
     start_time = Time.current
     deps = historical_departures.order("stop_ref, line_ref, departure_time DESC").limit(20_000) # make sure it's sorted
@@ -236,9 +236,12 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     failure_count = 0
     error_count = 0
+    non_nils_skipped = 0
     deps.each_with_index do |current_departure, idx|
       next if idx == last_index
-      if skip_nils && current_departure.headway.present?
+      if skip_non_nils && current_departure.headway.present?
+        # skip departures that already have a value for headway
+        non_nils_skipped += 1
         next # thank u
       end
       previous_departure = deps[idx + 1]
@@ -265,6 +268,7 @@ class HistoricalDeparture < ApplicationRecord
     end
     logger.info "Updated #{successful_count} headways."
     logger.info "Skipped #{failure_count} headways due to stop_ref/line_ref mismatch"
+    logger.info "Skipped #{non_nils_skipped} headways that were already present"
     logger.info "Update failed for #{error_count} headways"
     logger.info "Total #{successful_count + failure_count + error_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
