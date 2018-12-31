@@ -212,14 +212,15 @@ class HistoricalDeparture < ApplicationRecord
     sql = <<~HEREDOC
       DELETE FROM historical_departures T1
       USING historical_departures T2
-      WHERE T1.id < T2.id
+      WHERE T1.id > T2.id
       AND T1.departure_time = T2.departure_time
       AND T1.stop_ref = T2.stop_ref
       AND T1.vehicle_ref = T2.vehicle_ref
       AND T1.id > #{min_id}
       ;
     HEREDOC
-    ActiveRecord::Base.connection.execute(sql).first
+    result = ActiveRecord::Base.connection.execute(sql).first
+    logger.info result
   end
 
   def self.doit(age_in_secs, skip_non_nils = true)
