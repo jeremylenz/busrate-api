@@ -242,11 +242,12 @@ class HistoricalDeparture < ApplicationRecord
     return if unsorted_historical_departures.blank? || unsorted_historical_departures.count < 2
     HistoricalDeparture.transaction do
       length = unsorted_historical_departures.count
-      cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_instance
-
-      puts cursor.fetch
-      puts lookahead.fetch
+      cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
+        puts hd
+        puts lookahead.fetch
+        break
+      end
 
     end
   end
