@@ -255,7 +255,7 @@ class HistoricalDeparture < ApplicationRecord
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
         if skip_non_nils && current_departure.headway.present?
           non_nils_skipped += 1
-          next
+          next # thank u
         end
         previous_departure_hash = lookahead.fetch(symbolize_keys: true)
         break if previous_departure_hash.blank?
@@ -288,7 +288,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Skipped #{skip_count} headways due to stop_ref/line_ref mismatch"
     logger.info "Skipped #{non_nils_skipped} headways that were already present"
     logger.info "Update failed for #{error_count} headways"
-    logger.info "Total #{successful_count + skip_count + error_count}"
+    logger.info "Total #{successful_count + skip_count + non_nils_skipped +   error_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
   end
 
