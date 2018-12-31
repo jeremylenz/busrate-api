@@ -105,7 +105,6 @@ class VehiclePosition < ApplicationRecord
     new_vehicle_position_params = vehicle_activity.map do |data|
       VehiclePosition.extract_single(data)
     end.compact
-    return [] if new_vehicle_position_params.empty?
 
     new_vehicle_count = Vehicle.all.count - existing_vehicle_count
     new_stop_count = BusStop.all.count - existing_stop_count
