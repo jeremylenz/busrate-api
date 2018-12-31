@@ -285,9 +285,11 @@ class HistoricalDeparture < ApplicationRecord
 
     end
 
-    logger.info "Updated #{successful_count} headways."
+    logger.info "#{skip_non_nils ? 'Updated' : 'Updated & overwrote'} #{successful_count} headways."
     logger.info "Skipped #{skip_count} headways due to stop_ref/line_ref mismatch"
-    logger.info "Skipped #{non_nils_skipped} headways that were already present"
+    if skip_non_nils
+      logger.info "Skipped #{non_nils_skipped} headways that were already present"
+    end
     logger.info "Update failed for #{error_count} headways"
     logger.info "Total #{successful_count + skip_count + non_nils_skipped +   error_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
