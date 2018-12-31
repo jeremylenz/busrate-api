@@ -246,15 +246,16 @@ class HistoricalDeparture < ApplicationRecord
       puts "Processing #{length} departures"
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_instance
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
-        hd_hash = {
-        :id => hd.id,
-        :headway => hd.headway,
-        :stop_ref => hd.stop_ref,
-        :line_ref => hd.line_ref,
-        :departure_time => hd.departure_time,
-        :previous_departure_id => hd.previous_departure_id,
-        }
+        # hd_hash = {
+        # :id => hd.id,
+        # :headway => hd.headway,
+        # :stop_ref => hd.stop_ref,
+        # :line_ref => hd.line_ref,
+        # :departure_time => hd.departure_time,
+        # :previous_departure_id => hd.previous_departure_id,
+        # }
         lka = lookahead.fetch(symbolize_keys: true)
+        break if lka.blank?
         # puts hd_hash
         # puts lka
         # puts hd.departure_time
@@ -262,7 +263,7 @@ class HistoricalDeparture < ApplicationRecord
         headway = (hd.departure_time - lka[:departure_time].to_time).round.to_i
         # puts headway
         counter += 1
-        print "#{counter}   \r"
+        print "#{counter} processed  \r"
         # break if counter > 2
       end
 
