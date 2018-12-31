@@ -30,6 +30,8 @@ gem 'httparty'
 
 gem 'fast_inserter'
 gem 'whenever'
+# Handle cursors in Postgres
+gem 'postgresql_cursor'
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
