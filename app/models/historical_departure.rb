@@ -253,7 +253,7 @@ class HistoricalDeparture < ApplicationRecord
       logger.info "Processing #{length} departures"
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
-        if skip_non_nils && current_departure.reload.headway.present?
+        if skip_non_nils && !current_departure.headway.nil?
           non_nils_skipped += 1
           next # thank u
         end
