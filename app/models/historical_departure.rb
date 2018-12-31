@@ -256,7 +256,7 @@ class HistoricalDeparture < ApplicationRecord
         lka = lookahead.fetch
         puts hd_hash
         puts lka
-        headway = (hd.departure_time - lka.departure_time).round.to_i
+        headway = (hd.departure_time - lka[:departure_time]).round.to_i
         puts headway
         counter += 1
         break if counter > 2
