@@ -251,8 +251,8 @@ class HistoricalDeparture < ApplicationRecord
         }
         puts hd_hash
         puts lookahead.fetch
-        count += 1
-        break if count > 1
+        counter += 1
+        break if counter > 1
       end
 
     end
