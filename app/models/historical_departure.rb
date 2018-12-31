@@ -243,6 +243,7 @@ class HistoricalDeparture < ApplicationRecord
     counter = 0
     HistoricalDeparture.transaction do
       length = unsorted_historical_departures.count
+      puts "Processing #{length} departures"
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_instance
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
         hd_hash = {
@@ -259,8 +260,9 @@ class HistoricalDeparture < ApplicationRecord
         # puts hd.departure_time
         # puts lka[:departure_time].to_time
         headway = (hd.departure_time - lka[:departure_time].to_time).round.to_i
-        puts headway
+        # puts headway
         counter += 1
+        print "#{counter}   \r"
         # break if counter > 2
       end
 
