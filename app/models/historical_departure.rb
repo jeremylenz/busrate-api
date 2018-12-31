@@ -240,13 +240,15 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.calculate_headways(unsorted_historical_departures)
     return if unsorted_historical_departures.blank? || unsorted_historical_departures.count < 2
+    counter = 0
     HistoricalDeparture.transaction do
       length = unsorted_historical_departures.count
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_instance
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
-        puts hd
+        puts hd.to_h
         puts lookahead.fetch
-        break
+        count += 1
+        break if count > 1
       end
 
     end
