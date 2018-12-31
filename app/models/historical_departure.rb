@@ -238,13 +238,14 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds)
   end
 
-  def self.calculate_headways(unsorted_historical_departures)
+  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true)
     length = unsorted_historical_departures.count
     return if unsorted_historical_departures.blank? || length < 2
     start_time = Time.current
     skip_count = 0
     error_count = 0
     successful_count = 0
+    non_nils_skipped = 0
     # 2 hours worth of historical_departures is typically 180,000+ records.
     # Here we're using the postgresql_cursor gem (each_row and each_instance methods)
     # to process all of them, hopefully without running out of memory or getting the process killed.
@@ -252,6 +253,10 @@ class HistoricalDeparture < ApplicationRecord
       puts "Processing #{length} departures"
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
+        if skip_non_nils && current_departure.headway.present?
+          non_nils_skipped += 1
+          next
+        end
         previous_departure_hash = lookahead.fetch(symbolize_keys: true)
         break if previous_departure_hash.blank?
         headway = (current_departure.departure_time - previous_departure_hash[:departure_time].to_time).round.to_i
@@ -281,7 +286,7 @@ class HistoricalDeparture < ApplicationRecord
 
     logger.info "Updated #{successful_count} headways."
     logger.info "Skipped #{skip_count} headways due to stop_ref/line_ref mismatch"
-    # logger.info "Skipped #{non_nils_skipped} headways that were already present"
+    logger.info "Skipped #{non_nils_skipped} headways that were already present"
     logger.info "Update failed for #{error_count} headways"
     logger.info "Total #{successful_count + skip_count + error_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
