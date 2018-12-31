@@ -245,11 +245,13 @@ class HistoricalDeparture < ApplicationRecord
       length = unsorted_historical_departures.count
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_instance
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
-        hd_hash = {:departure_time => hd.departure_time,
+        hd_hash = {
+        :id => hd.id, =
         :headway => hd.headway,
-        :previous_departure_id => hd.previous_departure_id,
         :stop_ref => hd.stop_ref,
         :line_ref => hd.line_ref,
+        :departure_time => hd.departure_time,
+        :previous_departure_id => hd.previous_departure_id,
         }
         puts hd_hash
         puts lookahead.fetch
