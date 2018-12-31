@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_12_24_155943) do
+ActiveRecord::Schema.define(version: 2018_12_31_185714) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -29,14 +29,14 @@ ActiveRecord::Schema.define(version: 2018_12_24_155943) do
   end
 
   create_table "historical_departures", force: :cascade do |t|
-    t.string "stop_ref"
-    t.string "line_ref"
+    t.string "stop_ref", null: false
+    t.string "line_ref", null: false
     t.datetime "departure_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "vehicle_ref"
     t.bigint "bus_stop_id"
-    t.bigint "headway" # time in seconds since the previous departure
+    t.bigint "headway"
     t.bigint "previous_departure_id"
     t.index ["departure_time"], name: "by_departure_time", order: :desc
     t.index ["stop_ref", "line_ref"], name: "by_stop_line_ref"
