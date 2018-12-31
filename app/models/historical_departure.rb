@@ -267,6 +267,7 @@ class HistoricalDeparture < ApplicationRecord
           skip_count += 1
           next
         end
+        print "updating departure #{current_departure.id}   \r"
         current_departure.update(
           headway: headway,
           previous_departure_id: previous_departure_id,
