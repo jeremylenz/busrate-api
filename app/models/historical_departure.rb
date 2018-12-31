@@ -245,7 +245,7 @@ class HistoricalDeparture < ApplicationRecord
       length = unsorted_historical_departures.count
       puts "Processing #{length} departures"
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row
-      cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
+      cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |hd|
         # hd_hash = {
         # :id => hd.id,
         # :headway => hd.headway,
