@@ -48,3 +48,7 @@ end
 every 1.hour do
   runner "HistoricalDeparture.purge_duplicates_newer_than(3700)"
 end
+
+every 1.hour do
+  runner "HistoricalDeparture.update_count"
+end
