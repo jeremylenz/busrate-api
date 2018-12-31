@@ -223,6 +223,11 @@ class HistoricalDeparture < ApplicationRecord
     logger.info result
   end
 
+  def self.update_count
+    result = ActiveRecord::Base.connection.execute("ANALYZE;").first
+    logger.info result
+  end
+
   def self.doit(age_in_secs, skip_non_nils = true)
     hds = HistoricalDeparture.newer_than(age_in_secs)
     HistoricalDeparture.calculate_headways(hds, skip_non_nils)
