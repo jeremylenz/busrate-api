@@ -246,9 +246,9 @@ class HistoricalDeparture < ApplicationRecord
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_instance
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance do |hd|
         puts {
-        departure_time: hd.departure_time,
-        headway: hd.headway,
-        previous_departure_id: hd.previous_departure_id,
+        departure_time => hd.departure_time,
+        headway => hd.headway,
+        previous_departure_id => hd.previous_departure_id,
       }
         puts lookahead.fetch
         count += 1
