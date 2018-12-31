@@ -254,7 +254,6 @@ class HistoricalDeparture < ApplicationRecord
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
         if skip_non_nils && current_departure.headway.present?
-          print "headway: #{current_departure.headway}    \r"
           non_nils_skipped += 1
           next # thank u
         end
