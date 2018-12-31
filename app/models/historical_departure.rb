@@ -250,7 +250,7 @@ class HistoricalDeparture < ApplicationRecord
     # Here we're using the postgresql_cursor gem (each_row and each_instance methods)
     # to process all of them, hopefully without running out of memory or getting the process killed.
     HistoricalDeparture.transaction do
-      puts "Processing #{length} departures"
+      logger.info "Processing #{length} departures"
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
         if skip_non_nils && current_departure.headway.present?
