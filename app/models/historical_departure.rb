@@ -252,6 +252,7 @@ class HistoricalDeparture < ApplicationRecord
         previous_departure_hash = lookahead.fetch(symbolize_keys: true)
         break if previous_departure_hash.blank?
         headway = (current_departure.departure_time - previous_departure_hash[:departure_time].to_time).round.to_i
+        headway = nil if headway == 0
         previous_departure_id = previous_departure_hash[:id]
 
         unless current_departure.stop_ref == previous_departure_hash[:stop_ref] && current_departure.line_ref == previous_departure_hash[:line_ref]
