@@ -253,10 +253,13 @@ class HistoricalDeparture < ApplicationRecord
         :departure_time => hd.departure_time,
         :previous_departure_id => hd.previous_departure_id,
         }
+        lka = lookahead.fetch
         puts hd_hash
-        puts lookahead.fetch
+        puts lka
+        headway = (hd.departure_time - lka.departure_time).round.to_i
+        puts headway
         counter += 1
-        break if counter > 1
+        break if counter > 2
       end
 
     end
