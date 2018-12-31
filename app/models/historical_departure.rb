@@ -224,8 +224,13 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.update_count
-    result = ActiveRecord::Base.connection.execute("ANALYZE;").first
-    logger.info result
+    start_time = Time.current
+    logger.info "Starting ANALYZE; ..."
+    ActiveRecord::Base.connection.execute("ANALYZE;")
+    logger.info "ANALYZE complete in #{Time.current - start_time} seconds"
+  rescue(err)
+    logger.error err
+    false
   end
 
   def self.doit(age_in_secs, skip_non_nils = true)
