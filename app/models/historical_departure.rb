@@ -248,6 +248,8 @@ class HistoricalDeparture < ApplicationRecord
         hd_hash = {:departure_time => hd.departure_time,
         :headway => hd.headway,
         :previous_departure_id => hd.previous_departure_id,
+        :stop_ref => hd.stop_ref,
+        :line_ref => hd.line_ref,
         }
         puts hd_hash
         puts lookahead.fetch
