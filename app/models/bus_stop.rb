@@ -5,7 +5,7 @@ class BusStop < ApplicationRecord
   validates_presence_of :stop_ref
   validates_uniqueness_of :stop_ref
 
-  def clean_up(limit)
+  def self.clean_up(limit)
     start_time = Time.current
     logger.info "Cleaning up bus stops..."
     bad_bus_stop = self.where(stop_ref: nil).first
