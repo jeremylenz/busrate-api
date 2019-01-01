@@ -11,19 +11,21 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.fast_insert_objects(table_name, object_list)
+    # Use the fast_inserter gem to write hundreds of rows to the table
+    # with a single SQL statement.  (Active Record is too slow in this situation.)
     return if object_list.blank?
     fast_inserter_start_time = Time.current
     fast_inserter_variable_columns = object_list.first.keys.map(&:to_s)
     fast_inserter_values = object_list.map { |nvpp| nvpp.values }
     fast_inserter_params = {
       table: table_name,
-      static_columns: {},
+      static_columns: {}, # values that are the same for each record
       options: {
-        timestamps: true,
+        timestamps: true, # write created_at / updated_at
         group_size: 2_000,
       },
-      variable_columns: fast_inserter_variable_columns,
-      values: fast_inserter_values,
+      variable_columns: fast_inserter_variable_columns, # column names of values that are different for each record
+      values: fast_inserter_values, # values that are different for each record
     }
     model = table_name.classify.constantize # get Rails model class from table name
     last_id = model.order(id: :desc).first&.id || 0
@@ -38,11 +40,15 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.grab_all
+    # Call MTA ALL_VEHICLES_URL endpoint and make vehicle positions.
+    # Runs every 30 seconds via grab_and_go.
+    # Per the MTA, must not run more than once every 30 seconds.
     start_time = Time.current
     logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
     logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
 
+    # Check the previous API call
     previous_call = MtaApiCallRecord.most_recent
     last_id = 0
     if previous_call.present?
@@ -50,7 +56,8 @@ class HistoricalDeparture < ApplicationRecord
       last_id = previous_call.id
     end
 
-    if previous_call.present? && previous_call.created_at > 30.seconds.ago
+    # Check if it's < 30 seconds old
+    if previous_call.present? && previous_call.created_at > 30.seconds.ago # yes, > means younger than 30 seconds
       wait_time = 31 - (Time.current - previous_call.created_at).to_i
       wait_time += 4 if wait_time == 31
       # logger.info "grab_all called early; must wait at least 30 seconds between API calls"
@@ -59,6 +66,7 @@ class HistoricalDeparture < ApplicationRecord
       return self.grab_all
     end
 
+    # Make the call
     MtaApiCallRecord.transaction do
       MtaApiCallRecord.lock.create() # no fields needed; just uses created_at timestamp
     end
@@ -71,6 +79,7 @@ class HistoricalDeparture < ApplicationRecord
       return
     end
 
+    # Process the data and write to db
     object_list = VehiclePosition.extract_from_response(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
 
@@ -80,6 +89,8 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.grab_and_go
+    # Runs every 1 minute.  Runs grab_all either once or twice,
+    # depending on if the first one takes > 30 seconds.
     start_time = Time.current
     logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
@@ -224,6 +235,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.update_count
+    # Update the estimated historical_departures count for the stats API endpoint
     start_time = Time.current
     logger.info "Starting ANALYZE; ..."
     ActiveRecord::Base.connection.execute("ANALYZE;")
@@ -233,9 +245,10 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
-  def self.doit(age_in_secs, skip_non_nils = true, block_size = 1000)
+  def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
+    # convenience method for playing around in rails console
     hds = HistoricalDeparture.newer_than(age_in_secs)
-    HistoricalDeparture.calculate_headways(hds, skip_non_nils)
+    HistoricalDeparture.calculate_headways(hds, skip_non_nils, block_size)
   end
 
   def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000)
@@ -266,10 +279,11 @@ class HistoricalDeparture < ApplicationRecord
           current_batch_line_ref = current_departure.line_ref
         end
         if current_departure.stop_ref == current_batch_stop_ref && current_departure.line_ref == current_batch_line_ref
+          # Add departures to current_batch until stop_ref and line_ref no longer match
           current_batch << current_departure
           next
         else
-          # process batch and update stats
+          # Process batch and update stats
           batch_result = process_batch(current_batch, skip_non_nils)
           total_count += current_batch.length
           batch_count += batch_result[:batch_count]
@@ -302,8 +316,8 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.process_batch(departure_arr, skip_non_nils = true)
-    # assume departure_arr is sorted by departure_time desc
-    # assume all departures have the same stop_ref and line_ref
+    # Assume departure_arr is sorted by departure_time desc
+    # Assume all departures in departure_arr have the same stop_ref and line_ref
 
     start_time = Time.current
     update_time = 0.0
@@ -314,6 +328,8 @@ class HistoricalDeparture < ApplicationRecord
     non_nils_skipped = 0
 
     departure_arr.each_with_index do |current_departure, idx|
+      # Compare each departure time with the next departure
+      # The headway is the number of seconds between them
       next if idx == last_index
       if skip_non_nils && current_departure.headway.present?
         non_nils_skipped += 1
@@ -322,6 +338,9 @@ class HistoricalDeparture < ApplicationRecord
       previous_departure = departure_arr[idx + 1]
 
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
+      # If headway rounds to 0, another vehicle left the stop the same second
+      # and we don't want that to affect the average headway for the stop
+      # Therefore, we don't allow a headway of 0.
       headway = nil if headway == 0
       previous_departure_id = previous_departure.id
 
