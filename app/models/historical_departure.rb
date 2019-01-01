@@ -280,7 +280,6 @@ class HistoricalDeparture < ApplicationRecord
           next
         end # if
       end # of cursor block
-      cursor.close
     end # of transaction
 
     logger.info "#{skip_non_nils ? 'Updated' : 'Updated & overwrote'} #{successful_count} headways."
