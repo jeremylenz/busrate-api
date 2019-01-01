@@ -272,6 +272,7 @@ class HistoricalDeparture < ApplicationRecord
           error_count += batch_result[:error_count]
           successful_count += batch_result[:successful_count]
           non_nils_skipped += batch_result[:non_nils_skipped]
+          print "successful_count: #{successful_count}\r"
 
           # clear out our workspace for the next batch
           current_batch = []
@@ -326,7 +327,6 @@ class HistoricalDeparture < ApplicationRecord
         error_count += 1
       else
         successful_count += 1
-        print "successful_count: #{successful_count}\r"
       end # if
     end # of each_with_index
 
