@@ -23,7 +23,7 @@ class BusStop < ApplicationRecord
       if real_bus_stop.blank?
         hd.errors << "Couldn't find bus stop with stop_ref #{hd.stop_ref}"
       end
-      logger.info "#{[hd.id, hd.stop_ref, hd.bus_stop_id]} --> #{[hd.id, real_bus_stop.stop_ref, real_bus_stop.id]}"
+      logger.debug "#{[hd.id, hd.stop_ref, hd.bus_stop_id]} --> #{[hd.id, real_bus_stop.stop_ref, real_bus_stop.id]}"
       hd.update(
         bus_stop_id: real_bus_stop.id
       )
@@ -32,10 +32,19 @@ class BusStop < ApplicationRecord
         logger.info "Error updating historical departure #{hd.id} - #{hd.errors.full_messages.join("; ")}"
       else
         successful_count += 1
+        print "successful_count: #{successful_count}"
       end
     end # of each_instance
+    puts
 
-    logger.info "#{purge_count} departures purged" if purge_count > 0
+    # purge departures with no stop_ref
+    if purge_count > 0
+      logger.info "Purging departures..."
+      ids_to_purge.uniq!
+      HistoricalDeparture.delete(ids_to_purge.take(65_535))
+      logger.info "#{purge_count} departures purged"
+    end
+
     logger.info "#{successful_count} departures moved"
     logger.info "#{bad_bus_stop.historical_departures.count} departures remaining"
     logger.info "clean_up complete in #{(Time.current - start_time).round(2)} seconds"
