@@ -306,12 +306,12 @@ class HistoricalDeparture < ApplicationRecord
     departure_arr.each_with_index do |current_departure, idx|
       next if idx == last_index
       if skip_non_nils && current_departure.headway.present?
-        puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
+        # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
         non_nils_skipped += 1
         next # thank u
       end
       previous_departure = departure_arr[idx + 1]
-      puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
+      # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
 
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
       headway = nil if headway == 0
