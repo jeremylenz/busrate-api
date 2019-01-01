@@ -306,13 +306,11 @@ class HistoricalDeparture < ApplicationRecord
     # puts   # Uncomment this in tandem with the print on line 281
     logger.info "#{skip_non_nils ? 'Updated' : 'Updated & overwrote'} #{successful_count} headways."
     logger.info "Processed #{batch_count} stop_ref/line_ref combinations"
-    if skip_non_nils
-      logger.info "Skipped #{non_nils_skipped} headways that were already present"
-    end
-    logger.info "Update failed for #{error_count} headways"
-    logger.info "Total #{successful_count + batch_count + non_nils_skipped + error_count}"
-    logger.info "calculate_headways done after #{Time.current - start_time} seconds"
-    logger.info "Including #{batch_elapsed_time} seconds batch process time; which includes #{update_time} seconds update time"
+    logger.info "Skipped #{non_nils_skipped} headways that were already present" if skip_non_nils
+    logger.info "Update failed for #{error_count} headways" if error_count > 0
+    logger.info "Total headways processed: #{successful_count + batch_count + non_nils_skipped + error_count}"
+    logger.info "calculate_headways done after #{(Time.current - start_time).round(2)} seconds"
+    # logger.info "Including #{batch_elapsed_time.round(2)} seconds batch process time; which includes #{update_time.round(2)} seconds update time"
   end
 
   def self.process_batch(departure_arr, skip_non_nils = true)
