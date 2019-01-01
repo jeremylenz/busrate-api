@@ -1,7 +1,7 @@
 class HistoricalDeparture < ApplicationRecord
 
   belongs_to :bus_stop
-  belongs_to :previous_departure, class_name: "HistoricalDeparture", allow_nil: true
+  belongs_to :previous_departure, class_name: "HistoricalDeparture", required: false
   validates :headway, numericality: {greater_than: 0, allow_nil: true}
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
