@@ -276,6 +276,7 @@ class HistoricalDeparture < ApplicationRecord
           successful_count += batch_result[:successful_count]
           non_nils_skipped += batch_result[:non_nils_skipped]
           batch_elapsed_time += batch_result[:elapsed_time]
+          update_time += batch_result[:update_time]
           print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
 
           # clear out our workspace for the next batch
@@ -295,7 +296,8 @@ class HistoricalDeparture < ApplicationRecord
     end
     logger.info "Update failed for #{error_count} headways"
     logger.info "Total #{successful_count + batch_count + non_nils_skipped + error_count}"
-    logger.info "calculate_headways done after #{Time.current - start_time} seconds (including #{batch_elapsed_time} seconds batch process time)"
+    logger.info "calculate_headways done after #{Time.current - start_time} seconds"
+    logger.info "Including #{batch_elapsed_time} seconds batch process time; which includes #{update_time} seconds update time"
   end
 
   def self.process_batch(departure_arr, skip_non_nils = true)
@@ -303,40 +305,41 @@ class HistoricalDeparture < ApplicationRecord
     # assume all departures have the same stop_ref and line_ref
 
     start_time = Time.current
+    update_time = 0.0
     last_index = departure_arr.length - 1
     batch_count = 1
     error_count = 0
     successful_count = 0
     non_nils_skipped = 0
 
-    HistoricalDeparture.transaction do
-      departure_arr.each_with_index do |current_departure, idx|
-        next if idx == last_index
-        if skip_non_nils && current_departure.headway.present?
-          # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
-          non_nils_skipped += 1
-          next # thank u
-        end
-        previous_departure = departure_arr[idx + 1]
-        # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
+    departure_arr.each_with_index do |current_departure, idx|
+      next if idx == last_index
+      if skip_non_nils && current_departure.headway.present?
+        # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
+        non_nils_skipped += 1
+        next # thank u
+      end
+      previous_departure = departure_arr[idx + 1]
+      # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
 
-        headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
-        headway = nil if headway == 0
-        previous_departure_id = previous_departure.id
+      headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
+      headway = nil if headway == 0
+      previous_departure_id = previous_departure.id
 
-        current_departure.update(
-          headway: headway,
-          previous_departure_id: previous_departure_id,
-        )
+      update_start_time = Time.current
+      current_departure.update(
+        headway: headway,
+        previous_departure_id: previous_departure_id,
+      )
+      update_time += (Time.current - update_start_time)
 
-        if current_departure.errors.any?
-          logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
-          error_count += 1
-        else
-          successful_count += 1
-        end # if
-      end # of each_with_index
-    end # of transaction
+      if current_departure.errors.any?
+        logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
+        error_count += 1
+      else
+        successful_count += 1
+      end # if
+    end # of each_with_index
 
     {
       batch_count: batch_count,
@@ -344,6 +347,7 @@ class HistoricalDeparture < ApplicationRecord
       successful_count: successful_count,
       non_nils_skipped: non_nils_skipped,
       elapsed_time: Time.current - start_time,
+      update_time: update_time,
     }
   end # of process_batch
 
