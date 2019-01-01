@@ -47,7 +47,7 @@ class BusStop < ApplicationRecord
     end
 
     logger.info "#{successful_count} departures moved"
-    logger.info "#{error_count} departures not updated due to errors"
+    logger.info "#{error_count} departures not updated due to errors" if error_count > 0
     logger.info "#{bad_bus_stop.historical_departures.count} departures remaining"
     logger.info "clean_up complete in #{(Time.current - start_time).round(2)} seconds"
   end
