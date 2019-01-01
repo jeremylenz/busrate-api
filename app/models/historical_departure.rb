@@ -246,6 +246,7 @@ class HistoricalDeparture < ApplicationRecord
     error_count = 0
     successful_count = 0
     non_nils_skipped = 0
+    total_count = 0
     # 2 hours worth of historical_departures is typically 180,000+ records.
     # Here we're using the postgresql_cursor gem (each_row and each_instance methods)
     # to process all of them, hopefully without running out of memory or getting the process killed.
@@ -268,11 +269,12 @@ class HistoricalDeparture < ApplicationRecord
         else
           # process batch and update stats
           batch_result = process_batch(current_batch, skip_non_nils)
+          total_count += current_batch.length
           batch_count += batch_result[:batch_count]
           error_count += batch_result[:error_count]
           successful_count += batch_result[:successful_count]
           non_nils_skipped += batch_result[:non_nils_skipped]
-          print "successful_count: #{successful_count}\r"
+          print "total_count: #{total_count} | successful_count: #{successful_count}\r"
 
           # clear out our workspace for the next batch
           current_batch = []
