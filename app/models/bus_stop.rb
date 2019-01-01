@@ -9,6 +9,10 @@ class BusStop < ApplicationRecord
     start_time = Time.current
     logger.info "Cleaning up bus stops..."
     bad_bus_stop = self.where(stop_ref: nil).first
+    if bad_bus_stop.blank?
+      logger.info "No bus stops found with nil stop_ref :)"
+      return
+    end
     logger.info "BusStop with nil stop_ref: #{bad_bus_stop.id}"
     ids_to_purge = []
     successful_count = 0
