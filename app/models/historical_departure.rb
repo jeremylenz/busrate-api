@@ -288,7 +288,7 @@ class HistoricalDeparture < ApplicationRecord
       logger.info "Skipped #{non_nils_skipped} headways that were already present"
     end
     logger.info "Update failed for #{error_count} headways"
-    logger.info "Total #{successful_count + skip_count + non_nils_skipped + error_count}"
+    logger.info "Total #{successful_count + batch_count + non_nils_skipped + error_count}"
     logger.info "calculate_headways done after #{Time.current - start_time} seconds"
   end
 
@@ -316,7 +316,6 @@ class HistoricalDeparture < ApplicationRecord
       headway = nil if headway == 0
       previous_departure_id = previous_departure.id
 
-      print "updating departure #{current_departure.id}     \r"
       current_departure.update(
         headway: headway,
         previous_departure_id: previous_departure_id,
