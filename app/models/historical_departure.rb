@@ -253,6 +253,8 @@ class HistoricalDeparture < ApplicationRecord
       logger.info "Processing #{length} departures"
 
       current_batch = []
+      current_batch_stop_ref = nil
+      current_batch_line_ref = nil
 
       cursor = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
         if current_batch_stop_ref.blank?
