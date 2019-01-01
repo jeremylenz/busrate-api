@@ -257,7 +257,7 @@ class HistoricalDeparture < ApplicationRecord
       current_batch_stop_ref = nil
       current_batch_line_ref = nil
 
-      cursor = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 1000) do |current_departure|
+      cursor = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 500) do |current_departure|
         if current_batch_stop_ref.blank?
           # we are at the beginning of a new batch
           current_batch_stop_ref = current_departure.stop_ref
