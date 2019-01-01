@@ -70,6 +70,7 @@ class VehiclePosition < ApplicationRecord
     arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
     feet_from_stop = data['MonitoredVehicleJourney']['MonitoredCall']['DistanceFromStop']
     stop_ref = data['MonitoredVehicleJourney']['MonitoredCall']['StopPointRef']
+    return nil unless stop_ref.present?
     timestamp = data['RecordedAtTime']
 
     vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
