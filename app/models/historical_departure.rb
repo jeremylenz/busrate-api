@@ -309,32 +309,34 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     non_nils_skipped = 0
 
-    departure_arr.each_with_index do |current_departure, idx|
-      next if idx == last_index
-      if skip_non_nils && current_departure.headway.present?
-        # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
-        non_nils_skipped += 1
-        next # thank u
-      end
-      previous_departure = departure_arr[idx + 1]
-      # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
+    HistoricalDeparture.transaction do
+      departure_arr.each_with_index do |current_departure, idx|
+        next if idx == last_index
+        if skip_non_nils && current_departure.headway.present?
+          # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
+          non_nils_skipped += 1
+          next # thank u
+        end
+        previous_departure = departure_arr[idx + 1]
+        # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
 
-      headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
-      headway = nil if headway == 0
-      previous_departure_id = previous_departure.id
+        headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
+        headway = nil if headway == 0
+        previous_departure_id = previous_departure.id
 
-      current_departure.update(
-        headway: headway,
-        previous_departure_id: previous_departure_id,
-      )
+        current_departure.update(
+          headway: headway,
+          previous_departure_id: previous_departure_id,
+        )
 
-      if current_departure.errors.any?
-        logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
-        error_count += 1
-      else
-        successful_count += 1
-      end # if
-    end # of each_with_index
+        if current_departure.errors.any?
+          logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
+          error_count += 1
+        else
+          successful_count += 1
+        end # if
+      end # of each_with_index
+    end # of transaction
 
     {
       batch_count: batch_count,
