@@ -13,6 +13,7 @@ class BusStop < ApplicationRecord
     ids_to_purge = []
     successful_count = 0
     purge_count = 0
+    error_count = 0
 
     hds = bad_bus_stop.historical_departures.limit(limit).each_instance do |hd|
       if hd.stop_ref.blank?
