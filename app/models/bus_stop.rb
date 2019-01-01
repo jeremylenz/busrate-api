@@ -33,7 +33,7 @@ class BusStop < ApplicationRecord
         logger.info "Error updating historical departure #{hd.id} - #{hd.errors.full_messages.join("; ")}"
       else
         successful_count += 1
-        print "successful_count: #{successful_count}"
+        print "successful_count: #{successful_count}\r"
       end
     end # of each_instance
     puts
