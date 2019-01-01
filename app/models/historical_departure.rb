@@ -247,6 +247,7 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     non_nils_skipped = 0
     total_count = 0
+    batch_elapsed_time = 0
     # 2 hours worth of historical_departures is typically 180,000+ records.
     # Here we're using the postgresql_cursor gem (each_row and each_instance methods)
     # to process all of them, hopefully without running out of memory or getting the process killed.
@@ -274,6 +275,7 @@ class HistoricalDeparture < ApplicationRecord
           error_count += batch_result[:error_count]
           successful_count += batch_result[:successful_count]
           non_nils_skipped += batch_result[:non_nils_skipped]
+          batch_elapsed_time += batch_result[:elapsed_time]
           print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
 
           # clear out our workspace for the next batch
@@ -293,13 +295,14 @@ class HistoricalDeparture < ApplicationRecord
     end
     logger.info "Update failed for #{error_count} headways"
     logger.info "Total #{successful_count + batch_count + non_nils_skipped + error_count}"
-    logger.info "calculate_headways done after #{Time.current - start_time} seconds"
+    logger.info "calculate_headways done after #{Time.current - start_time} seconds (including #{batch_elapsed_time} seconds batch process time)"
   end
 
   def self.process_batch(departure_arr, skip_non_nils = true)
     # assume departure_arr is sorted by departure_time desc
     # assume all departures have the same stop_ref and line_ref
 
+    start_time = Time.current
     last_index = departure_arr.length - 1
     batch_count = 1
     error_count = 0
@@ -338,6 +341,7 @@ class HistoricalDeparture < ApplicationRecord
       error_count: error_count,
       successful_count: successful_count,
       non_nils_skipped: non_nils_skipped,
+      elapsed_time: Time.current - start_time,
     }
   end # of process_batch
 
