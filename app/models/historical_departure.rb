@@ -238,7 +238,7 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds, skip_non_nils)
   end
 
-  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 1000)
+  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000)
     length = unsorted_historical_departures.count
     return if unsorted_historical_departures.blank? || length < 2
     start_time = Time.current
@@ -289,7 +289,7 @@ class HistoricalDeparture < ApplicationRecord
       end # of cursor block
     end # of transaction
 
-    puts
+    # puts   # Uncomment this in tandem with the print on line 281
     logger.info "#{skip_non_nils ? 'Updated' : 'Updated & overwrote'} #{successful_count} headways."
     logger.info "Processed #{batch_count} stop_ref/line_ref combinations"
     if skip_non_nils
