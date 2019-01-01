@@ -328,7 +328,7 @@ class HistoricalDeparture < ApplicationRecord
       previous_departure_id = previous_departure.id
 
       update_start_time = Time.current
-      current_departure.update(
+      current_departure.update_columns(
         headway: headway,
         previous_departure_id: previous_departure_id,
       )
