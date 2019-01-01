@@ -24,7 +24,7 @@ class BusStop < ApplicationRecord
       if real_bus_stop.blank?
         hd.errors << "Couldn't find bus stop with stop_ref #{hd.stop_ref}"
       end
-      logger.debug "#{[hd.id, hd.stop_ref, hd.bus_stop_id]} --> #{[hd.id, real_bus_stop.stop_ref, real_bus_stop.id]}"
+      # logger.info "#{[hd.id, hd.stop_ref, hd.bus_stop_id]} --> #{[hd.id, real_bus_stop.stop_ref, real_bus_stop.id]}"
       hd.update(
         bus_stop_id: real_bus_stop.id
       )
