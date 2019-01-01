@@ -233,9 +233,9 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
-  def self.doit(age_in_secs)
+  def self.doit(age_in_secs, skip_non_nils = true)
     hds = HistoricalDeparture.newer_than(age_in_secs)
-    HistoricalDeparture.calculate_headways(hds)
+    HistoricalDeparture.calculate_headways(hds, skip_non_nils)
   end
 
   def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true)
