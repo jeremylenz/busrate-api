@@ -251,8 +251,9 @@ class HistoricalDeparture < ApplicationRecord
     # to process all of them, hopefully without running out of memory or getting the process killed.
     HistoricalDeparture.lock.transaction do
       logger.info "Processing #{length} departures"
-      lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
-      cursor = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
+      max_id = unsorted_historical_departures.order(id: :desc).ids.first
+      lookahead = unsorted_historical_departures.where(["id <= ?", max_id]).order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
+      cursor = unsorted_historical_departures.where(["id <= ?", max_id]).order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
         if skip_non_nils && !current_departure.headway.nil?
           puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
           non_nils_skipped += 1
