@@ -278,7 +278,7 @@ class HistoricalDeparture < ApplicationRecord
           non_nils_skipped += batch_result[:non_nils_skipped]
           batch_elapsed_time += batch_result[:elapsed_time]
           update_time += batch_result[:update_time]
-          print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
+          # print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
 
           # clear out our workspace for the next batch
           current_batch = []
@@ -316,12 +316,10 @@ class HistoricalDeparture < ApplicationRecord
     departure_arr.each_with_index do |current_departure, idx|
       next if idx == last_index
       if skip_non_nils && current_departure.headway.present?
-        # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
         non_nils_skipped += 1
         next # thank u
       end
       previous_departure = departure_arr[idx + 1]
-      # puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure.id}"].inspect
 
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
       headway = nil if headway == 0
@@ -351,58 +349,5 @@ class HistoricalDeparture < ApplicationRecord
       update_time: update_time,
     }
   end # of process_batch
-
-  # def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true)
-  #   return if unsorted_historical_departures.blank? || unsorted_historical_departures.length < 2
-  #   deps = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC") # make sure it's sorted
-  #   process_headways(deps, skip_non_nils)
-  # end
-  #
-  # def self.process_headways(sorted_deps, skip_non_nils = true)
-  #   return if sorted_deps.blank? || sorted_deps.length < 2
-  #   start_time = Time.current
-  #   last_index = sorted_deps.count - 1
-  #   logger.info "Calculating #{last_index} headways"
-  #   successful_count = 0
-  #   failure_count = 0
-  #   error_count = 0
-  #   non_nils_skipped = 0
-  #   sorted_deps.each_with_index do |current_departure, idx|
-  #     next if idx == last_index
-  #     if skip_non_nils && current_departure.headway.present?
-  #       # skip departures that already have a value for headway
-  #       non_nils_skipped += 1
-  #       next # thank u
-  #     end
-  #     previous_departure = sorted_deps[idx + 1]
-  #     unless current_departure.stop_ref == previous_departure.stop_ref && current_departure.line_ref == previous_departure.line_ref
-  #       failure_count += 1
-  #       print "failure_count: #{failure_count}        \r"
-  #       next
-  #     end
-  #     prev_id = previous_departure.id
-  #     headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
-  #     headway = nil if headway == 0
-  #     current_departure.update(
-  #       headway: headway,
-  #       previous_departure_id: prev_id,
-  #     )
-  #
-  #     if current_departure.errors.any?
-  #       logger.info "Problem updating departure #{current_departure.id}: #{current_departure.errors.full_messages.join("; ")}"
-  #       error_count += 1
-  #     else
-  #       successful_count += 1
-  #       print "successful_count: #{successful_count}\r"
-  #     end
-  #   end
-  #   logger.info "Updated #{successful_count} headways."
-  #   logger.info "Skipped #{failure_count} headways due to stop_ref/line_ref mismatch"
-  #   logger.info "Skipped #{non_nils_skipped} headways that were already present"
-  #   logger.info "Update failed for #{error_count} headways"
-  #   logger.info "Total #{successful_count + failure_count + error_count}"
-  #   logger.info "process_headways done after #{Time.current - start_time} seconds"
-  #
-  # end
 
 end
