@@ -274,7 +274,7 @@ class HistoricalDeparture < ApplicationRecord
           error_count += batch_result[:error_count]
           successful_count += batch_result[:successful_count]
           non_nils_skipped += batch_result[:non_nils_skipped]
-          print "total_count: #{total_count} | successful_count: #{successful_count}\r"
+          print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
 
           # clear out our workspace for the next batch
           current_batch = []
