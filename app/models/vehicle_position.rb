@@ -110,7 +110,7 @@ class VehiclePosition < ApplicationRecord
     new_stop_count = BusStop.all.count - existing_stop_count
     logger.info "#{new_vehicle_count} Vehicles created" if new_vehicle_count > 0
     logger.info "#{new_stop_count} BusStops created" if new_stop_count > 0
-    logger.info "VehiclePosition.extract_from_response complete in #{Time.current - start_time} seconds"
+    logger.info "VehiclePosition.extract_from_response complete in #{(Time.current - start_time).round(2)} seconds"
     new_vehicle_position_params
   end
 

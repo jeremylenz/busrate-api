@@ -32,7 +32,7 @@ class HistoricalDeparture < ApplicationRecord
 
     inserter = FastInserter::Base.new(fast_inserter_params)
     inserter.fast_insert
-    # logger.info "#{table_name} fast_inserter complete in #{Time.current - fast_inserter_start_time} seconds"
+    # logger.info "#{table_name} fast_inserter complete in #{(Time.current - fast_inserter_start_time).round(2)} seconds"
     model_name = table_name.classify
     logger.info "#{fast_inserter_values.length} #{model_name}s fast-inserted"
     # Return an ActiveRecord relation with the objects just created
@@ -52,7 +52,7 @@ class HistoricalDeparture < ApplicationRecord
     previous_call = MtaApiCallRecord.most_recent
     last_id = 0
     if previous_call.present?
-      logger.info "most recent timestamp: #{Time.current - previous_call&.created_at} seconds ago"
+      logger.info "most recent timestamp: #{(Time.current - previous_call&.created_at).round(2)} seconds ago"
       last_id = previous_call.id
     end
 
@@ -83,7 +83,7 @@ class HistoricalDeparture < ApplicationRecord
     object_list = VehiclePosition.extract_from_response(response)
     new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
 
-    logger.info "grab_all # #{identifier} complete in #{Time.current - start_time} seconds."
+    logger.info "grab_all # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds."
 
     new_vehicle_positions
   end
@@ -99,13 +99,13 @@ class HistoricalDeparture < ApplicationRecord
 
     elapsed_time = Time.current - start_time
     if elapsed_time > 30.seconds
-      logger.info "First grab_all took #{elapsed_time} seconds; skipping second grab_all"
+      logger.info "First grab_all took #{elapsed_time.round(2)} seconds; skipping second grab_all"
       return
     end
 
-    logger.info "continuing grab_and_go # #{identifier} after #{elapsed_time} seconds"
+    logger.info "continuing grab_and_go # #{identifier} after #{elapsed_time.round(2)} seconds"
     grab_all
-    logger.info "grab_and_go # #{identifier} complete in #{Time.current - start_time} seconds"
+    logger.info "grab_and_go # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
   def self.is_departure?(old_vehicle_position, new_vehicle_position)
@@ -201,7 +201,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures by removing non-unique values"
     # logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
-    logger.info "Departure scrape # #{identifier} complete in #{Time.current - start_time} seconds"
+    logger.info "Departure scrape # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"
 
   end
 
@@ -239,7 +239,7 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
     logger.info "Starting ANALYZE; ..."
     ActiveRecord::Base.connection.execute("ANALYZE;")
-    logger.info "ANALYZE complete in #{Time.current - start_time} seconds"
+    logger.info "ANALYZE complete in #{(Time.current - start_time).round(2)} seconds"
   rescue(err)
     logger.error err
     false
