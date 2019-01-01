@@ -254,12 +254,12 @@ class HistoricalDeparture < ApplicationRecord
       lookahead = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").offset(1).each_row(block_size: 10)
       cursor = unsorted_historical_departures.lock.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: 10) do |current_departure|
         if skip_non_nils && !current_departure.headway.nil?
-          puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"]
+          puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "skipping"].inspect
           non_nils_skipped += 1
           next # thank u
         end
         previous_departure_hash = lookahead.fetch(symbolize_keys: true)
-        puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure_hash[:id]}"]
+        puts [current_departure.id, current_departure.stop_ref, current_departure.line_ref, current_departure.headway, current_departure.departure_time, "prev_id: #{previous_departure_hash[:id]}"].inspect
         break if previous_departure_hash.blank?
         headway = (current_departure.departure_time - previous_departure_hash[:departure_time].to_time).round.to_i
         headway = nil if headway == 0
