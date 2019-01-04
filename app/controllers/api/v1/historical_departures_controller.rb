@@ -50,8 +50,10 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     render json: {
       line_ref: line_ref,
       stop_ref: stop_ref,
-      historical_departures: today_times,
-      prev_departures: prev_times,
+      recents: recents,
+      recents_departure_times: today_times,
+      prev_departures: prev_departures,
+      prev_departure_times: prev_times,
       prev_departure_text: prev_text,
     }
 
