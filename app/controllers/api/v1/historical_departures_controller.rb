@@ -31,6 +31,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     # get most recent 8
     today = Time.zone.now.in_time_zone("EST").strftime('%A')
     recents = @historical_departures.first(8)
+    recents_rating = HistoricalDeparture.rating(recents, 5)
 
     if today == "Monday"
       compare_time = 72.hours.ago
@@ -46,6 +47,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     compare_time += 10.minutes # how late was the bus this time yesterday?
 
     prev_departures = @historical_departures.where(['departure_time < ?', compare_time]).first(8)
+    prev_departures_rating = HistoricalDeparture.rating(prev_departures, 5)
 
     today_times = recents.map { |hd| hd.departure_time }
     prev_times = prev_departures.map { |hd| hd.departure_time }
@@ -54,8 +56,10 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       line_ref: line_ref,
       stop_ref: stop_ref,
       recents: recents,
+      recents_rating: recents_rating,
       recent_departure_times: today_times,
       prev_departures: prev_departures,
+      prev_departures_rating: prev_departures_rating,
       prev_departure_times: prev_times,
       prev_departure_text: prev_text,
     }
