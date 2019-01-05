@@ -14,7 +14,7 @@ class HistoricalDeparture < ApplicationRecord
     return nil if departures.blank? || departures.count < 2
 
     headways = departures.map(&:headway).compact
-    headways_in_minutes = departues.map(&:headway_in_minutes).compact
+    headways_in_minutes = departures.map(&:headway_in_minutes).compact
     # Use the descriptive_statistics gem to get cool stats
     average_headway = headways.mean.round(2)
     standard_deviation = headways.standard_deviation.round(2)
