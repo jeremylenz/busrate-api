@@ -10,6 +10,32 @@ class HistoricalDeparture < ApplicationRecord
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
   end
 
+  def self.rating(departures, allowable_headway)
+    return nil if departures.blank? || departures.count < 2
+
+    headways = departures.map(&:headway).compact
+    headways_in_minutes = departues.map(&:headway_in_minutes).compact
+    # Use the descriptive_statistics gem to get cool stats
+    average_headway = headways.mean.round(2)
+    standard_deviation = headways.standard_deviation.round(2)
+
+    num_headways = headways.count
+    allowable_headway = allowable_headway * 60 # convert to seconds
+    allowable_total = num_headways * allowable_headway
+    actual_total = headways.sum
+    busrate_score = (actual_total / allowable_total).round
+
+    {
+      headways: headways,
+      headways_in_minutes: headways_in_minutes,
+      average_headway: average_headway,
+      standard_deviation: standard_deviation,
+      allowable_total: allowable_total,
+      actual_total: actual_total,
+      busrate_score: busrate_score,
+    }
+  end
+
   def self.fast_insert_objects(table_name, object_list)
     # Use the fast_inserter gem to write hundreds of rows to the table
     # with a single SQL statement.  (Active Record is too slow in this situation.)
@@ -366,5 +392,12 @@ class HistoricalDeparture < ApplicationRecord
       update_time: update_time,
     }
   end # of process_batch
+
+  # Instance methods
+
+  def headway_in_minutes
+    return nil if self.headway.blank?
+    (self.headway / 60).round
+  end
 
 end
