@@ -24,11 +24,16 @@ class HistoricalDeparture < ApplicationRecord
     allowable_total = (num_headways * allowable_headway).round
     actual_total = headways.sum
 
-    bonus = (average_headway - standard_deviation) * num_headways
-    if bonus > 0
-      bonus /= 2.0
+    anti_bonus = (standard_deviation - average_headway) * num_headways
+    # If standard_deviation > average_headway, allowable_total will go DOWN.
+    if anti_bonus < 0
+      anti_bonus = 0
     end
-    allowable_total += bonus # If standard_deviation > average_headway, allowable_total will go DOWN.  If standard_deviation < average_headway, allowable_total will go UP
+
+    bunched_headways_count = headways.count { |headway| headway < 120 } # any arrival within 2 minutes of the previous vehicle counts as bunching
+    anti_bonus += (allowable_headway * bunched_headways_count)
+
+    allowable_total -= anti_bonus
 
     busrate_score = (allowable_total / actual_total * 100).round
     raw_score = busrate_score
@@ -45,7 +50,8 @@ class HistoricalDeparture < ApplicationRecord
       average_headway: average_headway,
       standard_deviation: standard_deviation,
       allowable_total: allowable_total,
-      bonus: bonus,
+      bunched_headways_count: bunched_headways_count,
+      anti_bonus: anti_bonus,
       actual_total: actual_total,
       raw_score: raw_score,
       busrate_score: busrate_score,
