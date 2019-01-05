@@ -25,6 +25,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
 
 
     @historical_departures = HistoricalDeparture.for_route_and_stop(line_ref, stop_ref)
+    HistoricalDeparture.calculate_headways(@historical_departures)
 
     # get most recent 8
     today = Time.zone.now.in_time_zone("EST").strftime('%A')
@@ -47,9 +48,6 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
 
     today_times = recents.map { |hd| hd.departure_time }
     prev_times = prev_departures.map { |hd| hd.departure_time }
-
-    HistoricalDeparture.calculate_headways(recents)
-    HistoricalDeparture.calculate_headways(prev_departures)
 
     render json: {
       line_ref: line_ref,
