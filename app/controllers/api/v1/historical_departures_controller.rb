@@ -48,7 +48,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     today_times = recents.map { |hd| hd.departure_time }
     prev_times = prev_departures.map { |hd| hd.departure_time }
 
-    HistoricalDeparture.calculate_headways(recents + prev_departures)
+    HistoricalDeparture.calculate_headways(recents)
+    HistoricalDeparture.calculate_headways(prev_departures)
 
     render json: {
       line_ref: line_ref,
