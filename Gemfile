@@ -30,6 +30,7 @@ gem 'httparty'
 
 gem 'fast_inserter'
 gem 'whenever'
+gem 'descriptive_statistics'
 # Handle cursors in Postgres
 gem 'postgresql_cursor'
 
