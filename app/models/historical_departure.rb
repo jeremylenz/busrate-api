@@ -23,7 +23,14 @@ class HistoricalDeparture < ApplicationRecord
     allowable_headway = allowable_headway * 60 # convert to seconds
     allowable_total = (num_headways * allowable_headway).round
     actual_total = headways.sum
+
+    bonus = (average_headway - standard_deviation) * num_headways
+    allowable_total += bonus # If standard_deviation > average_headway, allowable_total will go DOWN.  If standard_deviation < average_headway, allowable_total will go UP
+
     busrate_score = (allowable_total / actual_total * 100).round
+    if busrate_score > 100
+      busrate_score = 100
+    end
 
     {
       headways: headways,
@@ -31,6 +38,7 @@ class HistoricalDeparture < ApplicationRecord
       average_headway: average_headway,
       standard_deviation: standard_deviation,
       allowable_total: allowable_total,
+      bonus: bonus,
       actual_total: actual_total,
       busrate_score: busrate_score,
     }
