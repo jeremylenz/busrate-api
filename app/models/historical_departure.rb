@@ -25,6 +25,9 @@ class HistoricalDeparture < ApplicationRecord
     actual_total = headways.sum
 
     bonus = (average_headway - standard_deviation) * num_headways
+    if bonus > 0
+      bonus /= 2.0
+    end
     allowable_total += bonus # If standard_deviation > average_headway, allowable_total will go DOWN.  If standard_deviation < average_headway, allowable_total will go UP
 
     busrate_score = (allowable_total / actual_total * 100).round
