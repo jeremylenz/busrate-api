@@ -21,7 +21,7 @@ class HistoricalDeparture < ApplicationRecord
 
     num_headways = headways.count
     allowable_headway = allowable_headway * 60 # convert to seconds
-    allowable_total = num_headways * allowable_headway
+    allowable_total = (num_headways * allowable_headway).round
     actual_total = headways.sum
     busrate_score = (actual_total / allowable_total).round
 
