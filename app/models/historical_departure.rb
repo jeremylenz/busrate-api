@@ -30,7 +30,8 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.rush_hours_only
-    self.between_hours(10, 14)
+    # 10am - 2pm Mon-Fri
+    self.weekdays_only.between_hours(10, 14)
   end
 
   def self.on_day_of_week(day_sym)
