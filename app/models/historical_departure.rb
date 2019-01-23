@@ -85,7 +85,6 @@ class HistoricalDeparture < ApplicationRecord
     end
 
     {
-      headways: headways,
       headways_in_minutes: headways_in_minutes,
       average_headway: average_headway,
       standard_deviation: standard_deviation,
