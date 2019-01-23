@@ -35,7 +35,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     overall_rating = HistoricalDeparture.rating(@historical_departures, 8)
     weekday_rating = HistoricalDeparture.rating(@historical_departures.weekdays_only, 8)
     weekend_rating = HistoricalDeparture.rating(@historical_departures.weekends_only, 8)
-    rush_hour_rating = HistoricalDeparture.rating(@historical_departures.rush_hours_only, 8)
+    morning_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.morning_rush_hours_only, 8)
+    evening_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.evening_rush_hours_only, 8)
 
     if today == "Monday"
       compare_time = 72.hours.ago

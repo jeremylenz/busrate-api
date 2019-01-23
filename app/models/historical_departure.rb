@@ -28,9 +28,13 @@ class HistoricalDeparture < ApplicationRecord
     self.where(["extract(hour from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ? AND extract(hour from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", start_hour_in_est - 1, end_hour_in_est])
   end
 
-  def self.rush_hours_only
-    # 10am - 2pm Mon-Fri
-    self.weekdays_only.between_hours(10, 14)
+  def self.morning_rush_hours_only
+    # 6am - 10am Mon-Fri
+    self.weekdays_only.between_hours(6, 10)
+  end
+
+  def self.evening_rush_hours_only
+    self.weekdays_only.between_hours(17, 21)
   end
 
   def self.on_day_of_week(day_sym)
