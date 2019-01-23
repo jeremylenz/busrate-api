@@ -1,5 +1,16 @@
 class HistoricalDeparture < ApplicationRecord
 
+  # These day numbers are used by Postgres-- one off from Ruby day numbers
+  DAYS_OF_WEEK = {
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+    sunday: 7,
+  }
+
   belongs_to :bus_stop
   belongs_to :previous_departure, class_name: "HistoricalDeparture", required: false
   validates :headway, numericality: {greater_than: 0, allow_nil: true}
@@ -8,6 +19,33 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.for_route_and_stop(line_ref, stop_ref)
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
+  end
+
+  def self.between_hours(start_hour_in_est, end_hour_in_est)
+    # departure_time is stored in Postgres as timestamp without time zone
+    # departure_time AT TIME ZONE 'UTC' gives it a time zone UTC
+    # So we can then convert that to EST and extract the hour of the day
+    # Hour is 0-23.
+    self.where(["extract(hour from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ? AND extract(hour from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", start_hour_in_est - 1, end_hour_in_est])
+  end
+
+  def self.rush_hours_only
+    self.between_hours(10, 14)
+  end
+
+  def self.on_day_of_week(day_sym)
+    # Convert departure_time to EST
+    # Return only records from that day of the week
+    day_num = DAYS_OF_WEEK[day_sym.to_sym]
+    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') = ?", day_num])
+  end
+
+  def self.weekdays_only
+    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", DAYS_OF_WEEK[:saturday]])
+  end
+
+  def self.weekends_only
+    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ?", DAYS_OF_WEEK[:friday]])
   end
 
   def self.rating(departures, allowable_headway_in_minutes)
