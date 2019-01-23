@@ -32,6 +32,10 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     today = Time.zone.now.in_time_zone("EST").strftime('%A')
     recents = @historical_departures.first(8)
     recents_rating = HistoricalDeparture.rating(recents, 8)
+    overall_rating = HistoricalDeparture.rating(@historical_departures, 8)
+    weekday_rating = HistoricalDeparture.rating(@historical_departures.weekdays_only, 8)
+    weekend_rating = HistoricalDeparture.rating(@historical_departures.weekends_only, 8)
+    rush_hour_rating = HistoricalDeparture.rating(@historical_departures.rush_hours_only, 8)
 
     if today == "Monday"
       compare_time = 72.hours.ago
@@ -62,6 +66,10 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       prev_departures_rating: prev_departures_rating,
       prev_departure_times: prev_times,
       prev_departure_text: prev_text,
+      overall_rating: overall_rating,
+      weekday_rating: weekday_rating,
+      weekend_rating: weekend_rating,
+      rush_hour_rating: rush_hour_rating,
     }
 
   end
