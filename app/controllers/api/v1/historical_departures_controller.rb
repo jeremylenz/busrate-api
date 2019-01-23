@@ -70,7 +70,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       overall_rating: overall_rating,
       weekday_rating: weekday_rating,
       weekend_rating: weekend_rating,
-      rush_hour_rating: rush_hour_rating,
+      morning_rush_hour_rating: morning_rush_hour_rating,
+      evening_rush_hour_rating: evening_rush_hour_rating,
     }
 
   end
