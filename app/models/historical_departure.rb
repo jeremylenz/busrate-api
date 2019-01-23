@@ -11,6 +11,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.rating(departures, allowable_headway)
+    # Pass in allowable_headway in minutes
     return nil if departures.blank? || departures.count < 2
 
     headways = departures.map(&:headway).compact
@@ -31,6 +32,7 @@ class HistoricalDeparture < ApplicationRecord
     end
 
     bunched_headways_count = headways.count { |headway| headway < 120 } # any arrival within 2 minutes of the previous vehicle counts as bunching
+    percent_of_deps_bunched = (bunched_headways_count / headways.count) * 100
     anti_bonus += (allowable_headway * bunched_headways_count)
 
     allowable_total -= anti_bonus
@@ -50,6 +52,7 @@ class HistoricalDeparture < ApplicationRecord
       average_headway: average_headway,
       standard_deviation: standard_deviation,
       bunched_headways_count: bunched_headways_count,
+      percent_of_deps_bunched: percent_of_deps_bunched,
       anti_bonus: anti_bonus,
       allowable_total: allowable_total,
       actual_total: actual_total,
