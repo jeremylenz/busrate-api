@@ -1,14 +1,13 @@
 class HistoricalDeparture < ApplicationRecord
 
-  # These day numbers are used by Postgres-- one off from Ruby day numbers
   DAYS_OF_WEEK = {
+    sunday: 0,
     monday: 1,
     tuesday: 2,
     wednesday: 3,
     thursday: 4,
     friday: 5,
     saturday: 6,
-    sunday: 7,
   }
 
   belongs_to :bus_stop
@@ -42,11 +41,11 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.weekdays_only
-    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", DAYS_OF_WEEK[:saturday]])
+    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ? OR extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", DAYS_OF_WEEK[:sunday], DAYS_OF_WEEK[:saturday]])
   end
 
   def self.weekends_only
-    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ?", DAYS_OF_WEEK[:friday]])
+    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') = ? OR extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') = ?", DAYS_OF_WEEK[:saturday], DAYS_OF_WEEK[:sunday]])
   end
 
   def self.rating(departures, allowable_headway_in_minutes)
