@@ -45,7 +45,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.weekdays_only
-    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ? OR extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", DAYS_OF_WEEK[:sunday], DAYS_OF_WEEK[:saturday]])
+    self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') > ? AND extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') < ?", DAYS_OF_WEEK[:sunday], DAYS_OF_WEEK[:saturday]])
   end
 
   def self.weekends_only
