@@ -5,7 +5,50 @@ class BusStop < ApplicationRecord
   validates_presence_of :stop_ref
   validates_uniqueness_of :stop_ref
 
+  def self.find_and_remove_duplicates
+    # Find bus stops with duplicate stop_ref (shouldn't happen)
+    # Assign all departures to one of them and destroy the other
+
+    BusStop.all.each do |bus_stop_a|
+      print "Processing #{bus_stop_a.id}\r"
+      $stdout.flush
+
+      next if bus_stop.valid?
+      # do we have a duplicate?
+      # if so, find the twin
+      bus_stop_b = BusStop.where(stop_ref: bus_stop_a.stop_ref).where.not(id: bus_stop_a.id).first
+      if bus_stop_b.blank?
+        logger.info "Couldn't find duplicate bus stop for #{bus_stop_a.id}"
+        logger.info "Errors: #{bus_stop_a.errors.full_messages.join("; ")}"
+        next
+      end
+      # decide which one to keep
+      logger.info "Deciding which one to keep"
+      if bus_stop_a.historical_departures.count > bus_stop_b.historical_departures.count
+        keeper = bus_stop_a
+        bad_bus_stop = bus_stop_b
+        logger.info "keeping #{keeper.id}, bus_stop_a"
+      else
+        keeper = bus_stop_b
+        bad_bus_stop = bus_stop_a
+        logger.info "keeping #{keeper.id}, bus_stop_b"
+      end
+      # migrate the data
+      logger.info "Migrating vehicle positions"
+      bad_bus_stop.vehicle_positions.each do |vehicle_position|
+        vehicle_position.update(bus_stop: keeper)
+      end
+      logger.info "Migrating historical departures"
+      bad_bus_stop.historical_departures.each do |historical_departure|
+        historical_departure.update(bus_stop: keeper)
+      end
+      logger.info "Destroying BusStop #{bad_bus_stop.id}"
+      bad_bus_stop.destroy
+    end
+  end
+
   def self.clean_up(limit)
+    # Before validations were added, a bus stop got created with a nil stop_ref and departures got assigned to it.  Need this to clean it up.
     start_time = Time.current
     logger.info "Cleaning up bus stops..."
     bad_bus_stop = self.where(stop_ref: nil).first
