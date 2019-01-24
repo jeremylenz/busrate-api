@@ -13,7 +13,7 @@ class BusStop < ApplicationRecord
       print "Processing #{bus_stop_a.id}\r"
       $stdout.flush
 
-      next if bus_stop.valid?
+      next if bus_stop_a.valid?
       # do we have a duplicate?
       # if so, find the twin
       bus_stop_b = BusStop.where(stop_ref: bus_stop_a.stop_ref).where.not(id: bus_stop_a.id).first
