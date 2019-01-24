@@ -57,8 +57,12 @@ class HistoricalDeparture < ApplicationRecord
 
     headways = departures.map(&:headway).compact
     headways_in_minutes = departures.map(&:headway_in_minutes).compact
+
+    # any arrival within 2 minutes of the previous vehicle counts as bunching
+    unbunched_headways = headways.select { |headway| headway >= 120 } # Don't allow bus bunching to 'improve' average headway
+
     # Use the descriptive_statistics gem to get cool stats
-    average_headway = headways.mean.round(2)
+    average_headway = unbunched_headways.mean.round(2)
     standard_deviation = headways.standard_deviation.round(2)
 
     num_headways = headways.count
@@ -73,6 +77,7 @@ class HistoricalDeparture < ApplicationRecord
     end
 
     bunched_headways_count = headways.count { |headway| headway < 120 } # any arrival within 2 minutes of the previous vehicle counts as bunching
+    bunched_headways_count *= 2 # count both departures in the bunch as bunched
     percent_of_deps_bunched = ((bunched_headways_count.to_f / headways.count.to_f) * 100.0).round(1)
     anti_bonus += (allowable_headway * bunched_headways_count)
 
