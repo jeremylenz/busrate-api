@@ -347,7 +347,7 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds, skip_non_nils, block_size)
   end
 
-  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000, oom_limit = 200_000)
+  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000)
     length = unsorted_historical_departures.count
     return if unsorted_historical_departures.blank? || length < 2
     start_time = Time.current
@@ -390,21 +390,14 @@ class HistoricalDeparture < ApplicationRecord
           update_time += batch_result[:update_time]
           print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
           if (total_count % 2000) < current_batch.length
-            puts
-            print "Starting garbage collection..."
+            print "Doing garbage collection...                                                                                \r"
             GC.start
-            print "...complete\r"
           end
 
           # clear out our workspace for the next batch
           current_batch = []
           current_batch_stop_ref = nil
           current_batch_line_ref = nil
-          if successful_count >= oom_limit # avoid getting the process killed
-            puts
-            logger.info "Aborting process_headways; limit of #{oom_limit} reached"
-            break
-          end
           next
         end # if
       end # of cursor block
