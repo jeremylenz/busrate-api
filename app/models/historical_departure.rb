@@ -347,7 +347,7 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds, skip_non_nils, block_size)
   end
 
-  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000, oom_limit = 6000)
+  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000, oom_limit = 200_000)
     length = unsorted_historical_departures.count
     return if unsorted_historical_departures.blank? || length < 2
     start_time = Time.current
@@ -393,7 +393,7 @@ class HistoricalDeparture < ApplicationRecord
             puts
             print "Starting garbage collection..."
             GC.start
-            print "...complete\n"
+            print "...complete\r"
           end
 
           # clear out our workspace for the next batch
