@@ -368,7 +368,7 @@ class HistoricalDeparture < ApplicationRecord
       current_batch_stop_ref = nil
       current_batch_line_ref = nil
 
-      cursor = unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: block_size) do |current_departure|
+      unsorted_historical_departures.order("stop_ref, line_ref, departure_time DESC").each_instance(block_size: block_size) do |current_departure|
         if current_batch_stop_ref.blank?
           # we are at the beginning of a new batch
           current_batch_stop_ref = current_departure.stop_ref
@@ -395,6 +395,7 @@ class HistoricalDeparture < ApplicationRecord
           current_batch_stop_ref = nil
           current_batch_line_ref = nil
           if successful_count >= oom_limit # avoid getting the process killed
+            puts
             logger.info "Aborting process_headways; limit of #{oom_limit} reached"
             break
           end
