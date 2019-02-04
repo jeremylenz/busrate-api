@@ -380,9 +380,6 @@ class HistoricalDeparture < ApplicationRecord
           next
         else
           # Process batch and update stats
-          print "Starting garbage collection..."
-          GC.start
-          print "...complete"
           batch_result = process_batch(current_batch, skip_non_nils)
           total_count += current_batch.length
           batch_count += batch_result[:batch_count]
@@ -397,6 +394,12 @@ class HistoricalDeparture < ApplicationRecord
           current_batch = []
           current_batch_stop_ref = nil
           current_batch_line_ref = nil
+          if (total_count % 2000) < current_batch.length
+            puts
+            print "Starting garbage collection..."
+            GC.start
+            print "...complete\n"
+          end
           if successful_count >= oom_limit # avoid getting the process killed
             puts
             logger.info "Aborting process_headways; limit of #{oom_limit} reached"
