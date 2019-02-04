@@ -388,18 +388,18 @@ class HistoricalDeparture < ApplicationRecord
           non_nils_skipped += batch_result[:non_nils_skipped]
           batch_elapsed_time += batch_result[:elapsed_time]
           update_time += batch_result[:update_time]
-          print "total_count: #{total_count % 2000} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
-
-          # clear out our workspace for the next batch
-          current_batch = []
-          current_batch_stop_ref = nil
-          current_batch_line_ref = nil
+          print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
           if (total_count % 2000) < current_batch.length
             puts
             print "Starting garbage collection..."
             GC.start
             print "...complete\n"
           end
+
+          # clear out our workspace for the next batch
+          current_batch = []
+          current_batch_stop_ref = nil
+          current_batch_line_ref = nil
           if successful_count >= oom_limit # avoid getting the process killed
             puts
             logger.info "Aborting process_headways; limit of #{oom_limit} reached"
