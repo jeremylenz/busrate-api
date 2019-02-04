@@ -37,7 +37,7 @@ every 1.minute do
   runner "HistoricalDeparture.scrape_all"
 end
 
-every 1.minute do
+every 2.minutes do
   runner "HistoricalDeparture.calculate_headways(HistoricalDeparture.newer_than(14_400))"
 end
 
