@@ -388,7 +388,7 @@ class HistoricalDeparture < ApplicationRecord
           non_nils_skipped += batch_result[:non_nils_skipped]
           batch_elapsed_time += batch_result[:elapsed_time]
           update_time += batch_result[:update_time]
-          # print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
+          print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
 
           # clear out our workspace for the next batch
           current_batch = []
@@ -399,7 +399,7 @@ class HistoricalDeparture < ApplicationRecord
       end # of cursor block
     end # of transaction
 
-    # puts   # Uncomment this in tandem with the print on line 281
+    puts   # Uncomment this in tandem with the print on line 391
     logger.info "#{skip_non_nils ? 'Updated' : 'Updated & overwrote'} #{successful_count} headways."
     logger.info "Processed #{batch_count} stop_ref/line_ref combinations"
     logger.info "Skipped #{non_nils_skipped} headways that were already present" if skip_non_nils
