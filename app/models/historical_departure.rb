@@ -380,6 +380,9 @@ class HistoricalDeparture < ApplicationRecord
           next
         else
           # Process batch and update stats
+          print "Starting garbage collection..."
+          GC.start
+          print "...complete"
           batch_result = process_batch(current_batch, skip_non_nils)
           total_count += current_batch.length
           batch_count += batch_result[:batch_count]
