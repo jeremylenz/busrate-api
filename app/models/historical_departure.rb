@@ -347,7 +347,7 @@ class HistoricalDeparture < ApplicationRecord
     HistoricalDeparture.calculate_headways(hds, skip_non_nils, block_size)
   end
 
-  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000)
+  def self.calculate_headways(unsorted_historical_departures, skip_non_nils = true, block_size = 2000, oom_limit = 6000)
     length = unsorted_historical_departures.count
     return if unsorted_historical_departures.blank? || length < 2
     start_time = Time.current
@@ -394,6 +394,10 @@ class HistoricalDeparture < ApplicationRecord
           current_batch = []
           current_batch_stop_ref = nil
           current_batch_line_ref = nil
+          if successful_count >= oom_limit # avoid getting the process killed
+            logger.info "Aborting process_headways; limit of #{oom_limit} reached"
+            break
+          end
           next
         end # if
       end # of cursor block
