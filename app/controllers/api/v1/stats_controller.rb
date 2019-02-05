@@ -14,8 +14,8 @@ class Api::V1::StatsController < ApplicationController
 
     @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
     @historical_departures_per_day = @historical_departure_recent_count * 60 * 24
-    @headways_recent_count = HistoricalDeparture.newer_than(1200).where.not(headway: nil)
-    @nil_headways_recent_count = HistoricalDeparture.newer_than(1200).where(headway: nil)
+    @headways_recent_count = HistoricalDeparture.newer_than(1200).where.not(headway: nil).count
+    @nil_headways_recent_count = HistoricalDeparture.newer_than(1200).where(headway: nil).count
 
     @vehicle_position_count = VehiclePosition.all.count
     @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
