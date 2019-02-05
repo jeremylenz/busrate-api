@@ -12,10 +12,13 @@ class Api::V1::StatsController < ApplicationController
     sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='historical_departures';"
     @historical_departure_count = ActiveRecord::Base.connection.execute(sql).first["estimate"]
 
-    @historical_departure_recent_count = HistoricalDeparture.newer_than(600).count / 10
+    @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
     @historical_departures_per_day = @historical_departure_recent_count * 60 * 24
+    @headways_recent_count = HistoricalDeparture.newer_than(1200).where.not(headway: nil)
+    @nil_headways_recent_count = HistoricalDeparture.newer_than(1200).where(headway: nil)
+
     @vehicle_position_count = VehiclePosition.all.count
-    @vehicle_position_recent_count = VehiclePosition.newer_than(600).count / 10
+    @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
     @vehicle_count = Vehicle.all.count
 
     if @mta_api_call_records_count > 0
@@ -28,6 +31,8 @@ class Api::V1::StatsController < ApplicationController
       historical_departures: number_with_delimiter(@historical_departure_count, delimiter: ','),
       historical_departures_per_minute: @historical_departure_recent_count,
       historical_departures_per_day: @historical_departures_per_day,
+      last_20_min_headways_count: @headways_recent_count,
+      last_20_min_nil_headways: @nil_headways_recent_count,
       vehicle_positions: @vehicle_position_count,
       vehicle_positions_per_minute: @vehicle_position_recent_count,
       bus_lines: @bus_line_count,
