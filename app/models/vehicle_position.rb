@@ -34,7 +34,7 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.purge_duplicates_newer_than(age_in_secs)
-    min_id = VehiclePosition.newer_than(age_in_secs).order(created_at: :asc).ids.first
+    min_id = VehiclePosition.newer_than(age_in_secs).order(created_at: :asc).ids.first || 0
     logger.info "Purging duplicate VehiclePositions with id > #{min_id}"
     sql = <<~HEREDOC
       DELETE FROM vehicle_positions T1
