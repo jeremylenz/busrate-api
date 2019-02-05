@@ -282,6 +282,7 @@ class HistoricalDeparture < ApplicationRecord
     ids_to_purge = []
     expired_count = 0
     addl_count = 0
+    dup_count = 0
     vehicle_positions.each do |veh_ref, vp_list|
       sorted_vps = vp_list.sort_by(&:timestamp) # guarantee that the oldest vehicle_position is first
 
@@ -291,7 +292,12 @@ class HistoricalDeparture < ApplicationRecord
 
         # Compare it with every other position to see if we can make a departure
         sorted_vps.each do |new_vehicle_position|
-          expired_count += 1 if expired_dep?(old_vehicle_position, new_vehicle_position)
+          # expired_count += 1 if expired_dep?(old_vehicle_position, new_vehicle_position)
+          if VehiclePosition.is_duplicate?(old_vehicle_position, new_vehicle_position)
+            new_vehicle_position.delete
+            dup_count += 1
+            next
+          end
           if is_departure?(old_vehicle_position, new_vehicle_position)
             addl_count += 1 if old_vehicle_position.arrival_text != "at stop"
             bus_stop = BusStop.find_or_create_by(stop_ref: new_vehicle_position.stop_ref)
@@ -321,6 +327,7 @@ class HistoricalDeparture < ApplicationRecord
 
     logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
     logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures by removing non-unique values"
+    logger.info "Avoided #{dup_count} duplicate departures by destroying duplicate vehicle positions" if dup_count > 0
     # logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "Departure scrape # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"

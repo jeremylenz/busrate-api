@@ -50,6 +50,15 @@ class VehiclePosition < ApplicationRecord
     logger.info result
   end
 
+  def self.is_duplicate?(vp_a, vp_b)
+    if vp_a.timestamp == vp_b.timestamp &&
+      vp_a.vehicle_ref == vp_b.vehicle_ref &&
+      vp_a.stop_ref == vp_b.stop_ref
+      return true
+    end
+    false
+  end
+
   def skinny_attributes
     skinny = self.attributes
     skinny.delete "id"
