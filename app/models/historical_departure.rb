@@ -204,6 +204,13 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "grab_and_go # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
+  def self.wait_and_grab
+    logger.info "Waiting 30 seconds"
+    sleep(30)
+    logger.info "Starting grab_all after waiting"
+    grab_all
+  end
+
   def self.is_departure?(old_vehicle_position, new_vehicle_position)
     return false if old_vehicle_position.blank? || new_vehicle_position.blank?
     # If all of the following rules apply, we consider it a departure:
