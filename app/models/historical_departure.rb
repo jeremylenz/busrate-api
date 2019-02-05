@@ -260,6 +260,8 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.scrape_all
+    logger.info "Purging duplicate VehiclePositions < 4 minutes old"
+    VehiclePosition.purge_duplicates_newer_than(240)
     self.scrape_from(VehiclePosition.newer_than(240))
   end
 
