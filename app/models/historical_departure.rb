@@ -181,21 +181,21 @@ class HistoricalDeparture < ApplicationRecord
 
     # Use Fast Inserter gem
     # logger.info "Using fast inserter gem"
-    # new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
+    # fast_insert_objects('vehicle_positions', object_list)
 
-    # Use regular ActiveRecord
+    # Use regular ActiveRecord - checks for dups before saving
     logger.info "Using Active Record"
-    new_vehicle_positions = object_list.map do |vp_attrs|
+    error_count = 0
+    object_list.each do |vp_attrs|
       new_vp = VehiclePosition.create(vp_attrs)
       if new_vp.errors.any?
-        logger.info new_vp.errors.full_messages.join("; ")
+        error_count += 1
       end
       new_vp
     end
 
+    logger.info "#{error_count} duplicate vehicle positions avoided"
     logger.info "grab_all # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds."
-
-    new_vehicle_positions
   end
 
   def self.grab_and_go
