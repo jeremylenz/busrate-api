@@ -400,6 +400,12 @@ class HistoricalDeparture < ApplicationRecord
           non_nils_skipped += batch_result[:non_nils_skipped]
           batch_elapsed_time += batch_result[:elapsed_time]
           update_time += batch_result[:update_time]
+
+          # check time limit
+          if (Time.current - start_time) > 300
+            logger.warn "calculate_headways took > 300 seconds; aborting"
+            break
+          end
           print "total_count: #{total_count} | successful_count: #{successful_count} | current batch length: #{current_batch.length} \r"
           if (total_count % 2000) < current_batch.length
             print "Doing garbage collection...                                                                                \r"
