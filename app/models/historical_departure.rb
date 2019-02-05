@@ -502,10 +502,9 @@ class HistoricalDeparture < ApplicationRecord
     chunk1 = HistoricalDeparture.newer_than(14_400).older_than(10_800)
     chunk2 = HistoricalDeparture.newer_than(10_801).older_than(7_200)
     chunk3 = HistoricalDeparture.newer_than(7_201).older_than(3_600)
-    chunk4 = HistoricalDeparture.newer_than(3_601)
-    chunk5 = HistoricalDeparture.newer_than(13_200).older_than(9_000)
-    chunk6 = HistoricalDeparture.newer_than(9_001).older_than(5_400)
-    chunk7 = HistoricalDeparture.newer_than(5_401).older_than(1_800)
+    chunk4 = HistoricalDeparture.newer_than(13_200).older_than(9_000)
+    chunk5 = HistoricalDeparture.newer_than(9_001).older_than(5_400)
+    chunk6 = HistoricalDeparture.newer_than(5_401).older_than(1_800)
     logger.info "DB queries complete after #{(Time.current - start_time).round(2)} seconds"
 
     logger.info "Processing chunk 1"
@@ -520,8 +519,6 @@ class HistoricalDeparture < ApplicationRecord
     calculate_headways(chunk5)
     logger.info "Processing chunk 6"
     calculate_headways(chunk6)
-    logger.info "Processing chunk 7"
-    calculate_headways(chunk7)
     logger.info "chunk_headways complete after #{(Time.current - start_time).round(2)} seconds"
   end
 
