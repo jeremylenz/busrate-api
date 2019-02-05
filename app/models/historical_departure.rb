@@ -15,6 +15,7 @@ class HistoricalDeparture < ApplicationRecord
   validates :headway, numericality: {greater_than: 0, allow_nil: true}
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
+  scope :older_than, -> (num) { where(["departure_time < ?", num.seconds.ago]) }
 
   def self.for_route_and_stop(line_ref, stop_ref)
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
@@ -484,6 +485,45 @@ class HistoricalDeparture < ApplicationRecord
       update_time: update_time,
     }
   end # of process_batch
+
+  def self.chunk_headways
+    # Take all headways less than 4 hours old
+    # Divide them into chunks and process
+    # 4 hrs: 14_400 seconds
+    # 3.5 hrs: 13_200
+    # 3 hrs: 10_800
+    # 2.5 hrs: 9_000
+    # 2 hrs: 7_200
+    # 90 min: 5_400
+    # 1 hr: 3_600
+
+    start_time = Time.current
+    logger.info "Chunking headways..."
+    chunk1 = HistoricalDeparture.newer_than(14_400).older_than(10_800)
+    chunk2 = HistoricalDeparture.newer_than(10_801).older_than(7_200)
+    chunk3 = HistoricalDeparture.newer_than(7_201).older_than(3_600)
+    chunk4 = HistoricalDeparture.newer_than(3_601)
+    chunk5 = HistoricalDeparture.newer_than(13_200).older_than(9_000)
+    chunk6 = HistoricalDeparture.newer_than(9_001).older_than(5_400)
+    chunk7 = HistoricalDeparture.newer_than(5_401).older_than(1_800)
+    logger.info "DB queries complete after #{(Time.current - start_time).round(2)} seconds"
+
+    logger.info "Processing chunk 1"
+    calculate_headways(chunk1)
+    logger.info "Processing chunk 2"
+    calculate_headways(chunk2)
+    logger.info "Processing chunk 3"
+    calculate_headways(chunk3)
+    logger.info "Processing chunk 4"
+    calculate_headways(chunk4)
+    logger.info "Processing chunk 5"
+    calculate_headways(chunk5)
+    logger.info "Processing chunk 6"
+    calculate_headways(chunk6)
+    logger.info "Processing chunk 7"
+    calculate_headways(chunk7)
+    logger.info "chunk_headways complete after #{(Time.current - start_time).round(2)} seconds"
+  end
 
   # Instance methods
 
