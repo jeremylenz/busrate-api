@@ -524,11 +524,21 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "chunk_headways complete after #{(Time.current - start_time).round(2)} seconds"
   end
 
+  def self.is_duplicate?(dep_a, dep_b)
+    if dep_a.departure_time == dep_b.departure_time
+      && dep_a.vehicle_ref == dep_b.vehicle_ref
+      && dep_a.stop_ref == dep_b.stop_ref
+      return true
+    end
+    false
+  end
+
   # Instance methods
 
   def headway_in_minutes
     return nil if self.headway.blank?
     (self.headway / 60).round
   end
+
 
 end
