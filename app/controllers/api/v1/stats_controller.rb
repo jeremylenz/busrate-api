@@ -12,10 +12,10 @@ class Api::V1::StatsController < ApplicationController
     sql = "SELECT reltuples::BIGINT AS estimate FROM pg_class WHERE relname='historical_departures';"
     @historical_departure_count = ActiveRecord::Base.connection.execute(sql).first["estimate"]
 
-    @historical_departure_recent_count = HistoricalDeparture.newer_than(300).count / 5
+    @historical_departure_recent_count = HistoricalDeparture.newer_than(600).count / 10
     @historical_departures_per_day = @historical_departure_recent_count * 60 * 24
     @vehicle_position_count = VehiclePosition.all.count
-    @vehicle_position_recent_count = VehiclePosition.newer_than(300).count / 5
+    @vehicle_position_recent_count = VehiclePosition.newer_than(600).count / 10
     @vehicle_count = Vehicle.all.count
 
     if @mta_api_call_records_count > 0
