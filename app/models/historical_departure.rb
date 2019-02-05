@@ -519,6 +519,8 @@ class HistoricalDeparture < ApplicationRecord
     calculate_headways(chunk5)
     logger.info "Processing chunk 6"
     calculate_headways(chunk6)
+    logger.info "chunking complete after #{(Time.current - start_time).round(2)} seconds"
+    calculate_headways(HistoricalDeparture.newer_than(14_400).older_than(3_600))
     logger.info "chunk_headways complete after #{(Time.current - start_time).round(2)} seconds"
   end
 
