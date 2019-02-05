@@ -327,7 +327,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.purge_duplicates_newer_than(age_in_secs)
-    min_id = HistoricalDeparture.newer_than(age_in_secs).order(created_at: :desc).ids.first
+    min_id = HistoricalDeparture.newer_than(age_in_secs).order(created_at: :asc).ids.first
     logger.info "Purging duplicate HistoricalDepartures with id > #{min_id}"
     sql = <<~HEREDOC
       DELETE FROM historical_departures T1
