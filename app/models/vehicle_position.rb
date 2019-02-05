@@ -31,6 +31,23 @@ class VehiclePosition < ApplicationRecord
     logger.info "#{dup_count} duplicate VehiclePositions counted"
   end
 
+  def self.purge_duplicates_newer_than(age_in_secs)
+    min_id = VehiclePosition.newer_than(age_in_secs).order(created_at: :asc).ids.first
+    logger.info "Purging duplicate VehiclePositions with id > #{min_id}"
+    sql = <<~HEREDOC
+      DELETE FROM vehicle_positions T1
+      USING vehicle_positions T2
+      WHERE T1.id > T2.id
+      AND T1.id > #{min_id}
+      AND T1.timestamp = T2.timestamp
+      AND T1.stop_ref = T2.stop_ref
+      AND T1.vehicle_ref = T2.vehicle_ref
+      ;
+    HEREDOC
+    result = ActiveRecord::Base.connection.execute(sql).first
+    logger.info result
+  end
+
   def skinny_attributes
     skinny = self.attributes
     skinny.delete "id"
