@@ -22,7 +22,7 @@ class VehiclePosition < ApplicationRecord
 
   def self.purge_older_than(seconds)
     records_to_purge = self.older_than(seconds).ids.take(65_535)
-    logger.info "Purging #{records_to_purge.length} VehiclePositions"
+    logger.info "Purging #{records_to_purge.length} old VehiclePositions"
     self.delete(records_to_purge)
     logger.info "#{VehiclePosition.all.count} VehiclePositions remaining in database"
     self.count_duplicates
