@@ -4,6 +4,8 @@ class VehiclePosition < ApplicationRecord
   belongs_to :bus_line
   belongs_to :bus_stop
 
+  validates_uniqueness_of :timestamp, scope: [:stop_ref, :vehicle_ref], message: "must have a unique vehicle_ref and stop_ref for a given timestamp"
+
   scope :at_stop, -> { where(arrival_text: "at stop") }
   scope :older_than, -> (num) { where(["timestamp < ?", num.seconds.ago]) }
   scope :newer_than, -> (num) { where(["timestamp > ?", num.seconds.ago]) }

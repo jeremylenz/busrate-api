@@ -178,7 +178,20 @@ class HistoricalDeparture < ApplicationRecord
 
     # Process the data and write to db
     object_list = VehiclePosition.extract_from_response(response)
-    new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
+
+    # Use Fast Inserter gem
+    # logger.info "Using fast inserter gem"
+    # new_vehicle_positions = fast_insert_objects('vehicle_positions', object_list)
+
+    # Use regular ActiveRecord
+    logger.info "Using Active Record"
+    new_vehicle_positions = object.list.map do |vp_attrs|
+      new_vp = VehiclePosition.create(vp_attrs)
+      if new_vp.errors.any?
+        logger.info new_vp.errors.full_messages.join("; ")
+      end
+      new_vp
+    end
 
     logger.info "grab_all # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds."
 
