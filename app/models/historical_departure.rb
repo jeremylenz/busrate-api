@@ -137,7 +137,6 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.grab_all
     # Call MTA ALL_VEHICLES_URL endpoint and make vehicle positions.
-    # Runs every 30 seconds via grab_and_go.
     # Per the MTA, must not run more than once every 30 seconds.
     start_time = Time.current
     logger = Logger.new('log/grab.log')
@@ -187,6 +186,8 @@ class HistoricalDeparture < ApplicationRecord
   def self.grab_and_go
     # Runs every 1 minute.  Runs grab_all either once or twice,
     # depending on if the first one takes > 30 seconds.
+    # No longer in use
+
     start_time = Time.current
     logger = Logger.new('log/grab.log')
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
@@ -205,6 +206,8 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.wait_and_grab
+    # Wait 30 seconds, then run grab_all.  This is so grab_all can run every 30 seconds, even though
+    # the minimum interval supported by cron is 1 minute.
     logger = Logger.new('log/grab.log')
     logger.info "Waiting 30 seconds"
     sleep(30)
