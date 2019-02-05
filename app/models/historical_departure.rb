@@ -206,12 +206,12 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "grab_and_go # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
-  def self.wait_and_grab
+  def self.wait_and_grab(wait_time = 32)
     # Wait 30 seconds, then run grab_all.  This is so grab_all can run every 30 seconds, even though
     # the minimum interval supported by cron is 1 minute.
     logger = Logger.new('log/grab.log')
-    logger.info "Waiting 32 seconds"
-    sleep(32)
+    logger.info "Waiting #{wait_time} seconds"
+    sleep(wait_time)
     logger.info "Starting grab_all after waiting"
     grab_all
   end
