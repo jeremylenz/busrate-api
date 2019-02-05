@@ -538,9 +538,9 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.is_duplicate?(dep_a, dep_b)
-    if dep_a.departure_time == dep_b.departure_time
-      && dep_a.vehicle_ref == dep_b.vehicle_ref
-      && dep_a.stop_ref == dep_b.stop_ref
+    if dep_a.departure_time == dep_b.departure_time &&
+      dep_a.vehicle_ref == dep_b.vehicle_ref &&
+      dep_a.stop_ref == dep_b.stop_ref
       return true
     end
     false
