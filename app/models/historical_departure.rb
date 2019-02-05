@@ -205,6 +205,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.wait_and_grab
+    logger = Logger.new('log/grab.log')
     logger.info "Waiting 30 seconds"
     sleep(30)
     logger.info "Starting grab_all after waiting"
