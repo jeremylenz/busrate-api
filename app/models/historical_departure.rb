@@ -185,7 +185,7 @@ class HistoricalDeparture < ApplicationRecord
 
     # Use regular ActiveRecord
     logger.info "Using Active Record"
-    new_vehicle_positions = object.list.map do |vp_attrs|
+    new_vehicle_positions = object_list.map do |vp_attrs|
       new_vp = VehiclePosition.create(vp_attrs)
       if new_vp.errors.any?
         logger.info new_vp.errors.full_messages.join("; ")
