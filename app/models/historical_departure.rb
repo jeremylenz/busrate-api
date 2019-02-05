@@ -263,7 +263,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Purging duplicate VehiclePositions < 4 minutes old"
     existing_count = VehiclePosition.newer_than(240).count
     VehiclePosition.purge_duplicates_newer_than(240)
-    logger.info "Purged #{VehiclePosition.newer_than(240).count - existing_count} duplicate VehiclePositions"
+    logger.info "Purged #{existing_count - VehiclePosition.newer_than(240).count} duplicate VehiclePositions"
     self.scrape_from(VehiclePosition.newer_than(240))
   end
 
