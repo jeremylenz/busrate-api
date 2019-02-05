@@ -102,10 +102,20 @@ class VehiclePosition < ApplicationRecord
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'].present?
     return [] unless response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0].present?
     vehicle_activity = response['Siri']['ServiceDelivery']['VehicleMonitoringDelivery'][0]['VehicleActivity']
+    logger.info "VehiclePosition.extract_from_response starting for #{vehicle_activity.length} vehicle positions"
     # duplicates_avoided = 0
+    begin
     new_vehicle_position_params = vehicle_activity.map do |data|
+      if (Time.current - start_time) > 300
+        logger.warn "VehiclePosition.extract_from_response took > 300 seconds; aborting"
+        break
+      end
       VehiclePosition.extract_single(data)
     end.compact
+    rescue NoMethodError
+      # if the map is aborted by the break, it will return nil so .compact will throw a NoMethodError.
+      new_vehicle_position_params = []
+    end
 
     new_vehicle_count = Vehicle.all.count - existing_vehicle_count
     new_stop_count = BusStop.all.count - existing_stop_count
