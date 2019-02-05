@@ -210,8 +210,8 @@ class HistoricalDeparture < ApplicationRecord
     # Wait 30 seconds, then run grab_all.  This is so grab_all can run every 30 seconds, even though
     # the minimum interval supported by cron is 1 minute.
     logger = Logger.new('log/grab.log')
-    logger.info "Waiting 30 seconds"
-    sleep(30)
+    logger.info "Waiting 32 seconds"
+    sleep(32)
     logger.info "Starting grab_all after waiting"
     grab_all
   end
