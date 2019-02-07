@@ -383,7 +383,6 @@ class HistoricalDeparture < ApplicationRecord
     # Delete pre-existing duplicates
     unless ids_to_purge.length == 0
       logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
-      logger.info "#{ids_to_purge.first(20).inspect}"
       self.delete(ids_to_purge)
     end
 
