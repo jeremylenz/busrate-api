@@ -358,13 +358,13 @@ class HistoricalDeparture < ApplicationRecord
     already_seen = {}
 
     # Create a list of existing IDs to delete
-    ids_to_delete = []
+    ids_to_purge = []
 
     # Move through the object list and check for duplicates
     object_list.each do |dep|
       tracking_key = "#{dep["departure_time"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
-        ids_to_delete << dep["id"] unless dep["id"].nil?
+        ids_to_purge << dep["id"] unless dep["id"].nil?
         logger.info "Tracking key: #{tracking_key}"
         logger.info "Original: #{already_seen[tracking_key]}"
         logger.info "Duplicate prevented: #{dep}"
@@ -375,8 +375,8 @@ class HistoricalDeparture < ApplicationRecord
 
     # Delete pre-existing duplicates
     logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
-    logger.info "#{ids_to_delete.first(20).inspect + ["..."]}"
-    self.delete(ids_to_delete)
+    logger.info "#{ids_to_purge.first(20).inspect + ["..."]}"
+    self.delete(ids_to_purge)
 
     # Log results
     logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
