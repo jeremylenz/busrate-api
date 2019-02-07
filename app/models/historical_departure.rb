@@ -430,7 +430,7 @@ class HistoricalDeparture < ApplicationRecord
       ;
     HEREDOC
     result = ActiveRecord::Base.connection.execute(sql)
-    logger.info result
+    logger.info result.first
     logger.info "HistoricalDeparture.purge_duplicates_newer_than complete after #{(Time.current - start_time).round(2)} seconds"
   end
 
