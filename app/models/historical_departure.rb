@@ -179,14 +179,17 @@ class HistoricalDeparture < ApplicationRecord
     # Process the data and write to db
     object_list = VehiclePosition.extract_from_response(response)
 
+    # Prevent duplicates
+    uniq_object_list = VehiclePosition.prevent_duplicates(object_list, VehiclePosition.newer_than(1_200).reload)
+
     # Use Fast Inserter gem
     logger.info "Using fast inserter gem"
-    fast_insert_objects('vehicle_positions', object_list)
+    fast_insert_objects('vehicle_positions', uniq_object_list)
 
     # Use regular ActiveRecord - checks for dups before saving
     # logger.info "Using Active Record to insert vehicle positions"
     # error_count = 0
-    # object_list.each do |vp_attrs|
+    # uniq_object_list.each do |vp_attrs|
     #   new_vp = VehiclePosition.create(vp_attrs)
     #   if new_vp.errors.any?
     #     error_count += 1
@@ -346,7 +349,6 @@ class HistoricalDeparture < ApplicationRecord
     # Additionally, if duplicates are found within the existing HistoricalDepartures, delete them.
 
     start_time = Time.current
-    logger = Logger.new('log/grab.log')
     logger.info "HistoricalDeparture prevent_duplicates starting..."
 
     # Coming in, we have an array of hashes and an ActiveRecord::Relation.
