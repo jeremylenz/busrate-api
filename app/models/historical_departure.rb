@@ -326,7 +326,7 @@ class HistoricalDeparture < ApplicationRecord
 
     ids_to_purge.uniq!
 
-    departure_object_list = prevent_duplicates(departures.compact.uniq, HistoricalDeparture.newer_than(1_200)
+    departure_object_list = self.prevent_duplicates(departures.compact.uniq, HistoricalDeparture.newer_than(1_200))
 
     HistoricalDeparture::fast_insert_objects('historical_departures', departure_object_list)
     VehiclePosition.delete(ids_to_purge.take(65_535))
