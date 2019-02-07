@@ -349,11 +349,11 @@ class HistoricalDeparture < ApplicationRecord
     logger = Logger.new('log/grab.log')
     logger.info "prevent_duplicates starting..."
 
-    puts dep_objects_to_be_added.first(5).map { |d| "#{d["departure_time"]}"}
-    puts existing_historical_departures.first(5).map(&:attributes).map { |d| "#{d[:departure_time]}" }
+    puts dep_objects_to_be_added.first(5).map { |d| "#{d[:departure_time]}"}
+    puts existing_historical_departures.first(5).map(&:attributes).map { |d| "#{d["departure_time"]}" }
 
-    puts dep_objects_to_be_added.first(5).map { |d| "#{d["departure_time"].to_i }"}
-    puts existing_historical_departures.first(5).map(&:attributes).map { |d| "#{d[:departure_time].to_i }" }
+    puts dep_objects_to_be_added.first(5).map { |d| "#{d[:departure_time].to_i }"}
+    puts existing_historical_departures.first(5).map(&:attributes).map { |d| "#{d["departure_time"].to_i }" }
 
     # Coming in, we have an array of hashes and an ActiveRecord::Relation.
     # Combine both lists into one array of hashes, with the existing departures first.
