@@ -326,7 +326,7 @@ class HistoricalDeparture < ApplicationRecord
 
     ids_to_purge.uniq!
 
-    departure_object_list = self.prevent_duplicates(departures.compact.uniq, HistoricalDeparture.newer_than(1_200))
+    departure_object_list = self.prevent_duplicates(departures.compact.uniq, HistoricalDeparture.newer_than(1_200).reload)
 
     HistoricalDeparture::fast_insert_objects('historical_departures', departure_object_list)
     VehiclePosition.delete(ids_to_purge.take(65_535))
@@ -349,12 +349,6 @@ class HistoricalDeparture < ApplicationRecord
     logger = Logger.new('log/grab.log')
     logger.info "prevent_duplicates starting..."
 
-    puts dep_objects_to_be_added.first(5).map { |d| "#{d[:departure_time]}"}
-    puts existing_historical_departures.first(5).map(&:attributes).map { |d| "#{d["departure_time"]}" }
-
-    puts dep_objects_to_be_added.first(5).map { |d| "#{d[:departure_time].to_i }"}
-    puts existing_historical_departures.first(5).map(&:attributes).map { |d| "#{d["departure_time"].to_i }" }
-
     # Coming in, we have an array of hashes and an ActiveRecord::Relation.
     # Combine both lists into one array of hashes, with the existing departures first.
     # Use transform_keys on dep_objects_to_be_added to ensure that all keys are strings and not symbols.
@@ -370,7 +364,7 @@ class HistoricalDeparture < ApplicationRecord
 
     # Move through the object list and check for duplicates
     object_list.each do |dep|
-      tracking_key = "#{dep["departure_time"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+      tracking_key = "#{dep["departure_time"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
         dup_count += 1
         print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
