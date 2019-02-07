@@ -396,7 +396,10 @@ class HistoricalDeparture < ApplicationRecord
 
     # Log results
     prevented_count = dep_objects_to_be_added.length - result.length
-    logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures" unless prevented_count == 0
+    unless prevented_count == 0
+      logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures"
+      logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
+    end
     logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
 
     result
@@ -463,7 +466,7 @@ class HistoricalDeparture < ApplicationRecord
     # Here we're using the postgresql_cursor gem (each_row and each_instance methods)
     # to process all of them, hopefully without running out of memory or getting the process killed.
     HistoricalDeparture.lock.transaction do
-      logger.info "Processing #{length} departures"
+      logger.info "Adding headways to #{length} departures..."
 
       current_batch = []
       current_batch_stop_ref = nil

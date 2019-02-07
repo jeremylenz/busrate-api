@@ -69,7 +69,7 @@ class VehiclePosition < ApplicationRecord
 
     # Delete pre-existing duplicates
     unless ids_to_purge.length == 0
-      logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
+      logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate VehiclePositions"
       logger.info "#{ids_to_purge.first(20).inspect}"
       self.delete(ids_to_purge)
     end
@@ -81,7 +81,10 @@ class VehiclePosition < ApplicationRecord
 
     # Log results
     prevented_count = objects_to_be_added.length - result.length
-    logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate VehiclePositions" unless prevented_count == 0
+    unless prevented_count == 0
+      logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate VehiclePositions"
+      logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
+    end
     logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
 
     result
