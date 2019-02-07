@@ -347,7 +347,7 @@ class HistoricalDeparture < ApplicationRecord
 
     start_time = Time.current
     logger = Logger.new('log/grab.log')
-    logger.info "prevent_duplicates starting..."
+    logger.info "HistoricalDeparture prevent_duplicates starting..."
 
     # Coming in, we have an array of hashes and an ActiveRecord::Relation.
     # Combine both lists into one array of hashes, with the existing departures first.
@@ -381,9 +381,11 @@ class HistoricalDeparture < ApplicationRecord
     puts
 
     # Delete pre-existing duplicates
-    logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures" unless ids_to_purge.length == 0
-    logger.info "#{ids_to_purge.first(20).inspect}"
-    self.delete(ids_to_purge)
+    unless ids_to_purge.length == 0
+      logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
+      logger.info "#{ids_to_purge.first(20).inspect}"
+      self.delete(ids_to_purge)
+    end
 
     # Assemble result
     # Return the unique list of values, but only keep values having no ID.
