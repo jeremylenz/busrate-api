@@ -26,7 +26,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
 
     @historical_departures = HistoricalDeparture.for_route_and_stop(line_ref, stop_ref)
     logger.info "preventing duplicates"
-    HistoricalDeparture.prevent_duplicates([], @historical_departures)
+    HistoricalDeparture.prevent_duplicates([], @historical_departures) # when this gets too slow we can just do it for recents and previous, not all
     @historical_departures.reload
 
     start_time = Time.current
