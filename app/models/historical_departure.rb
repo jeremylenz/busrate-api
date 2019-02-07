@@ -260,10 +260,12 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.scrape_all
+    # Before scraping, remove duplicate VehiclePositions to try to prevent creating duplicate departures
     logger.info "Purging duplicate VehiclePositions < 4 minutes old"
     existing_count = VehiclePosition.newer_than(240).count
     VehiclePosition.purge_duplicates_newer_than(240)
     logger.info "Purged #{existing_count - VehiclePosition.newer_than(240).count} duplicate VehiclePositions"
+
     self.scrape_from(VehiclePosition.newer_than(240))
   end
 
@@ -274,13 +276,11 @@ class HistoricalDeparture < ApplicationRecord
     identifier = start_time.to_f.to_s.split(".")[1].first(4)
     logger.info "Starting departure scrape # #{identifier} at #{start_time.in_time_zone("EST")}"
 
-    existing_count = HistoricalDeparture.all.count
     departures = []
-    departure_ids = [] # keep track so we don't make duplicates
 
     vehicle_positions = vehicle_positions.group_by(&:vehicle_ref)
     # "MTABC_3742"=>[#<VehiclePosition ...>, #<VehiclePosition ...>, #<VehiclePosition ...>]
-    # logger.info "Filtering #{vehicle_positions.length} vehicles"
+    # logger.info "Filtering #{vehicle_positions.length} VehiclePositions"
     vehicle_positions.delete_if { |k, v| v.length < 2 }
     # logger.info "Filtered to #{vehicle_positions.length} vehicles with 2+ positions"
     ids_to_purge = []
@@ -326,16 +326,64 @@ class HistoricalDeparture < ApplicationRecord
 
     ids_to_purge.uniq!
 
-    HistoricalDeparture::fast_insert_objects('historical_departures', departures.compact.uniq)
+    departure_object_list = prevent_duplicates(departures.compact.uniq, HistoricalDeparture.newer_than(1_200)
+
+    HistoricalDeparture::fast_insert_objects('historical_departures', departure_object_list)
     VehiclePosition.delete(ids_to_purge.take(65_535))
 
-    logger.info "!------------- #{HistoricalDeparture.all.count - existing_count} historical departures created -------------!"
+    logger.info "!------------- #{departure_object_list.length} historical departures created -------------!"
     logger.info "Avoided #{departures.compact.length - departures.compact.uniq.length} duplicate departures by removing non-unique values"
     logger.info "Avoided #{dup_count} duplicate departures by destroying duplicate vehicle positions" if dup_count > 0
     # logger.info "#{expired_count} departures not created because vehicle positions were > 90 seconds apart" unless expired_count == 0
     logger.info "#{ids_to_purge.length} old vehicle positions purged"
     logger.info "Departure scrape # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"
 
+  end
+
+  def self.prevent_duplicates(dep_objects_to_be_added, existing_historical_departures)
+    # Pass in a list of objects from which HistoricalDepartures will be created, and compare them to a list of existing HistoricalDeparture records.
+    # Return only the objects which would not be duplicates.
+    # Additionally, if duplicates are found within the existing HistoricalDepartures, delete them.
+
+    start_time = Time.current
+    logger = Logger.new('log/grab.log')
+    logger.info "prevent_duplicates starting..."
+
+    # Coming in, we have an array of hashes and an ActiveRecord::Relation.
+    # Combine both lists into one array of hashes, with the existing departures first.
+    # Use transform_keys on dep_objects_to_be_added to ensure that all keys are strings and not symbols.
+    object_list = existing_historical_departures.map(&:attributes) + dep_objects_to_be_added.map { |d| d.transform_keys { |k| k.to_s } }
+
+    # Create a tracking hash to remember which departures we've already seen
+    already_seen = {}
+
+    # Create a list of existing IDs to delete
+    ids_to_delete = []
+
+    # Move through the object list and check for duplicates
+    object_list.each do |dep|
+      tracking_key = "#{dep["departure_time"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+      if already_seen[tracking_key]
+        ids_to_delete << dep["id"] unless dep["id"].nil?
+        logger.info "Tracking key: #{tracking_key}"
+        logger.info "Original: #{already_seen[tracking_key]}"
+        logger.info "Duplicate prevented: #{dep}"
+      else
+        already_seen[tracking_key] = dep
+      end
+    end
+
+    # Delete pre-existing duplicates
+    logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
+    logger.info "#{ids_to_delete.first(20).inspect + ["..."]}"
+    self.delete(ids_to_delete)
+
+    # Log results
+    logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
+
+    # Return the unique list of values, but only keep values having no ID.
+    # This ensures we don't try to re-create existing records.
+    already_seen.values.select { |dep| dep["id"].nil? }
   end
 
   def self.count_duplicates
