@@ -360,20 +360,24 @@ class HistoricalDeparture < ApplicationRecord
     # Create a list of existing IDs to delete
     ids_to_purge = []
 
+    dup_count = 0
+
     # Move through the object list and check for duplicates
     object_list.each do |dep|
       tracking_key = "#{dep["departure_time"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
-        print "already seen: #{tracking_key}\r"
+        dup_count += 1
+        print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
         ids_to_purge << dep["id"] unless dep["id"].nil?
         logger.info "Tracking key: #{tracking_key}"
         logger.info "Original: #{already_seen[tracking_key]}"
         logger.info "Duplicate prevented: #{dep}"
       else
-        print "new: #{tracking_key}\r"
+        print "dups: #{dup_count} | new: #{tracking_key}            \r"
         already_seen[tracking_key] = dep
       end
     end
+    logger.info "#{dup_count} duplicates found"
     puts
 
     # Delete pre-existing duplicates
