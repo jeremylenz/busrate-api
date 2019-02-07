@@ -418,6 +418,7 @@ class HistoricalDeparture < ApplicationRecord
   def self.purge_duplicates_newer_than(age_in_secs)
     min_id = HistoricalDeparture.newer_than(age_in_secs).order(created_at: :asc).ids.first
     logger.info "Purging duplicate HistoricalDepartures with id > #{min_id}"
+    start_time = Time.current
     sql = <<~HEREDOC
       DELETE FROM historical_departures T1
       USING historical_departures T2
@@ -428,8 +429,9 @@ class HistoricalDeparture < ApplicationRecord
       AND T1.id > #{min_id}
       ;
     HEREDOC
-    result = ActiveRecord::Base.connection.execute(sql).first
+    result = ActiveRecord::Base.connection.execute(sql)
     logger.info result
+    logger.info "HistoricalDeparture.purge_duplicates_newer_than complete after #{(Time.current - start_time).round(2)} seconds"
   end
 
   def self.update_count
