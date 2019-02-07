@@ -264,10 +264,11 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.scrape_all
     # Before scraping, remove duplicate VehiclePositions to try to prevent creating duplicate departures
-    logger.info "Purging duplicate VehiclePositions < 4 minutes old"
+    # logger.info "Purging duplicate VehiclePositions < 4 minutes old"
     existing_count = VehiclePosition.newer_than(240).count
     VehiclePosition.purge_duplicates_newer_than(240)
-    logger.info "Purged #{existing_count - VehiclePosition.newer_than(240).count} duplicate VehiclePositions"
+    purge_count = existing_count - VehiclePosition.newer_than(240).count
+    logger.info "Purged #{purge_count} duplicate VehiclePositions" unless purge_count == 0
 
     self.scrape_from(VehiclePosition.newer_than(240))
   end
