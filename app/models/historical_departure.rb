@@ -364,17 +364,20 @@ class HistoricalDeparture < ApplicationRecord
     object_list.each do |dep|
       tracking_key = "#{dep["departure_time"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
+        print "already seen: #{tracking_key}\r"
         ids_to_purge << dep["id"] unless dep["id"].nil?
         logger.info "Tracking key: #{tracking_key}"
         logger.info "Original: #{already_seen[tracking_key]}"
         logger.info "Duplicate prevented: #{dep}"
       else
+        print "new: #{tracking_key}\r"
         already_seen[tracking_key] = dep
       end
     end
+    puts
 
     # Delete pre-existing duplicates
-    logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
+    logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures" unless ids_to_purge.length == 0
     logger.info "#{ids_to_purge.first(20).inspect}"
     self.delete(ids_to_purge)
 
