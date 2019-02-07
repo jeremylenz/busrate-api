@@ -367,13 +367,13 @@ class HistoricalDeparture < ApplicationRecord
       tracking_key = "#{dep["departure_time"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
         dup_count += 1
-        print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
+        puts "dups: #{dup_count} | already seen: #{tracking_key}                \r"
         ids_to_purge << dep["id"] unless dep["id"].nil?
         logger.info "Tracking key: #{tracking_key}"
         logger.info "Original: #{already_seen[tracking_key]}"
         logger.info "Duplicate prevented: #{dep}"
       else
-        print "dups: #{dup_count} | new: #{tracking_key}            \r"
+        puts "dups: #{dup_count} | new: #{tracking_key}            \r"
         already_seen[tracking_key] = dep
       end
     end
