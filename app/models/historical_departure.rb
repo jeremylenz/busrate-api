@@ -382,6 +382,8 @@ class HistoricalDeparture < ApplicationRecord
     self.delete(ids_to_purge)
 
     # Assemble result
+    # Return the unique list of values, but only keep values having no ID.
+    # This ensures we don't try to re-create existing records.
     result = already_seen.values.select { |dep| dep["id"].nil? }
 
     # Log results
@@ -389,9 +391,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures" unless prevented_count == 0
     logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
 
-    # Return the unique list of values, but only keep values having no ID.
-    # This ensures we don't try to re-create existing records.
-
+    result
   end
 
   def self.count_duplicates
