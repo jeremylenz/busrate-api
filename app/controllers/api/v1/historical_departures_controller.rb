@@ -25,8 +25,10 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
 
 
     @historical_departures = HistoricalDeparture.for_route_and_stop(line_ref, stop_ref)
+    HistoricalDeparture.prevent_duplicates([], @historical_departures)
+    start_time = Time.current
     headways_updated = HistoricalDeparture.process_batch(@historical_departures)[:successful_count]
-    logger.info "Updated #{headways_updated} headways"
+    logger.info "historical_departures_controller: Updated #{headways_updated} headways in #{(Time.current - start_time).round(2)} seconds"
 
     # get most recent 8
     today = Time.zone.now.in_time_zone("EST").strftime('%A')
