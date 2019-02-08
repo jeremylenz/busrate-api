@@ -578,7 +578,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.chunk_headways
     # Take all headways less than 4 hours old
-    # Divide them into chunks and process
+    # Divide them into 1 hour chunks and process
     # 4 hrs: 14_400 seconds
     # 3.5 hrs: 13_200
     # 3 hrs: 10_800
@@ -597,19 +597,13 @@ class HistoricalDeparture < ApplicationRecord
     chunk6 = HistoricalDeparture.newer_than(5_401).older_than(1_800)
     logger.info "DB queries complete after #{(Time.current - start_time).round(2)} seconds"
 
-    logger.info "Processing chunk 1"
-    calculate_headways(chunk1)
-    logger.info "Processing chunk 2"
-    calculate_headways(chunk2)
-    logger.info "Processing chunk 3"
-    calculate_headways(chunk3)
-    logger.info "Processing chunk 4"
-    calculate_headways(chunk4)
-    logger.info "Processing chunk 5"
-    calculate_headways(chunk5)
-    logger.info "Processing chunk 6"
-    calculate_headways(chunk6)
-    logger.info "chunking complete after #{(Time.current - start_time).round(2)} seconds"
+    [chunk1, chunk2, chunk3, chunk4, chunk5, chunk6].each_with_index do |chunk, idx|
+      logger.info "Processing chunk #{idx + 1}"
+      calculate_headways(chunk)
+      logger.info "chunk_headways: Waiting..."
+      sleep(30)
+    end
+    # logger.info "chunking complete after #{(Time.current - start_time).round(2)} seconds"
     # calculate_headways(HistoricalDeparture.newer_than(14_400).older_than(3_600))
     logger.info "chunk_headways complete after #{(Time.current - start_time).round(2)} seconds"
   end
