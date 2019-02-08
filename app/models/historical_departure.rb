@@ -600,8 +600,6 @@ class HistoricalDeparture < ApplicationRecord
     [chunk1, chunk2, chunk3, chunk4, chunk5, chunk6].each_with_index do |chunk, idx|
       logger.info "Processing chunk #{idx + 1}"
       calculate_headways(chunk)
-      logger.info "chunk_headways: Waiting..."
-      sleep(30)
     end
     # logger.info "chunking complete after #{(Time.current - start_time).round(2)} seconds"
     # calculate_headways(HistoricalDeparture.newer_than(14_400).older_than(3_600))
