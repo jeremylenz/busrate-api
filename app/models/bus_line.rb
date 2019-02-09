@@ -7,6 +7,11 @@ class BusLine < ApplicationRecord
   def ordered_stop_refs
     return nil if self.stop_refs_response.nil?
 
+    if self.updated_at < 21.days.ago
+      logger.info "Refreshing stop_refs for #{self.line_ref}"
+      self.update_stop_refs
+    end
+
     response = JSON.parse(self.stop_refs_response)
     stop_groups_data = response['entry']['stopGroupings'][0]['stopGroups']
 
