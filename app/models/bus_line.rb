@@ -5,9 +5,9 @@ class BusLine < ApplicationRecord
   validates_uniqueness_of :line_ref
 
   def ordered_stop_refs
-    return nil if self.response.nil?
+    return nil if self.stop_refs_response.nil?
 
-    response = JSON.parse(self.response)
+    response = JSON.parse(self.stop_refs_response)
     stop_groups_data = response['data']['entry']['stopGroupings'][0]['stopGroups']
 
     stop_groups_data.map do |stop_group|
@@ -30,7 +30,7 @@ class BusLine < ApplicationRecord
 
     if response.code == 200
       self.update(
-        response: JSON.generate(response)
+        stop_refs_response: JSON.generate(response)
       )
     end
   end
