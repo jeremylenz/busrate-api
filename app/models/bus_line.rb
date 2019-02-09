@@ -30,7 +30,7 @@ class BusLine < ApplicationRecord
 
     if response.code == 200
       self.update(
-        stop_refs_response: JSON.generate(response)
+        stop_refs_response: response
       )
     end
   end
