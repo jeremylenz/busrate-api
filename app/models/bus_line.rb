@@ -23,7 +23,7 @@ class BusLine < ApplicationRecord
   def update_stop_refs
     line_ref = self.line_ref
     base_url = "http://bustime.mta.info/api/where/stops-for-route/"
-    url_addon = "#{line_ref}.json?key=#{MTA_BUS_API_KEY}&includePolylines=false&version=2"
+    url_addon = "#{line_ref}.json?key=#{ApplicationController::MTA_BUS_API_KEY}&includePolylines=false&version=2"
     url_addon = ERB::Util.url_encode(url_addon)
     url_addon = base_url + url_addon
     response = HTTParty.get(url_addon)

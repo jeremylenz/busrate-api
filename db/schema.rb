@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_12_31_185714) do
+ActiveRecord::Schema.define(version: 2019_02_09_032954) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -20,6 +20,7 @@ ActiveRecord::Schema.define(version: 2018_12_31_185714) do
     t.json "response"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "stop_refs_response"
   end
 
   create_table "bus_stops", force: :cascade do |t|
