@@ -8,7 +8,7 @@ class BusLine < ApplicationRecord
     return nil if self.stop_refs_response.nil?
 
     response = JSON.parse(self.stop_refs_response)
-    stop_groups_data = response['data']['entry']['stopGroupings'][0]['stopGroups']
+    stop_groups_data = response['entry']['stopGroupings'][0]['stopGroups']
 
     stop_groups_data.map do |stop_group|
       destination_name = stop_group['name']['name']
@@ -30,7 +30,7 @@ class BusLine < ApplicationRecord
 
     if response.code == 200
       self.update(
-        stop_refs_response: response
+        stop_refs_response: JSON.generate(response['data'])
       )
     end
   end
