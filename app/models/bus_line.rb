@@ -13,7 +13,7 @@ class BusLine < ApplicationRecord
 
     stop_list = bus_line.ordered_stop_refs[destination_idx]
 
-    stop_list.map do |stop_ref|
+    stop_list[:stop_refs].map do |stop_ref|
       matching_departure = HistoricalDeparture.where(
         stop_ref: stop_ref,
         line_ref: line_ref,
