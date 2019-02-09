@@ -17,7 +17,7 @@ class BusLine < ApplicationRecord
       matching_departure = HistoricalDeparture.where(
         stop_ref: stop_ref,
         line_ref: line_ref,
-        vehicle_ref: vehicle_ref,
+        vehicle_ref: vehicle_ref
       ).order(created_at: :desc).first
       if matching_departure.present?
         {
