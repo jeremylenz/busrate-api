@@ -21,7 +21,7 @@ class BusLine < ApplicationRecord
       ).order(created_at: :desc).first
       if matching_departure.present?
         {
-          stop_ref => matching_departure.departure_time
+          stop_ref => [matching_departure.departure_time, matching_departure.trip_identifier]
         }
       else
         {

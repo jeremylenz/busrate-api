@@ -642,5 +642,16 @@ class HistoricalDeparture < ApplicationRecord
     (self.headway / 60).round
   end
 
+  def trip_identifier
+    if self.block_ref
+      return self.block_ref
+    elsif self.dated_vehicle_journey_ref
+      return self.dated_vehicle_journey_ref
+    else
+      nil
+    end
+  end
+
+
 
 end

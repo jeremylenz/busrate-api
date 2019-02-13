@@ -109,6 +109,8 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.is_duplicate?(vp_a, vp_b)
+    # Unlike HistoricalDeparture, we cannot use the trip identifier to check for VehiclePosition duplicates.
+    # If two VehiclePositions have the same trip identifier etc. but different timestamps, they are both valid.
     if vp_a.timestamp == vp_b.timestamp &&
       vp_a.vehicle_ref == vp_b.vehicle_ref &&
       vp_a.stop_ref == vp_b.stop_ref
@@ -217,6 +219,18 @@ class VehiclePosition < ApplicationRecord
     logger.info "#{new_stop_count} BusStops created" if new_stop_count > 0
     logger.info "VehiclePosition.extract_from_response complete in #{(Time.current - start_time).round(2)} seconds"
     new_vehicle_position_params
+  end
+
+  # Instance methods
+
+  def trip_identifier
+    if self.block_ref
+      return self.block_ref
+    elsif self.dated_vehicle_journey_ref
+      return self.dated_vehicle_journey_ref
+    else
+      nil
+    end
   end
 
 
