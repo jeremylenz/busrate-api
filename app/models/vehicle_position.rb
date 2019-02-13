@@ -159,6 +159,12 @@ class VehiclePosition < ApplicationRecord
     return nil unless stop_ref.present?
     timestamp = data['RecordedAtTime']
 
+    block_ref = data['BlockRef']
+    dated_vehicle_journey_ref = nil
+    if data['FramedVehicleJourneyRef'].present?
+      dated_vehicle_journey_ref = data['FramedVehicleJourneyRef']['DatedVehicleJourneyRef']
+    end
+
     vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
     bus_line = BusLine.find_by(line_ref: line_ref)
     bus_stop = BusStop.find_or_create_by(stop_ref: stop_ref)
@@ -174,6 +180,8 @@ class VehiclePosition < ApplicationRecord
         feet_from_stop: feet_from_stop,
         stop_ref: stop_ref,
         timestamp: Time.rfc3339(timestamp),
+        block_ref: block_ref,
+        dated_vehicle_journey_ref: dated_vehicle_journey_ref,
     }
   end
 
