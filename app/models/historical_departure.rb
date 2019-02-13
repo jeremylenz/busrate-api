@@ -377,18 +377,14 @@ class HistoricalDeparture < ApplicationRecord
         tracking_key = "#{dep["departure_time"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       end
       if already_seen[tracking_key]
-        # print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
         if dep['block_ref'] || dep['dated_vehicle_journey_ref']
           trip_identifier_dup_count += 1
         end
         ids_to_purge << dep["id"] unless dep["id"].nil?
       else
-        # print "dups: #{dup_count} | new: #{tracking_key}            \r"
         already_seen[tracking_key] = dep
       end
     end
-    logger.info "#{dup_count} duplicates found"
-    puts
 
     # Delete pre-existing duplicates
     unless ids_to_purge.length == 0
