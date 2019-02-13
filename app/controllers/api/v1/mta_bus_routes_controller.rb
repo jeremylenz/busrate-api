@@ -57,7 +57,11 @@ class Api::V1::MtaBusRoutesController < ApplicationController
       new_vehicle_position_object = data.first
       if new_vehicle_position_object
         new_vehicle_position = VehiclePosition.create(VehiclePosition.extract_single(new_vehicle_position_object))
-        logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
+        if new_vehicle_position.errors.any?
+          logger.info "VehiclePosition errors: #{new_vehicle_position.errors.full_messages.join("; ")}"
+        else
+          logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
+        end
       end
 
       render json: response
