@@ -54,18 +54,18 @@ class Api::V1::MtaBusRoutesController < ApplicationController
       # we might re-create VehiclePositions that were already purged and thus
       # have the potential to create duplicate HistoricalDepartures.  Therefore,
       # we only take the first element.
-      new_vehicle_position_object = data.first
+      # new_vehicle_position_object = data.first
       # Still creates duplicate departures.  2+ VP's in a row, different timestamp but same vehicle, stop, line doesn't get picked up as a dup.
       # TODO: Refactor this once our duplicate checks include trip identifier.
-      if new_vehicle_position_object
+      # if new_vehicle_position_object
         # new_vehicle_position = VehiclePosition.create(VehiclePosition.extract_single(new_vehicle_position_object))
-        if new_vehicle_position.errors.any?
-          # Since we're using Active Record, any duplicates will be taken care of by Rails validity check :)
-          # logger.info "VehiclePosition errors: #{new_vehicle_position.errors.full_messages.join("; ")}"
-        else
-          logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
-        end
-      end
+        # if new_vehicle_position.errors.any?
+        #   # Since we're using Active Record, any duplicates will be taken care of by Rails validity check :)
+        #   # logger.info "VehiclePosition errors: #{new_vehicle_position.errors.full_messages.join("; ")}"
+        # else
+        #   logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
+        # end
+      # end
 
       render json: response
     else
