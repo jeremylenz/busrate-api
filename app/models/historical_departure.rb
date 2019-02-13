@@ -618,6 +618,19 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.is_duplicate?(dep_a, dep_b)
+    # If a trip identifier is present, use it to check for duplicate.  If not, fall back to departure_time.
+    if dep_a.block_ref &&
+      dep_a.block_ref == dep_b.block_ref &&
+      dep_a.vehicle_ref == dep_b.vehicle_ref &&
+      dep_a.stop_ref == dep_b.stop_ref
+      return true
+    end
+    if dep_a.dated_vehicle_journey_ref &&
+      dep_a.dated_vehicle_journey_ref == dep_b.dated_vehicle_journey_ref &&
+      dep_a.vehicle_ref == dep_b.vehicle_ref &&
+      dep_a.stop_ref == dep_b.stop_ref
+      return true
+    end
     if dep_a.departure_time == dep_b.departure_time &&
       dep_a.vehicle_ref == dep_b.vehicle_ref &&
       dep_a.stop_ref == dep_b.stop_ref
