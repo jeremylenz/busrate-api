@@ -49,15 +49,24 @@ class Api::V1::MtaBusRoutesController < ApplicationController
 
     if response.code == 200
       # Get vehicle position data to use for our own purposes before passing thru the MTA response
-      # TODO: figure out why this is creating duplicate departures
       data = response['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit']
-      new_vehicle_positions = data.map { |monitored_stop_visit| VehiclePosition.extract_single(monitored_stop_visit) }.compact
-      # HistoricalDeparture.fast_insert_objects('vehicle_positions', new_vehicle_positions)
+      # If we make VehiclePositions from ALL available data in the response,
+      # we might re-create VehiclePositions that were already purged and thus
+      # have the potential to create duplicate HistoricalDepartures.  Therefore,
+      # we only take the first element.
+      new_vehicle_position_object = data.first
+      if new_vehicle_position_object
+        new_vehicle_position = VehiclePosition.create(VehiclePosition.extract_single(new_vehicle_position_object))
+        logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
+      end
+
       render json: response
     else
       render json: {error: 'MTA API returned no data', response: JSON.parse(response.body)}, status: response.code
     end
 
+  rescue NoMethodError
+    render json: {error: 'MTA API returned bad data'}, status: 422
   end
 
   def vehicles_for_route
