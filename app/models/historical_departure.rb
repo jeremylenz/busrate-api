@@ -364,15 +364,23 @@ class HistoricalDeparture < ApplicationRecord
 
     # Create a list of existing IDs to delete
     ids_to_purge = []
-
-    dup_count = 0
+    trip_identifier_dup_count = 0
 
     # Move through the object list and check for duplicates
     object_list.each do |dep|
-      tracking_key = "#{dep["departure_time"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+      # If a trip identifier is present, use it.  Otherwise, fall back to timestamp.
+      if dep['block_ref']
+        tracking_key = "#{dep["block_ref"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+      elsif dep['dated_vehicle_journey_ref']
+        tracking_key = "#{dep["dated_vehicle_journey_ref"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+      else
+        tracking_key = "#{dep["departure_time"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+      end
       if already_seen[tracking_key]
-        dup_count += 1
         # print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
+        if dep['block_ref'] || dep['dated_vehicle_journey_ref']
+          trip_identifier_dup_count += 1
+        end
         ids_to_purge << dep["id"] unless dep["id"].nil?
       else
         # print "dups: #{dup_count} | new: #{tracking_key}            \r"
@@ -397,6 +405,7 @@ class HistoricalDeparture < ApplicationRecord
     prevented_count = dep_objects_to_be_added.length - result.length
     unless prevented_count == 0
       logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures"
+      logger.info "prevent_duplicates: including #{trip_identifier_dup_count} duplicates found by trip identifier"
       logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
     end
     logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
