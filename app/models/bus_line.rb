@@ -21,11 +21,15 @@ class BusLine < ApplicationRecord
       ).order(created_at: :desc).first
       if matching_departure.present?
         {
-          stop_ref => [matching_departure.departure_time, matching_departure.trip_identifier]
+          stop_ref: matching_departure.stop_ref,
+          departure_time: matching_departure.departure_time,
+          trip_identifier: matching_departure.trip_identifier,
         }
       else
         {
-          stop_ref => nil
+          stop_ref: stop_ref,
+          departure_time: nil,
+          trip_identifier: nil,
         }
       end
     end
@@ -33,6 +37,14 @@ class BusLine < ApplicationRecord
   rescue NoMethodError
     return nil
   end
+
+  # def self.departures_for_line_and_trip(line_ref, trip_identifier)
+  #   departures = HistoricalDeparture.where(
+  #     line_ref: line_ref,
+  #     block_ref: trip_identifier,
+  #   )
+  #
+  # end
 
   def ordered_stop_refs
     return nil if self.stop_refs_response.nil?
