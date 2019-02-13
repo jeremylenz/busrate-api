@@ -159,10 +159,10 @@ class VehiclePosition < ApplicationRecord
     return nil unless stop_ref.present?
     timestamp = data['RecordedAtTime']
 
-    block_ref = data['BlockRef']
+    block_ref = data['MonitoredVehicleJourney']['BlockRef']
     dated_vehicle_journey_ref = nil
-    if data['FramedVehicleJourneyRef'].present?
-      dated_vehicle_journey_ref = data['FramedVehicleJourneyRef']['DatedVehicleJourneyRef']
+    if data['MonitoredVehicleJourney']['FramedVehicleJourneyRef'].present?
+      dated_vehicle_journey_ref = data['MonitoredVehicleJourney']['FramedVehicleJourneyRef']['DatedVehicleJourneyRef']
     end
 
     vehicle = Vehicle.find_or_create_by(vehicle_ref: vehicle_ref)
