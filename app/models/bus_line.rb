@@ -38,13 +38,11 @@ class BusLine < ApplicationRecord
     return nil
   end
 
-  # def self.departures_for_line_and_trip(line_ref, trip_identifier)
-  #   departures = HistoricalDeparture.where(
-  #     line_ref: line_ref,
-  #     block_ref: trip_identifier,
-  #   )
-  #
-  # end
+  def self.departures_for_line_and_trip(line_ref, trip_identifier)
+    departures = HistoricalDeparture.where(
+      ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
+    ).where(line_ref: line_ref)
+  end
 
   def ordered_stop_refs
     return nil if self.stop_refs_response.nil?
