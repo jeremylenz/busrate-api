@@ -37,6 +37,8 @@ class BusLine < ApplicationRecord
           }
         end
       end
+
+      result
     end
 
   rescue NoMethodError
