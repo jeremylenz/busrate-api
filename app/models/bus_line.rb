@@ -69,13 +69,17 @@ class BusLine < ApplicationRecord
       # Output the departure time if valid, nil if not.
       # A departure is considered valid if it is after the previous departure, but
       # not more than 20 minutes after.
+
       if dep_object[:departure_time].present?
+        departure_time_valid = true
         travel_time_from_prev_stop = (dep_object[:departure_time] - prev_departure_time)
+        departure_time_valid = false if travel_time_from_prev_stop < 0
+        departure_time_valid = false if travel_time_from_prev_stop > 20.minutes
       else
-        travel_time_from_prev_stop = 99.minutes
+        departure_time_valid = false
       end
 
-      if prev_departure_time.blank? ||  travel_time_from_prev_stop < 20.minutes
+      if prev_departure_time.blank? || departure_time_valid
         result << dep_object
         prev_departure_time = dep_object[:departure_time]
       else
