@@ -14,8 +14,10 @@ class Api::V1::StatsController < ApplicationController
 
     @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
     @historical_departures_per_day = @historical_departure_recent_count * 60 * 24
-    @headways_recent_count = HistoricalDeparture.newer_than(1200).where.not(headway: nil).count
-    @nil_headways_recent_count = HistoricalDeparture.newer_than(1200).where(headway: nil).count
+    @headways_recent_count = HistoricalDeparture.newer_than(14_400).where.not(headway: nil).count
+    @nil_headways_recent_count = HistoricalDeparture.newer_than(14_400).where(headway: nil).count
+    total_headways_recent_count = @headways_recent_count + @nil_headways_recent_count
+    @headways_success_rate = "#{(@headways_recent_count.to_f / total_headways_recent_count.to_f).round(2)}%"
 
     @vehicle_position_count = VehiclePosition.all.count
     @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
@@ -31,8 +33,9 @@ class Api::V1::StatsController < ApplicationController
       historical_departures: number_with_delimiter(@historical_departure_count, delimiter: ','),
       historical_departures_per_minute: @historical_departure_recent_count,
       historical_departures_per_day: @historical_departures_per_day,
-      last_20_min_headways_count: @headways_recent_count,
-      last_20_min_nil_headways: @nil_headways_recent_count,
+      last_4_hours_headways_count: @headways_recent_count,
+      last_4_hours_nil_headways: @nil_headways_recent_count,
+      last_4_hours_headways_success: @headways_success_rate,
       vehicle_positions: @vehicle_position_count,
       vehicle_positions_per_minute: @vehicle_position_recent_count,
       bus_lines: @bus_line_count,
