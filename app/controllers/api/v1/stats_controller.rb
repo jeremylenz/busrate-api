@@ -17,7 +17,7 @@ class Api::V1::StatsController < ApplicationController
     @headways_recent_count = HistoricalDeparture.newer_than(14_400).where.not(headway: nil).count
     @nil_headways_recent_count = HistoricalDeparture.newer_than(14_400).where(headway: nil).count
     total_headways_recent_count = @headways_recent_count + @nil_headways_recent_count
-    @headways_success_rate = "#{(@headways_recent_count.to_f / total_headways_recent_count.to_f).round(2)}%"
+    @headways_success_rate = number_to_percentage(@headways_recent_count.to_f / total_headways_recent_count.to_f * 100.0, precision: 2)
 
     @vehicle_position_count = VehiclePosition.all.count
     @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
