@@ -4,33 +4,38 @@ class BusLine < ApplicationRecord
   validates_presence_of :line_ref
   validates_uniqueness_of :line_ref
 
-  def self.departures_for_line_and_vehicle(line_ref, vehicle_ref, destination_idx = 0)
-    # Given a line_ref, vehicle_ref, and destination/direction (0 or 1),
+  def self.trip_view(trip_identifier, line_ref, vehicle_ref)
+    # Given a trip identifier, line_ref, and vehicle_ref,
     # return the first matching departure time for each stop along the route.
 
     bus_line = self.find_by(line_ref: line_ref)
     return if bus_line.blank?
 
-    stop_list = bus_line.ordered_stop_refs[destination_idx]
+    stop_lists = bus_line.ordered_stop_refs # [direction_a_stops, direction_b_stops]
+    departures = self.departures_for_line_and_trip(line_ref, trip_identifier)
+    result = {
+      trip_identifier: trip_identifier,
+    }
 
-    stop_list[:stop_refs].map do |stop_ref|
-      matching_departure = HistoricalDeparture.where(
-        stop_ref: stop_ref,
-        line_ref: line_ref,
-        vehicle_ref: vehicle_ref
-      ).order(created_at: :desc).first
-      if matching_departure.present?
-        {
-          stop_ref: matching_departure.stop_ref,
-          departure_time: matching_departure.departure_time,
-          trip_identifier: matching_departure.trip_identifier,
-        }
-      else
-        {
+    stop_lists.each do |stop_list|
+      result[:destination] = stop_list[:destination_name]
+      result[:matching_departures] = stop_list[:stop_refs].map do |stop_ref|
+        matching_departure = departures.where(
           stop_ref: stop_ref,
-          departure_time: nil,
-          trip_identifier: nil,
-        }
+          vehicle_ref: vehicle_ref
+        ).order(created_at: :desc).first
+        if matching_departure.present?
+          {
+            stop_ref: matching_departure.stop_ref,
+            departure_time: matching_departure.departure_time,
+          }
+        else
+          {
+            stop_ref: stop_ref,
+            departure_time: nil,
+            trip_identifier: nil,
+          }
+        end
       end
     end
 
