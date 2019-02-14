@@ -38,8 +38,8 @@ class BusLine < ApplicationRecord
         end
       end
 
-      result
     end
+    result
 
   rescue NoMethodError
     return nil
