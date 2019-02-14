@@ -49,6 +49,42 @@ class BusLine < ApplicationRecord
     return nil
   end
 
+  def self.trip_sequence(dep_list_obj, key_stop_ref)
+    # Take a list of matching departures from self.trip_view
+    # Try to determine which departures are from the same vehicle trip
+    # Thus, we will know which departures we need to interpolate
+
+    result = []
+    key_reached = false
+    prev_departure_time = nil
+
+    dep_list_obj.each do |dep_object|
+      # If we haven't reached the key_stop_ref yet, ignore the element
+      if dep_object[:stop_ref] == key_stop_ref
+        prev_departure_time = dep_object[:departure_time]
+        key_reached = true
+      end
+      next unless key_reached
+
+      # Output the departure time if valid, nil if not.
+      # A departure is considered valid if it is after the previous departure, but
+      # not more than 20 minutes after.
+
+      if prev_departure_time.blank? || (dep_object[:departure_time] - prev_departure_time) < 20.minutes
+        result << dep_object
+        prev_departure_time = dep_object[:departure_time]
+      else
+        result << {
+          stop_ref: dep_object[:stop_ref],
+          departure_time: nil,
+        }
+      end
+
+    end
+
+    result
+  end
+
   def self.departures_for_line_and_trip(line_ref, trip_identifier)
     departures = HistoricalDeparture.where(
       ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
