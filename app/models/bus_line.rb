@@ -15,28 +15,32 @@ class BusLine < ApplicationRecord
     departures = self.departures_for_line_and_trip(line_ref, trip_identifier)
     result = {
       trip_identifier: trip_identifier,
+      line_ref: line_ref,
+      vehicle_ref: vehicle_ref,
+      destinations: [],
     }
 
     stop_lists.each do |stop_list|
-      result[:destination] = stop_list[:destination_name]
-      result[:matching_departures] = stop_list[:stop_refs].map do |stop_ref|
-        matching_departure = departures.where(
-          stop_ref: stop_ref,
-          vehicle_ref: vehicle_ref
-        ).order(created_at: :desc).first
-        if matching_departure.present?
-          {
-            stop_ref: matching_departure.stop_ref,
-            departure_time: matching_departure.departure_time,
-          }
-        else
-          {
+      result[:destinations] << {
+        destination_name: stop_list[:destination_name],
+        matching_departures: stop_list[:stop_refs].map do |stop_ref|
+          matching_departure = departures.where(
             stop_ref: stop_ref,
-            departure_time: nil,
-            trip_identifier: nil,
-          }
+            vehicle_ref: vehicle_ref
+          ).order(created_at: :desc).first
+          if matching_departure.present?
+            {
+              stop_ref: matching_departure.stop_ref,
+              departure_time: matching_departure.departure_time,
+            }
+          else
+            {
+              stop_ref: stop_ref,
+              departure_time: nil,
+            }
+          end
         end
-      end
+      }
 
     end
     result
