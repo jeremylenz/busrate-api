@@ -120,7 +120,6 @@ class BusLine < ApplicationRecord
 
     result.each_with_index do |dep_object, idx|
       current_timestamp = dep_object[:departure_time]
-      logger.info current_timestamp
       if current_timestamp.nil?
         num_interpolated_timestamps += 1
         indices_to_update << idx
@@ -133,9 +132,11 @@ class BusLine < ApplicationRecord
         # do the interpolation
         interpolated_timestamps = self.interpolate_timestamps(start_time, end_time, num_interpolated_timestamps)
         logger.info "Interpolated: #{interpolated_timestamps}"
+        logger.info "indices_to_update: #{indices_to_update}"
         indices_to_update.each_with_index do |result_idx, interpolated_timestamps_idx|
           result[result_idx][:interpolated_departure_time] = interpolated_timestamps[interpolated_timestamps_idx]
         end
+        logger.info "Current: #{current_timestamp} | start_time: #{start_time} | end_time: #{end_time} | num_interpolated_timestamps: #{num_interpolated_timestamps}"
         # reset the variables
         start_time = nil
         num_interpolated_timestamps = 0
