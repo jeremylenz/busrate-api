@@ -94,6 +94,59 @@ class BusLine < ApplicationRecord
     result
   end
 
+  def self.interpolate_timestamps(start_time, end_time, num_of_results = 1)
+    result = []
+    return [] if num_of_results < 1
+    total_time = end_time - start_time
+    num_of_time_chunks = num_of_results + 1
+    interval = total_time / num_of_time_chunks
+
+    current_timestamp = start_time
+    (1..num_of_results).each do |offset|
+      result << start_time + (offset * interval)
+    end
+
+    result
+  end
+
+  def self.interpolate_trip_sequence(dep_list_obj)
+    # Shave off nil values from the end
+    result = dep_list_obj.reverse.drop_while { |d| d[:departure_time].blank? }.reverse
+
+    start_time = nil
+    num_interpolated_timestamps = 0
+    end_time = nil
+    indices_to_update = []
+
+    result.each_with_index do |dep_object, idx|
+      current_timestamp = dep_object[:departure_time]
+      logger.info current_timestamp
+      if current_timestamp.nil?
+        num_interpolated_timestamps += 1
+        indices_to_update << idx
+        # check if start_time is populated
+      elsif start_time.nil?
+        # set the start time
+        start_time = current_timestamp
+      elsif end_time.nil?
+        end_time = current_timestamp
+        # do the interpolation
+        interpolated_timestamps = self.interpolate_timestamps(start_time, end_time, num_interpolated_timestamps)
+        logger.info "Interpolated: #{interpolated_timestamps}"
+        indices_to_update.each_with_index do |result_idx, interpolated_timestamps_idx|
+          result[result_idx][:interpolated_departure_time] = interpolated_timestamps[interpolated_timestamps_idx]
+        end
+        # reset the variables
+        start_time = nil
+        num_interpolated_timestamps = 0
+        end_time = nil
+        indices_to_update = []
+      end
+    end
+
+    result
+  end
+
   def self.departures_for_line_and_trip(line_ref, trip_identifier)
     departures = HistoricalDeparture.where(
       ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
