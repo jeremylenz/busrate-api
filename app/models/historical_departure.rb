@@ -369,6 +369,9 @@ class HistoricalDeparture < ApplicationRecord
     # Move through the object list and check for duplicates
     object_list.each do |dep|
       # If a trip identifier is present, use it.  Otherwise, fall back to timestamp.
+      # NOTE: block_ref and dated_vehicle_journey_ref CAN be the same for yesterday's trip (I think.)  Therefore,
+      # prevent_duplicates shouldn't be used to compare with existing HistoricalDepartures more than ~20 hours old.
+      # Currently I'm only using it for those newer than 1200 seconds (20 minutes).
       if dep['block_ref']
         tracking_key = "#{dep["block_ref"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       elsif dep['dated_vehicle_journey_ref']
@@ -618,13 +621,15 @@ class HistoricalDeparture < ApplicationRecord
     if dep_a.block_ref &&
       dep_a.block_ref == dep_b.block_ref &&
       dep_a.vehicle_ref == dep_b.vehicle_ref &&
-      dep_a.stop_ref == dep_b.stop_ref
+      dep_a.stop_ref == dep_b.stop_ref &&
+      self.timestamp_close_enough?(dep_a.departure_time, dep_b.departure_time)
       return true
     end
     if dep_a.dated_vehicle_journey_ref &&
       dep_a.dated_vehicle_journey_ref == dep_b.dated_vehicle_journey_ref &&
       dep_a.vehicle_ref == dep_b.vehicle_ref &&
-      dep_a.stop_ref == dep_b.stop_ref
+      dep_a.stop_ref == dep_b.stop_ref &&
+      self.timestamp_close_enough?(dep_a.departure_time, dep_b.departure_time)
       return true
     end
     if dep_a.departure_time == dep_b.departure_time &&
@@ -632,6 +637,13 @@ class HistoricalDeparture < ApplicationRecord
       dep_a.stop_ref == dep_b.stop_ref
       return true
     end
+    false
+  end
+
+  def self.timestamp_close_enough?(timestamp_a, timestamp_b)
+    # If the same vehicle departs the same stop within 5 minutes, it's considered
+    # close enough to be a duplicate departure
+    return true if (timestamp_a - timestamp_b).abs < 5.minutes
     false
   end
 
