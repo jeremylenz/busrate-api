@@ -648,17 +648,21 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.interpolate_for_route_and_stop(line_ref, stop_ref)
+    start_time = Time.current
+    logger.info "interpolate_for_route_and_stop starting: #{line_ref} #{stop_ref}"
     result = []
     # Get trip identifier and vehicle_ref
     key_departure = self.for_route_and_stop(line_ref, stop_ref).limit(8).last
     trip_identifier = key_departure.trip_identifier
     vehicle_ref = key_departure.vehicle_ref
+    logger.info "making trip view"
     # Make trip view
     trip_view = BusLine.trip_view(trip_identifier, line_ref, vehicle_ref)
+    logger.info "choosing direction"
     # Choose a direction
     matching_departures = trip_view[:destinations] # [obj_a, obj_b]
     matching_departures.each_with_index do |dep_list, idx|
-      if dep_list[:matching_departures].find { |dep_obj| deb_obj[:stop_ref] == stop_ref }.present?
+      if dep_list[:matching_departures].find { |dep_obj| dep_obj[:stop_ref] == stop_ref }.present?
         destination_idx = idx
       end
     end
@@ -667,14 +671,17 @@ class HistoricalDeparture < ApplicationRecord
       return
     end
     trip_view_list = trip_view[:destinations][destination_idx][:matching_departures]
+    logger.info "making trip sequence"
     # Make trip sequence
     trip_sequence = BusLine.trip_sequence(trip_view_list, stop_ref)
+    logger.info "interpolating sequence"
     # Interpolate sequence
     interpolated_trip_sequence = BusLine.interpolate_trip_sequence(trip_sequence)
+    logger.info "Creating departures..."
     # Make HistoricalDepartures based on results
     interpolated_trip_sequence.each do |dep_object|
       if dep_object[:interpolated_departure_time].present?
-        result << HistoricalDeparture.create(
+        new_departure = HistoricalDeparture.create(
           bus_stop: BusStop.find_by(stop_ref: stop_ref),
           stop_ref: stop_ref,
           line_ref: line_ref,
@@ -683,10 +690,16 @@ class HistoricalDeparture < ApplicationRecord
           block_ref: trip_identifier,
           interpolated: true,
         )
+        if new_departure.errors.any?
+          result << new_departure.errors.full_messages.join("; ")
+        else
+          result << new_departure
+        end
       else
         next
       end # if
     end # each
+    logger.info "interpolate_for_route_and_stop complete in #{(Time.current - start_time).round(2)} seconds"
     result
   end
 
