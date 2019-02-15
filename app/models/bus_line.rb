@@ -99,7 +99,7 @@ class BusLine < ApplicationRecord
 
   def self.interpolate_timestamps(start_time, end_time, num_of_results = 1)
     result = []
-    return [] if num_of_results < 1
+    return [] if num_of_results < 1 || num_of_results > 5
     total_time = end_time - start_time
     num_of_time_chunks = num_of_results + 1
     interval = total_time / num_of_time_chunks
