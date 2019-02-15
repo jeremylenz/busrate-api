@@ -700,6 +700,8 @@ class HistoricalDeparture < ApplicationRecord
         next
       end # if
     end # each
+    logger.info "processing headways"
+    self.process_batch(self.for_route_and_stop(line_ref, stop_ref).limit(8).reload, false)
     logger.info "interpolate_for_route_and_stop complete in #{(Time.current - start_time).round(2)} seconds"
     result
   end
