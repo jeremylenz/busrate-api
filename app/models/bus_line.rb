@@ -138,7 +138,7 @@ class BusLine < ApplicationRecord
         end
         logger.info "Current: #{current_timestamp} | start_time: #{start_time} | end_time: #{end_time} | num_interpolated_timestamps: #{num_interpolated_timestamps}"
         # reset the variables
-        start_time = nil
+        start_time = current_timestamp
         num_interpolated_timestamps = 0
         end_time = nil
         indices_to_update = []
