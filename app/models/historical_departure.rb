@@ -647,7 +647,7 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
-  def interpolate_for_route_and_stop(line_ref, stop_ref)
+  def self.interpolate_for_route_and_stop(line_ref, stop_ref)
     result = []
     # Get trip identifier and vehicle_ref
     key_departure = self.for_route_and_stop(line_ref, stop_ref).limit(8).last
