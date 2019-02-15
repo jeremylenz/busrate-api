@@ -16,6 +16,8 @@ class HistoricalDeparture < ApplicationRecord
 
   scope :newer_than, -> (num) { where(["departure_time > ?", num.seconds.ago]) }
   scope :older_than, -> (num) { where(["departure_time < ?", num.seconds.ago]) }
+  scope :interpolated, -> { where(interpolated: true) }
+  scope :actual, -> { where(interpolated: false) }
 
   def self.for_route_and_stop(line_ref, stop_ref)
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
