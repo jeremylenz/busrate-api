@@ -319,6 +319,7 @@ class HistoricalDeparture < ApplicationRecord
               block_ref: new_vehicle_position.block_ref,
               dated_vehicle_journey_ref: new_vehicle_position.dated_vehicle_journey_ref,
               departure_time: new_vehicle_position.timestamp - 30.seconds, # TODO: see if we still need this 30 seconds
+              interpolated: false,
             }
             # Purge the old_vehicle positions so they can't be used in the future to make duplicate departures
             ids_to_purge << old_vehicle_position.id
