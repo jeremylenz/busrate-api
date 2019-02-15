@@ -151,7 +151,7 @@ class BusLine < ApplicationRecord
   def self.departures_for_line_and_trip(line_ref, trip_identifier)
     departures = HistoricalDeparture.where(
       ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
-    ).where(line_ref: line_ref)
+    ).where(line_ref: line_ref).order(created_at: :desc, stop_ref: :desc, vehicle_ref: :desc)
   end
 
   def ordered_stop_refs
