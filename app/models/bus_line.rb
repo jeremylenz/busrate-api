@@ -7,6 +7,7 @@ class BusLine < ApplicationRecord
   def self.trip_view(trip_identifier, line_ref, vehicle_ref)
     # Given a trip identifier, line_ref, and vehicle_ref,
     # return the first matching departure time for each stop along the route.
+    # May show departures from several different trips.
 
     bus_line = self.find_by(line_ref: line_ref)
     return if bus_line.blank?
@@ -49,16 +50,16 @@ class BusLine < ApplicationRecord
     return nil
   end
 
-  def self.trip_sequence(dep_list_obj, key_stop_ref)
-    # Take a list of matching departures from self.trip_view
-    # Try to determine which departures are from the same vehicle trip
-    # Thus, we will know which departures we need to interpolate
+  def self.trip_sequence(trip_view, key_stop_ref)
+    # Take a list of matching departures from self.trip_view[:destinations][idx][:matching_departures]
+    # Try to determine which departures are from the same vehicle trip.
+    # Thus, we will know which departures we need to interpolate.
 
     result = []
     key_reached = false
     prev_departure_time = nil
 
-    dep_list_obj.each do |dep_object|
+    trip_view.each do |dep_object|
       # If we haven't reached the key_stop_ref yet, ignore the element
       if dep_object[:stop_ref] == key_stop_ref
         prev_departure_time = dep_object[:departure_time]
@@ -80,9 +81,11 @@ class BusLine < ApplicationRecord
       end
 
       if prev_departure_time.blank? || departure_time_valid
+        # We found a matching departure for this vehicle, trip identifier, and stop.
         result << dep_object
         prev_departure_time = dep_object[:departure_time]
       else
+        # The vehicle may have skipped over the stop.
         result << {
           stop_ref: dep_object[:stop_ref],
           departure_time: nil,
@@ -109,9 +112,13 @@ class BusLine < ApplicationRecord
     result
   end
 
-  def self.interpolate_trip_sequence(dep_list_obj)
+  def self.interpolate_trip_sequence(trip_sequence)
+    # Pass in the result of self.trip_sequence
+    # IMPORTANT: Assumes this list is already sanitized!  Don't pass in a raw trip_view.
+    # Returns the same object, but with interpolated departure times added where they were missing.
+
     # Shave off nil values from the end
-    result = dep_list_obj.reverse.drop_while { |d| d[:departure_time].blank? }.reverse
+    result = trip_sequence.reverse.drop_while { |d| d[:departure_time].blank? }.reverse
 
     start_time = nil
     num_interpolated_timestamps = 0

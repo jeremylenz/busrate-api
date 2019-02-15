@@ -647,6 +647,49 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
+  def interpolate_for_route_and_stop(line_ref, stop_ref)
+    result = []
+    # Get trip identifier and vehicle_ref
+    key_departure = self.for_route_and_stop(line_ref, stop_ref).limit(8).last
+    trip_identifier = key_departure.trip_identifier
+    vehicle_ref = key_departure.vehicle_ref
+    # Make trip view
+    trip_view = BusLine.trip_view(trip_identifier, line_ref, vehicle_ref)
+    # Choose a direction
+    matching_departures = trip_view[:destinations] # [obj_a, obj_b]
+    matching_departures.each_with_index do |dep_list, idx|
+      if dep_list[:matching_departures].find { |dep_obj| deb_obj[:stop_ref] == stop_ref }.present?
+        destination_idx = idx
+      end
+    end
+    if destination_idx.blank?
+      logger.info "couldn't find stop_ref #{stop_ref} in trip_view"
+      return
+    end
+    trip_view_list = trip_view[:destinations][destination_idx][:matching_departures]
+    # Make trip sequence
+    trip_sequence = BusLine.trip_sequence(trip_view_list, stop_ref)
+    # Interpolate sequence
+    interpolated_trip_sequence = BusLine.interpolate_trip_sequence(trip_sequence)
+    # Make HistoricalDepartures based on results
+    interpolated_trip_sequence.each do |dep_object|
+      if dep_object[:interpolated_departure_time].present?
+        result << HistoricalDeparture.create(
+          bus_stop: BusStop.find_by(stop_ref: stop_ref),
+          stop_ref: stop_ref,
+          line_ref: line_ref,
+          vehicle_ref: vehicle_ref,
+          departure_time: dep_object[:interpolated_departure_time],
+          block_ref: trip_identifier,
+          interpolated: true,
+        )
+      else
+        next
+      end # if
+    end # each
+    result
+  end
+
   # Instance methods
 
   def headway_in_minutes
