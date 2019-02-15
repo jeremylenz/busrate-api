@@ -687,7 +687,7 @@ class HistoricalDeparture < ApplicationRecord
       if dep_object[:interpolated_departure_time].present?
         new_departure = HistoricalDeparture.create(
           bus_stop: BusStop.find_by(stop_ref: stop_ref),
-          stop_ref: stop_ref,
+          stop_ref: dep_object[:stop_ref],
           line_ref: line_ref,
           vehicle_ref: vehicle_ref,
           departure_time: dep_object[:interpolated_departure_time],
