@@ -661,6 +661,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "choosing direction"
     # Choose a direction
     matching_departures = trip_view[:destinations] # [obj_a, obj_b]
+    destination_idx = nil
     matching_departures.each_with_index do |dep_list, idx|
       if dep_list[:matching_departures].find { |dep_obj| dep_obj[:stop_ref] == stop_ref }.present?
         destination_idx = idx
