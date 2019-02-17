@@ -650,6 +650,14 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
+  # Interpolated departures methods
+
+  def self.for_line_and_trip(line_ref, trip_identifier)
+    HistoricalDeparture.where(
+      ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
+    ).where(line_ref: line_ref).order(created_at: :desc, stop_ref: :desc, vehicle_ref: :desc)
+  end
+
   def self.interpolate_for_route_and_stop(line_ref, stop_ref)
     start_time = Time.current
     logger.info "interpolate_for_route_and_stop starting: #{line_ref} #{stop_ref}"

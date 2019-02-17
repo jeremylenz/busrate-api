@@ -13,7 +13,7 @@ class BusLine < ApplicationRecord
     return if bus_line.blank?
 
     stop_lists = bus_line.ordered_stop_refs # [direction_a_stops, direction_b_stops]
-    departures = self.departures_for_line_and_trip(line_ref, trip_identifier)
+    departures = HistoricalDeparture.for_line_and_trip(line_ref, trip_identifier)
     result = {
       trip_identifier: trip_identifier,
       line_ref: line_ref,
@@ -153,12 +153,6 @@ class BusLine < ApplicationRecord
     end
 
     result
-  end
-
-  def self.departures_for_line_and_trip(line_ref, trip_identifier)
-    departures = HistoricalDeparture.where(
-      ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
-    ).where(line_ref: line_ref).order(created_at: :desc, stop_ref: :desc, vehicle_ref: :desc)
   end
 
   def ordered_stop_refs
