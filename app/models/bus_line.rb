@@ -41,6 +41,7 @@ class BusLine < ApplicationRecord
             {
               stop_ref: matching_departure.stop_ref,
               departure_time: matching_departure.departure_time,
+              direction_ref: matching_departure.direction_ref,
             }
           else
             {
@@ -198,5 +199,5 @@ class BusLine < ApplicationRecord
       )
     end
   end
-  
+
 end
