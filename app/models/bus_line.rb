@@ -185,7 +185,7 @@ class BusLine < ApplicationRecord
     end
 
     if direction_ref.present?
-      result[direction_ref]
+      result[direction_ref][:stop_refs]
     else
       result
     end
