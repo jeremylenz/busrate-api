@@ -704,7 +704,11 @@ class HistoricalDeparture < ApplicationRecord
       end # if
     end # each
     logger.info "processing headways"
-    self.process_batch(self.for_route_and_stop(line_ref, stop_ref).limit(8).reload, false)
+    stop_refs_to_update = result.select { |elem| elem.class !== String }
+    stop_refs_to_update.each do |dep|
+      print "Processing headways for #{dep.stop_ref}..."
+      self.process_batch(self.for_route_and_stop(line_ref, dep.stop_ref).limit(8).reload, false)
+    end
     logger.info "interpolate_for_route_and_stop complete in #{(Time.current - start_time).round(2)} seconds"
     result
   end

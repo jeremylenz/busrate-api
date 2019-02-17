@@ -138,12 +138,12 @@ class BusLine < ApplicationRecord
         end_time = current_timestamp
         # do the interpolation
         interpolated_timestamps = self.interpolate_timestamps(start_time, end_time, num_interpolated_timestamps)
-        logger.info "Interpolated: #{interpolated_timestamps}"
-        logger.info "indices_to_update: #{indices_to_update}"
+        # logger.info "Interpolated: #{interpolated_timestamps}"
+        # logger.info "indices_to_update: #{indices_to_update}"
         indices_to_update.each_with_index do |result_idx, interpolated_timestamps_idx|
           result[result_idx][:interpolated_departure_time] = interpolated_timestamps[interpolated_timestamps_idx]
         end
-        logger.info "Current: #{current_timestamp} | start_time: #{start_time} | end_time: #{end_time} | num_interpolated_timestamps: #{num_interpolated_timestamps}"
+        # logger.info "Current: #{current_timestamp} | start_time: #{start_time} | end_time: #{end_time} | num_interpolated_timestamps: #{num_interpolated_timestamps}"
         # reset the variables
         start_time = current_timestamp
         num_interpolated_timestamps = 0
