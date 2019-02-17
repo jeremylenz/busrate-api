@@ -164,7 +164,7 @@ class BusLine < ApplicationRecord
     result
   end
 
-  def ordered_stop_refs
+  def ordered_stop_refs(direction_ref = nil)
     return nil if self.stop_refs_response.nil?
 
     if self.updated_at < 21.days.ago
@@ -175,7 +175,7 @@ class BusLine < ApplicationRecord
     response = JSON.parse(self.stop_refs_response)
     stop_groups_data = response['entry']['stopGroupings'][0]['stopGroups']
 
-    stop_groups_data.map do |stop_group|
+    result = stop_groups_data.map do |stop_group|
       destination_name = stop_group['name']['name']
       stop_refs = stop_group['stopIds']
       {
@@ -183,6 +183,36 @@ class BusLine < ApplicationRecord
         stop_refs: stop_refs,
       }
     end
+
+    if direction_ref.present?
+      result[direction_ref]
+    else
+      result
+    end
+  end
+
+  def next_stop_ref(stop_ref, direction_ref)
+    stop_refs = BusLine.ordered_stop_refs(direction_ref)
+    this_stop_idx = stop_refs[:stop_refs].find_index(stop_ref)
+    return nil if this_stop_idx.blank? || this_stop_idx >= stop_refs.length - 1
+    stop_refs[this_stop_idx + 1]
+  end
+
+  def previous_stop_ref(stop_ref, direction_ref)
+    stop_refs = BusLine.ordered_stop_refs(direction_ref)
+    this_stop_idx = stop_refs[:stop_refs].find_index(stop_ref)
+    return nil if this_stop_idx.blank? || this_stop_idx == 0
+    stop_refs[this_stop_idx - 1]
+  end
+
+  def first_stop_ref(direction_ref)
+    stop_refs = BusLine.ordered_stop_refs(direction_ref)
+    stop_refs[:stop_refs].first
+  end
+
+  def last_stop_ref(direction_ref)
+    stop_refs = BusLine.ordered_stop_refs(direction_ref)
+    stop_refs[:stop_refs].last
   end
 
   def update_stop_refs
