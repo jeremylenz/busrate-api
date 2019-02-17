@@ -224,6 +224,7 @@ class HistoricalDeparture < ApplicationRecord
     # If all of the following rules apply, we consider it a departure:
     # timestamp for new_vehicle_position is after old_vehicle_position
     # vehicle_ref is the same
+    # direction_ref is the same
     # arrival_text for old_vehicle_position is 'at stop', 'approaching', or '< 1 stop away'
     # the two vehicle positions are less than 90 seconds apart
     # stop_ref changes
@@ -231,6 +232,7 @@ class HistoricalDeparture < ApplicationRecord
 
     return false unless new_vehicle_position.timestamp > old_vehicle_position.timestamp
     return false unless new_vehicle_position.vehicle_ref == old_vehicle_position.vehicle_ref
+    return false unless new_vehicle_position.direction_ref == old_vehicle_position.direction_ref
     return false unless (new_vehicle_position.timestamp - old_vehicle_position.timestamp) < 90.seconds
     return false unless ["at stop", "approaching", "< 1 stop away"].include?(old_vehicle_position.arrival_text)
     return false unless new_vehicle_position.stop_ref != old_vehicle_position.stop_ref
