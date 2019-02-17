@@ -193,26 +193,26 @@ class BusLine < ApplicationRecord
 
   def next_stop_ref(stop_ref, direction_ref)
     stop_refs = ordered_stop_refs(direction_ref)
-    this_stop_idx = stop_refs[:stop_refs].find_index(stop_ref)
+    this_stop_idx = stop_refs.find_index(stop_ref)
     return nil if this_stop_idx.blank? || this_stop_idx >= stop_refs.length - 1
     stop_refs[this_stop_idx + 1]
   end
 
   def previous_stop_ref(stop_ref, direction_ref)
     stop_refs = ordered_stop_refs(direction_ref)
-    this_stop_idx = stop_refs[:stop_refs].find_index(stop_ref)
+    this_stop_idx = stop_refs.find_index(stop_ref)
     return nil if this_stop_idx.blank? || this_stop_idx == 0
     stop_refs[this_stop_idx - 1]
   end
 
   def first_stop_ref(direction_ref)
     stop_refs = ordered_stop_refs(direction_ref)
-    stop_refs[:stop_refs].first
+    stop_refs.first
   end
 
   def last_stop_ref(direction_ref)
     stop_refs = ordered_stop_refs(direction_ref)
-    stop_refs[:stop_refs].last
+    stop_refs.last
   end
 
   def update_stop_refs
