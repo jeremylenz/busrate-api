@@ -615,7 +615,7 @@ class HistoricalDeparture < ApplicationRecord
       calculate_headways(chunk)
     end
     logger.info "chunking complete after #{(Time.current - start_time).round(2)} seconds"
-    calculate_headways(HistoricalDeparture.newer_than(14_400))
+    # calculate_headways(HistoricalDeparture.newer_than(14_400))
     logger.info "chunk_headways complete after #{(Time.current - start_time).round(2)} seconds"
   end
 
@@ -706,7 +706,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "processing headways"
     stop_refs_to_update = result.select { |elem| elem.class != String }
     stop_refs_to_update.each do |dep|
-      print "Processing headways for #{dep.stop_ref}..."
+      print "Processing headways for #{dep.stop_ref}...  \r"
       self.process_batch(self.for_route_and_stop(line_ref, dep.stop_ref).limit(8).reload, false)
     end
     logger.info "interpolate_for_route_and_stop complete in #{(Time.current - start_time).round(2)} seconds"
