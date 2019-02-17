@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_02_15_203650) do
+ActiveRecord::Schema.define(version: 2019_02_17_222206) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -42,6 +42,7 @@ ActiveRecord::Schema.define(version: 2019_02_15_203650) do
     t.string "block_ref"
     t.string "dated_vehicle_journey_ref"
     t.boolean "interpolated"
+    t.integer "direction_ref"
     t.index ["block_ref"], name: "index_historical_departures_on_block_ref"
     t.index ["dated_vehicle_journey_ref"], name: "index_historical_departures_on_dated_vehicle_journey_ref"
     t.index ["departure_time"], name: "by_departure_time", order: :desc
@@ -73,6 +74,7 @@ ActiveRecord::Schema.define(version: 2019_02_15_203650) do
     t.bigint "bus_stop_id"
     t.string "dated_vehicle_journey_ref"
     t.string "block_ref"
+    t.integer "direction_ref"
     t.index ["bus_line_id"], name: "index_vehicle_positions_on_bus_line_id"
     t.index ["vehicle_id"], name: "index_vehicle_positions_on_vehicle_id"
   end
