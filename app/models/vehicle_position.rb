@@ -153,6 +153,10 @@ class VehiclePosition < ApplicationRecord
     return nil unless data['MonitoredVehicleJourney'].present?
     vehicle_ref = data['MonitoredVehicleJourney']['VehicleRef']
     line_ref = data['MonitoredVehicleJourney']['LineRef']
+    direction_ref = nil
+    if data['MonitoredVehicleJourney']['DirectionRef'].present?
+      direction_ref = data['MonitoredVehicleJourney']['DirectionRef'].to_i
+    end
     return nil unless vehicle_ref.present? && line_ref.present?
     return nil unless data['MonitoredVehicleJourney']['MonitoredCall'].present?
     arrival_text = data['MonitoredVehicleJourney']['MonitoredCall']['ArrivalProximityText']
@@ -178,6 +182,7 @@ class VehiclePosition < ApplicationRecord
         bus_stop_id: bus_stop.id,
         vehicle_ref: vehicle_ref,
         line_ref: line_ref,
+        direction_ref: direction_ref,
         arrival_text: arrival_text,
         feet_from_stop: feet_from_stop,
         stop_ref: stop_ref,

@@ -301,6 +301,7 @@ class HistoricalDeparture < ApplicationRecord
               bus_stop_id: bus_stop.id,
               stop_ref: old_vehicle_position.stop_ref,
               line_ref: new_vehicle_position.line_ref,
+              direction_ref: new_vehicle_position.direction_ref,
               vehicle_ref: new_vehicle_position.vehicle_ref,
               block_ref: new_vehicle_position.block_ref,
               dated_vehicle_journey_ref: new_vehicle_position.dated_vehicle_journey_ref,
