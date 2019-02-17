@@ -9,6 +9,14 @@ class BusLine < ApplicationRecord
     # return the first matching departure time for each stop along the route.
     # May show departures from several different trips.
 
+    # Sample snippet from result[:destinations][0][:matching_departures]:
+    # {:stop_ref=>"MTA_803019", :departure_time=>Sat, 16 Feb 2019 06:56:07 UTC +00:00}
+    # {:stop_ref=>"MTA_401664", :departure_time=>Sat, 16 Feb 2019 06:58:46 UTC +00:00}
+    # {:stop_ref=>"MTA_401665", :departure_time=>Sat, 16 Feb 2019 04:40:10 UTC +00:00}
+    # {:stop_ref=>"MTA_401666", :departure_time=>Sat, 16 Feb 2019 06:59:49 UTC +00:00}
+    # {:stop_ref=>"MTA_401667", :departure_time=>nil}
+    # {:stop_ref=>"MTA_404850", :departure_time=>Sat, 16 Feb 2019 07:01:24 UTC +00:00}
+
     bus_line = self.find_by(line_ref: line_ref)
     return if bus_line.blank?
 
@@ -190,5 +198,5 @@ class BusLine < ApplicationRecord
       )
     end
   end
-
+  
 end

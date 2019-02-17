@@ -23,6 +23,8 @@ class HistoricalDeparture < ApplicationRecord
     self.where(line_ref: line_ref, stop_ref: stop_ref).order(departure_time: :desc)
   end
 
+  # Filters
+
   def self.between_hours(start_hour_in_est, end_hour_in_est)
     # departure_time is stored in Postgres as timestamp without time zone
     # departure_time AT TIME ZONE 'UTC' gives it a time zone UTC
@@ -54,6 +56,8 @@ class HistoricalDeparture < ApplicationRecord
   def self.weekends_only
     self.where(["extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') = ? OR extract(dow from (departure_time AT TIME ZONE 'UTC') AT TIME ZONE 'EST') = ?", DAYS_OF_WEEK[:saturday], DAYS_OF_WEEK[:sunday]])
   end
+
+  # BusRate Score methods
 
   def self.rating(departures, allowable_headway_in_minutes)
     return nil if departures.blank? || departures.count < 2
@@ -108,6 +112,8 @@ class HistoricalDeparture < ApplicationRecord
       busrate_score: busrate_score,
     }
   end
+
+  # Data creation methods
 
   def self.fast_insert_objects(table_name, object_list)
     # Use the fast_inserter gem to write hundreds of rows to the table
@@ -201,28 +207,6 @@ class HistoricalDeparture < ApplicationRecord
     #
     # logger.info "#{error_count} duplicate vehicle positions avoided"
     logger.info "grab_all # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds."
-  end
-
-  def self.grab_and_go
-    # Runs every 1 minute.  Runs grab_all either once or twice,
-    # depending on if the first one takes > 30 seconds.
-    # No longer in use
-
-    start_time = Time.current
-    logger = Logger.new('log/grab.log')
-    identifier = start_time.to_f.to_s.split(".")[1].first(4)
-    logger.info "Starting grab_and_go # #{identifier} at #{start_time.in_time_zone("EST")}"
-    grab_all
-
-    elapsed_time = Time.current - start_time
-    if elapsed_time > 30.seconds
-      logger.info "First grab_all took #{elapsed_time.round(2)} seconds; skipping second grab_all"
-      return
-    end
-
-    logger.info "continuing grab_and_go # #{identifier} after #{elapsed_time.round(2)} seconds"
-    grab_all
-    logger.info "grab_and_go # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
   def self.wait_and_grab(wait_time = 32)
@@ -536,6 +520,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.process_batch(departure_arr, skip_non_nils = true)
+    # Add headways to a list of pre-sorted departures
     # Assume departure_arr is sorted by departure_time desc
     # Assume all departures in departure_arr have the same stop_ref and line_ref
 
@@ -591,7 +576,8 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.chunk_headways
     # Take all headways less than 4 hours old
-    # Divide them into 1 hour chunks and process
+    # Divide them into 1 hour chunks and process.
+    # Any headways we miss here will be taken care of just in time in the HistoricalDepartures controller.
     # 4 hrs: 14_400 seconds
     # 3.5 hrs: 13_200
     # 3 hrs: 10_800
@@ -602,12 +588,12 @@ class HistoricalDeparture < ApplicationRecord
 
     start_time = Time.current
     logger.info "Chunking headways..."
-    chunk1 = HistoricalDeparture.newer_than(14_400).older_than(10_800)
-    chunk2 = HistoricalDeparture.newer_than(10_801).older_than(7_200)
-    chunk3 = HistoricalDeparture.newer_than(7_201).older_than(3_600)
-    chunk4 = HistoricalDeparture.newer_than(13_200).older_than(9_000)
-    chunk5 = HistoricalDeparture.newer_than(9_001).older_than(5_400)
-    chunk6 = HistoricalDeparture.newer_than(5_401).older_than(1_800)
+    chunk1 = HistoricalDeparture.newer_than(14_400).older_than(10_800) # 4 - 3 hrs
+    chunk2 = HistoricalDeparture.newer_than(10_801).older_than(7_200) # 3 - 2 hrs
+    chunk3 = HistoricalDeparture.newer_than(7_201).older_than(3_600) # 2 - 1 hr
+    chunk4 = HistoricalDeparture.newer_than(13_200).older_than(9_000) # 3.5 - 2.5 hrs
+    chunk5 = HistoricalDeparture.newer_than(9_001).older_than(5_400) # 2.5 - 1.5 hrs
+    chunk6 = HistoricalDeparture.newer_than(5_401).older_than(1_800) # 1.5 - 0.5 hrs
     logger.info "DB queries complete after #{(Time.current - start_time).round(2)} seconds"
 
     [chunk1, chunk2, chunk3, chunk4, chunk5, chunk6].each_with_index do |chunk, idx|
@@ -659,6 +645,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.interpolate_for_route_and_stop(line_ref, stop_ref)
+    # Get the ordered stop list for a bus line, pick a trip and direction, and interpolate any missing departures.
     start_time = Time.current
     logger.info "interpolate_for_route_and_stop starting: #{line_ref} #{stop_ref}"
     result = []
