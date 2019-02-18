@@ -10,6 +10,15 @@ class BusLine < ApplicationRecord
   # maybe write method to choose destination
   # aggregate_trip_view will just be a list of trip views in the same format as trip_view
 
+  def self.pick_direction_ref(line_ref, stop_ref)
+    stop_lists = ordered_stop_refs(line_ref)
+    # Return either 0 or 1 depending on which stop_list the stop_ref is found in.
+    # If neither, find_index will return nil.
+    stop_lists.find_index do |stop_list|
+      stop_list[:stop_refs].include?(stop_ref)
+    end
+  end
+
   def self.trip_view(trip_identifier, line_ref, vehicle_ref, direction_ref)
     # Given a trip identifier, line_ref, and vehicle_ref,
     # return the first matching departure time for each stop along the route.
