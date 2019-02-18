@@ -11,7 +11,8 @@ class BusLine < ApplicationRecord
   # aggregate_trip_view will just be a list of trip views in the same format as trip_view
 
   def self.pick_direction_ref(line_ref, stop_ref)
-    stop_lists = ordered_stop_refs(line_ref)
+    bus_line = self.find_by(line_ref: line_ref)
+    stop_lists = bus_line.ordered_stop_refs
     # Return either 0 or 1 depending on which stop_list the stop_ref is found in.
     # If neither, find_index will return nil.
     stop_lists.find_index do |stop_list|
