@@ -70,7 +70,11 @@ class BusLine < ApplicationRecord
       end
       if current_departure.trip_identifier == current_batch_trip_identifier
         # Add departures to current_batch until current_batch_trip_identifier no longer matches
-        current_batch << current_departure
+        current_batch << {
+          stop_ref: current_departure.stop_ref,
+          departure_time: current_departure.departure_time,
+          direction_ref: current_departure.direction_ref,
+        }
         next
       else
         # Process batch and update stats
@@ -82,12 +86,15 @@ class BusLine < ApplicationRecord
           line_ref = current_batch.first.line_ref
           direction_ref = current_batch.first.direction_ref || 0
 
+          bus_line = BusLine.find_by(line_ref: line_ref)
+          stop_refs = bus_line.ordered_stop_refs(direction_ref)
+
           result << {
             trip_identifier: current_batch_trip_identifier,
             line_ref: line_ref,
             vehicle_ref: vehicle_ref,
             direction_ref: direction_ref,
-            matching_departures: current_batch,
+            matching_departures: build_matching_departures_hash(stop_refs, vehicle_ref, current_batch),
           }
         end
 
@@ -102,10 +109,14 @@ class BusLine < ApplicationRecord
 
   def self.build_matching_departures_hash(stop_refs, vehicle_ref, departures)
     stop_refs.map do |stop_ref|
-      matching_departure = departures.where(
-        stop_ref: stop_ref,
-        vehicle_ref: vehicle_ref
-      ).order(created_at: :desc).first
+      if departures.class == ActiveRecord::Relation
+        matching_departure = departures.where(
+          stop_ref: stop_ref,
+          vehicle_ref: vehicle_ref
+        ).order(created_at: :desc).first
+      else
+        matching_departure = departures.find { |dep| dep.stop_ref == stop_ref && dep.vehicle_ref == vehicle_ref }
+      end
       if matching_departure.present?
         {
           stop_ref: matching_departure.stop_ref,
