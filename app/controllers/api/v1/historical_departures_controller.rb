@@ -30,7 +30,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     @historical_departures.reload
 
     start_time = Time.current
-    headways_updated = HistoricalDeparture.process_batch(@historical_departures)[:successful_count]
+    # Only update headways for the past week (604_800) -- too slow otherwise
+    headways_updated = HistoricalDeparture.process_batch(@historical_departures.newer_than(604_800))[:successful_count]
     logger.info "historical_departures_controller: Updated #{headways_updated} headways in #{(Time.current - start_time).round(2)} seconds"
 
     # get most recent 8
