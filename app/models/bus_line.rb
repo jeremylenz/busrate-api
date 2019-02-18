@@ -70,11 +70,7 @@ class BusLine < ApplicationRecord
       end
       if current_departure.trip_identifier == current_batch_trip_identifier
         # Add departures to current_batch until current_batch_trip_identifier no longer matches
-        current_batch << {
-          stop_ref: current_departure.stop_ref,
-          departure_time: current_departure.departure_time,
-          direction_ref: current_departure.direction_ref,
-        }
+        current_batch << current_departure
         next
       else
         # Process batch and update stats
@@ -115,8 +111,8 @@ class BusLine < ApplicationRecord
           vehicle_ref: vehicle_ref
         ).order(created_at: :desc).first
       else
-        # If departures is a regular array, it's an array of hashes passed in from aggregate_trip_view
-        matching_departure = departures.find { |dep| dep[:stop_ref] == stop_ref && dep[:vehicle_ref] == vehicle_ref }
+        # If departures is a regular array, it's an array of HistoricalDepartures passed in from aggregate_trip_view
+        matching_departure = departures.find { |dep| dep.stop_ref == stop_ref && dep.vehicle_ref == vehicle_ref }
       end
       if matching_departure.present?
         {
