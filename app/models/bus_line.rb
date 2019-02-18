@@ -74,17 +74,23 @@ class BusLine < ApplicationRecord
         next
       else
         # Process batch and update stats
-        logger.info "current batch length: #{current_batch.length}"
+        print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}"
 
         sample_departure = current_batch.first
         if sample_departure.present?
           vehicle_ref = current_batch.first.vehicle_ref
           line_ref = current_batch.first.line_ref
           direction_ref = current_batch.first.direction_ref || 0
+
+          bus_line = BusLine.find_by(line_ref: line_ref)
+          stop_list = bus_line.ordered_stop_refs(direction_ref)
+
           result << {
             trip_identifier: current_batch_trip_identifier,
             line_ref: line_ref,
             vehicle_ref: vehicle_ref,
+            direction_ref: direction_ref,
+            matching_departures: current_batch,
           }
         end
 
