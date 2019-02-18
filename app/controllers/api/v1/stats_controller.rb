@@ -19,6 +19,9 @@ class Api::V1::StatsController < ApplicationController
     total_headways_recent_count = @headways_recent_count + @nil_headways_recent_count
     @headways_success_rate = number_to_percentage(@headways_recent_count.to_f / total_headways_recent_count.to_f * 100.0, precision: 2)
 
+    @interpolated_recent_count = HistoricalDeparture.newer_than(14_400).interpolated.count
+    @interpolated_rate = number_to_percentage(@interpolated_recent_count.to_f / HistoricalDeparture.newer_than(14_400).count.to_f * 100.0, precision: 2)
+
     @vehicle_position_count = VehiclePosition.all.count
     @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
     @vehicle_count = Vehicle.all.count
@@ -36,6 +39,8 @@ class Api::V1::StatsController < ApplicationController
       last_4_hours_headways_count: @headways_recent_count,
       last_4_hours_nil_headways: @nil_headways_recent_count,
       last_4_hours_headways_success: @headways_success_rate,
+      last_4_hours_interpolated_count: @interpolated_recent_count,
+      last_4_hours_interpolated_rate: @interpolated_rate,
       vehicle_positions: @vehicle_position_count,
       vehicle_positions_per_minute: @vehicle_position_recent_count,
       bus_lines: @bus_line_count,
