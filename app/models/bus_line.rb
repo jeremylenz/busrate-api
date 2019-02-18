@@ -218,7 +218,7 @@ class BusLine < ApplicationRecord
     # Returns the same object, but with interpolated departure times added where they were missing.
 
     # Shave off nil values from the end
-    result = trip_sequence.reverse.drop_while { |d| d[:departure_time].blank? }.reverse
+    result = trip_sequence[:trip_sequence].reverse.drop_while { |d| d[:departure_time].blank? }.reverse
 
     start_time = nil
     num_interpolated_timestamps = 0
@@ -252,7 +252,13 @@ class BusLine < ApplicationRecord
       end
     end
 
-    result
+    {
+      trip_identifier: trip_sequence[:trip_identifier],
+      line_ref: trip_sequence[:line_ref],
+      vehicle_ref: trip_sequence[:vehicle_ref],
+      direction_ref: trip_sequence[:direction_ref],
+      interpolated_trip_sequence: result,
+    }
   end
 
   def ordered_stop_refs(direction_ref = nil)
