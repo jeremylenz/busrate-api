@@ -10,6 +10,10 @@ class BusLine < ApplicationRecord
   # maybe write method to choose destination
   # aggregate_trip_view will just be a list of trip views in the same format as trip_view
 
+  def initialize
+    @@ordered_stop_refs_cache = {}
+  end
+
   def self.pick_direction_ref(line_ref, stop_ref)
     bus_line = self.find_by(line_ref: line_ref)
     stop_lists = bus_line.ordered_stop_refs
@@ -326,13 +330,23 @@ class BusLine < ApplicationRecord
   end
 
   def ordered_stop_refs(direction_ref = nil)
-    return nil if self.stop_refs_response.nil?
+
+    existing_data_in_memory = @@ordered_stop_refs_cache[self.line_ref.to_sym]
+    # Return cached result if present
+    if existing_data_in_memory
+      if direction_ref.present?
+        return existing_data_in_memory[direction_ref][:stop_refs]
+      else
+        return existing_data_in_memory
+      end
+    end
 
     if self.updated_at < 21.days.ago
       logger.info "Refreshing stop_refs for #{self.line_ref}"
       self.update_stop_refs
     end
 
+    return nil if self.stop_refs_response.nil?
     response = JSON.parse(self.stop_refs_response)
     stop_groups_data = response['entry']['stopGroupings'][0]['stopGroups']
 
@@ -346,6 +360,9 @@ class BusLine < ApplicationRecord
     end
 
     return if result.blank?
+
+    # cache the result for next lookup
+    @@ordered_stop_refs_cache[self.line_ref.to_sym] = result
 
     if direction_ref.present?
       result[direction_ref][:stop_refs]
