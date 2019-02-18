@@ -76,7 +76,7 @@ class BusLine < ApplicationRecord
         next
       else
         # Process batch and update stats
-        print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}   \r"
+        print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
 
         sample_departure = current_batch.first
         if sample_departure.present?
@@ -105,7 +105,7 @@ class BusLine < ApplicationRecord
         current_batch = []
       end
     end
-
+    puts # because of the print after else on 79
     result
   end
 
