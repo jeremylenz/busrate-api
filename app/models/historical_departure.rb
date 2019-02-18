@@ -710,13 +710,13 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "making trip sequences"
     trip_sequences = []
     aggregate_trip_view.each do |trip_view|
+      print "#{trip_view[:trip_identifier]}      \r"
       trip_sequences_to_add = BusLine.all_trip_sequences(trip_view)
       next if trip_sequences_to_add.blank?
       trip_sequences_to_add.each { |ts| trip_sequences << ts }
     end
     logger.info "interpolating trip sequences"
     interpolated_trip_sequences = trip_sequences.map do |trip_sequence|
-      print "#{trip_sequence[:trip_identifier]}      \r"
       BusLine.interpolate_trip_sequence(trip_sequence)
     end
     puts
