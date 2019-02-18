@@ -678,26 +678,21 @@ class HistoricalDeparture < ApplicationRecord
     interpolated_trip_sequences.each do |interpolated_trip_sequence|
       new_departures_list = BusLine.interpolated_departures_to_create(interpolated_trip_sequence)
       new_departures_list.each do |dep_object|
-        if dep_object[:interpolated_departure_time].present?
-          logger.info "Creating HistoricalDeparture for #{dep_object[:interpolated_departure_time]}"
-          new_departure = HistoricalDeparture.create(dep_object)
-          if new_departure.errors.any?
-            result << new_departure.errors.full_messages.join("; ")
-          else
-            result << new_departure
-          end
+        new_departure = HistoricalDeparture.create(dep_object)
+        if new_departure.errors.any?
+          result << new_departure.errors.full_messages.join("; ")
         else
-          logger.info "Interpolated departure time not found for #{dep_object}"
-          next
+          result << new_departure
         end # if
       end # each
     end # each
-    logger.info "processing headways"
+    logger.info "Processing headways for interpolated departures"
     stop_refs_to_update = result.select { |elem| elem.class != String }
     stop_refs_to_update.each do |dep|
       print "Processing headways for #{dep.stop_ref}...  \r"
       self.process_batch(self.for_route_and_stop(line_ref, dep.stop_ref).limit(8).reload, false)
     end
+    logger.info "Created #{stop_refs_to_update.length} interpolated departures"
     logger.info "interpolate_for_route_and_stop complete in #{(Time.current - start_time).round(2)} seconds"
     result
   end
