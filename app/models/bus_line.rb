@@ -243,8 +243,10 @@ class BusLine < ApplicationRecord
     # IMPORTANT: Assumes this list is already sanitized!  Don't pass in a raw trip_view.
     # Returns the same object, but with interpolated departure times added where they were missing.
 
+    # Shave off nil values from the beginning
+    result = trip_sequence[:trip_sequence].drop_while { |d| d[:departure_time].blank? }
     # Shave off nil values from the end
-    result = trip_sequence[:trip_sequence].reverse.drop_while { |d| d[:departure_time].blank? }.reverse
+    result = result.reverse.drop_while { |d| d[:departure_time].blank? }.reverse
 
     start_time = nil
     num_interpolated_timestamps = 0
