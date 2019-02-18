@@ -647,6 +647,12 @@ class HistoricalDeparture < ApplicationRecord
     ).where(line_ref: line_ref).order(created_at: :desc, stop_ref: :desc, vehicle_ref: :desc)
   end
 
+  def self.for_trip(trip_identifier)
+    HistoricalDeparture.where(
+      ["block_ref = ? OR dated_vehicle_journey_ref = ?", trip_identifier, trip_identifier]
+    ).order(created_at: :desc, stop_ref: :desc, vehicle_ref: :desc)
+  end
+
   def self.interpolate_for_route_and_stop(line_ref, stop_ref)
     # Get the ordered stop list for a bus line, pick a trip and direction, and interpolate any missing departures.
     start_time = Time.current

@@ -17,38 +17,27 @@ class BusLine < ApplicationRecord
     # {:stop_ref=>"MTA_401667", :departure_time=>nil}
     # {:stop_ref=>"MTA_404850", :departure_time=>Sat, 16 Feb 2019 07:01:24 UTC +00:00}
 
+    departures = HistoricalDeparture.for_line_and_trip(line_ref, trip_identifier)
+
+    self.build_trip_view(departures, line_ref, vehicle_ref, trip_identifier)
+  end
+
+  def self.build_trip_view(departures, line_ref, vehicle_ref, trip_identifier)
+
     bus_line = self.find_by(line_ref: line_ref)
     return if bus_line.blank?
-
     stop_lists = bus_line.ordered_stop_refs # [direction_a_stops, direction_b_stops]
-    departures = HistoricalDeparture.for_line_and_trip(line_ref, trip_identifier)
+
     result = {
       trip_identifier: trip_identifier,
       line_ref: line_ref,
       vehicle_ref: vehicle_ref,
       destinations: [],
     }
-
     stop_lists.each do |stop_list|
       result[:destinations] << {
         destination_name: stop_list[:destination_name],
-        matching_departures: stop_list[:stop_refs].map do |stop_ref|
-          matching_departure = departures.where(
-            stop_ref: stop_ref,
-            vehicle_ref: vehicle_ref
-          ).order(created_at: :desc).first
-          if matching_departure.present?
-            {
-              stop_ref: matching_departure.stop_ref,
-              departure_time: matching_departure.departure_time,
-              direction_ref: matching_departure.direction_ref,
-            }
-          else
-            {
-              stop_ref: stop_ref,
-              departure_time: nil,
-            }
-          end
+        matching_departures: self.build_matching_departures_hash(stop_list[:stop_refs], vehicle_ref, departures),
         end
       }
 
@@ -57,6 +46,59 @@ class BusLine < ApplicationRecord
 
   rescue NoMethodError
     return nil
+  end
+
+  def self.aggregate_trip_view(departures)
+    sorted_departures = departures.order("block_ref DESC, dated_vehicle_journey_ref DESC")
+    result = []
+
+    current_batch = []
+    current_batch_trip_identifier = nil
+
+    sorted_departures.each_record do |current_departure|
+      if current_batch_trip_identifier.blank?
+        # we are the beginning of a new batch
+        current_batch_trip_identifier = current_departure.trip_identifier
+      end
+      if current_departure.trip_identifier == current_batch_trip_identifier
+        # Add departures to current_batch until current_batch_trip_identifier no longer matches
+        current_batch << current_departure
+        next
+      else
+        # Process batch and update stats
+        next if current_batch.length < 2
+
+        vehicle_ref = current_batch.first.vehicle_ref
+        line_ref = current_batch.first.line_ref
+        direction_ref = current_batch.first.direction_ref || 0
+        result << {
+          trip_identifier: current_batch_trip_identifier,
+          line_ref: line_ref,
+          vehicle_ref: vehicle_ref,
+        }
+    end
+
+    result
+  end
+
+  def self.build_matching_departures_hash(stop_refs, vehicle_ref, departures)
+    stop_refs.map do |stop_ref|
+      matching_departure = departures.where(
+        stop_ref: stop_ref,
+        vehicle_ref: vehicle_ref
+      ).order(created_at: :desc).first
+      if matching_departure.present?
+        {
+          stop_ref: matching_departure.stop_ref,
+          departure_time: matching_departure.departure_time,
+          direction_ref: matching_departure.direction_ref,
+        }
+      else
+        {
+          stop_ref: stop_ref,
+          departure_time: nil,
+        }
+      end
   end
 
   def self.trip_sequence(trip_view, key_stop_ref)
