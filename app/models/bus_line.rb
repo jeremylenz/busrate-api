@@ -99,6 +99,7 @@ class BusLine < ApplicationRecord
           departure_time: nil,
         }
       end
+    end
   end
 
   def self.trip_sequence(trip_view, key_stop_ref)
