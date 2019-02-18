@@ -535,6 +535,11 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     non_nils_skipped = 0
 
+    # If this batch includes any interpolated departures, all headways must be recalculated
+    if departure_arr.any? { |dep| dep.interpolated }
+      skip_non_nils = false
+    end
+
     departure_arr.each_with_index do |current_departure, idx|
       # Compare each departure time with the next departure
       # The headway is the number of seconds between them
@@ -725,13 +730,8 @@ class HistoricalDeparture < ApplicationRecord
       BusLine.interpolated_departures_to_create(its)
     end.flatten
     logger.info "#{departures_to_create.length} departure objects complete after #{(Time.current - start_time).round(2)} seconds"
-    # logger.info "Creating #{departures_to_create.length} departures"
-    # departures_to_create.each do |dep_obj|
-    #   new_departure = HistoricalDeparture.create(dep_object)
-    #   if new_departure.errors.any?
-    #     logger.info new_departure.errors.full_messages.join("; ")
-    #   end # if
-    # end # each
+    logger.info "Creating #{departures_to_create.length} departures"
+    fast_insert_objects('historical_departures', departures_to_create)
     logger.info "interpolate_recent complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
