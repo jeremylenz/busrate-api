@@ -339,7 +339,7 @@ class BusLine < ApplicationRecord
         return existing_data_in_memory
       end
     end
-    logger.info "getting new ordered_stop_refs"
+    # logger.info "getting new ordered_stop_refs"
 
     if self.updated_at < 21.days.ago
       logger.info "Refreshing stop_refs for #{self.line_ref}"
