@@ -10,9 +10,7 @@ class BusLine < ApplicationRecord
   # maybe write method to choose destination
   # aggregate_trip_view will just be a list of trip views in the same format as trip_view
 
-  def initialize
-    @@ordered_stop_refs_cache = {}
-  end
+  @@ordered_stop_refs_cache = {}
 
   def self.pick_direction_ref(line_ref, stop_ref)
     bus_line = self.find_by(line_ref: line_ref)
