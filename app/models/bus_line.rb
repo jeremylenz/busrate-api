@@ -39,7 +39,6 @@ class BusLine < ApplicationRecord
       line_ref: line_ref,
       vehicle_ref: vehicle_ref,
       direction_ref: direction_ref,
-      destination_name: stop_list[:destination_name],
       matching_departures: self.build_matching_departures_hash(stop_list, vehicle_ref, departures),
     }
 
