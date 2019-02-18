@@ -4,7 +4,13 @@ class BusLine < ApplicationRecord
   validates_presence_of :line_ref
   validates_uniqueness_of :line_ref
 
-  def self.trip_view(trip_identifier, line_ref, vehicle_ref)
+  # Trip view and trip sequence should be same format
+  # must specify destination_ref
+  # should return only ONE matching_departures list with metadata
+  # maybe write method to choose destination
+  # aggregate_trip_view will just be a list of trip views in the same format as trip_view
+
+  def self.trip_view(trip_identifier, line_ref, vehicle_ref, direction_ref)
     # Given a trip identifier, line_ref, and vehicle_ref,
     # return the first matching departure time for each stop along the route.
     # May show departures from several different trips.
@@ -19,29 +25,23 @@ class BusLine < ApplicationRecord
 
     departures = HistoricalDeparture.for_line_and_trip(line_ref, trip_identifier)
 
-    self.build_trip_view(departures, line_ref, vehicle_ref, trip_identifier)
+    self.build_trip_view(departures, line_ref, vehicle_ref, direction_ref, trip_identifier)
   end
 
-  def self.build_trip_view(departures, line_ref, vehicle_ref, trip_identifier)
+  def self.build_trip_view(departures, line_ref, vehicle_ref, direction_ref, trip_identifier)
 
     bus_line = self.find_by(line_ref: line_ref)
-    return if bus_line.blank?
-    stop_lists = bus_line.ordered_stop_refs # [direction_a_stops, direction_b_stops]
+    return if bus_line.blank? || direction_ref.blank? || direction_ref > 1
+    stop_list = bus_line.ordered_stop_refs(direction_ref)
 
-    result = {
+    {
       trip_identifier: trip_identifier,
       line_ref: line_ref,
       vehicle_ref: vehicle_ref,
-      destinations: [],
+      direction_ref: direction_ref,
+      destination_name: stop_list[:destination_name],
+      matching_departures: self.build_matching_departures_hash(stop_list, vehicle_ref, departures),
     }
-    stop_lists.each do |stop_list|
-      result[:destinations] << {
-        destination_name: stop_list[:destination_name],
-        matching_departures: self.build_matching_departures_hash(stop_list[:stop_refs], vehicle_ref, departures),
-      }
-    end
-
-    result
 
   rescue NoMethodError
     return nil
