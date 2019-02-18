@@ -716,8 +716,10 @@ class HistoricalDeparture < ApplicationRecord
     end
     logger.info "interpolating trip sequences"
     interpolated_trip_sequences = trip_sequences.map do |trip_sequence|
+      print "#{trip_sequence[:trip_identifier]}      \r"
       BusLine.interpolate_trip_sequence(trip_sequence)
     end
+    puts
     logger.info "making departure objects"
     departures_to_create = interpolated_trip_sequences.map do |its|
       BusLine.interpolated_departures_to_create(its)
