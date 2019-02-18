@@ -679,21 +679,15 @@ class HistoricalDeparture < ApplicationRecord
       new_departures_list = BusLine.interpolated_departures_to_create(interpolated_trip_sequence)
       new_departures_list.each do |dep_object|
         if dep_object[:interpolated_departure_time].present?
-          new_departure = HistoricalDeparture.create(
-            bus_stop: BusStop.find_by(stop_ref: stop_ref),
-            stop_ref: dep_object[:stop_ref],
-            line_ref: line_ref,
-            vehicle_ref: vehicle_ref,
-            departure_time: dep_object[:interpolated_departure_time],
-            block_ref: trip_identifier,
-            interpolated: true,
-          )
+          logger.info "Creating HistoricalDeparture for #{dep_object[:interpolated_departure_time]}"
+          new_departure = HistoricalDeparture.create(dep_object)
           if new_departure.errors.any?
             result << new_departure.errors.full_messages.join("; ")
           else
             result << new_departure
           end
         else
+          logger.info "Interpolated departure time not found for #{dep_object}"
           next
         end # if
       end # each
