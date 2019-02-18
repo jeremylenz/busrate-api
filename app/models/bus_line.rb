@@ -204,7 +204,7 @@ class BusLine < ApplicationRecord
 
     stop_refs.each do |stop_ref|
       # make set from trip sequence, trying stop_ref as the key_stop_ref
-      current_trip_sequence = trip_sequence(matching_departures, stop_ref)
+      current_trip_sequence = trip_sequence(trip_view, stop_ref)
       sequence_set = Set.new(current_trip_sequence)
       # see if it's a subset of any of the unique vehicle trips
       if unique_vehicle_trips.any? { |unique_vehicle_trip| sequence_set.subset?(unique_vehicle_trip) }
