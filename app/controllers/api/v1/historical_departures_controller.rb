@@ -38,6 +38,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     headway_update_needed = (headways_to_update.where(headway: nil).count > 0)
     if headway_update_needed
       headways_updated = HistoricalDeparture.process_batch(headways_to_update)[:successful_count]
+      @historical_departures.reload
       logger.info "historical_departures_controller: Updated #{headways_updated} headways in #{(Time.current - start_time).round(2)} seconds"
     else
       logger.info "historical_departures_controller: headway recalc not needed; decision time #{(Time.current - start_time).round(2)} seconds"
