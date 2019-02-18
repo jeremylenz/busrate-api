@@ -333,12 +333,13 @@ class BusLine < ApplicationRecord
     # Return cached result if present
     if existing_data_in_memory
       if direction_ref.present?
-        logger.info "returning cached ordered_stop_refs"
+        # logger.info "returning cached ordered_stop_refs"
         return existing_data_in_memory[direction_ref][:stop_refs]
       else
         return existing_data_in_memory
       end
     end
+    logger.info "getting new ordered_stop_refs"
 
     if self.updated_at < 21.days.ago
       logger.info "Refreshing stop_refs for #{self.line_ref}"
