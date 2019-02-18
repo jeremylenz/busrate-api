@@ -309,6 +309,9 @@ class BusLine < ApplicationRecord
     else
       result
     end
+
+  rescue NoMethodError
+    return nil
   end
 
   def next_stop_ref(stop_ref, direction_ref)
