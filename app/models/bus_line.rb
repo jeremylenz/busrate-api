@@ -58,7 +58,7 @@ class BusLine < ApplicationRecord
       if current_batch_trip_identifier.blank?
         # we are the beginning of a new batch
         current_batch_trip_identifier = current_departure.trip_identifier
-        print "#{current_batch_trip_identifier}           \r"
+        print "#{current_batch_trip_identifier}"
       end
       if current_departure.trip_identifier == current_batch_trip_identifier
         # Add departures to current_batch until current_batch_trip_identifier no longer matches
@@ -76,6 +76,10 @@ class BusLine < ApplicationRecord
           line_ref: line_ref,
           vehicle_ref: vehicle_ref,
         }
+
+        # reset
+        current_batch_trip_identifier = current_departure.trip_identifier
+        current_batch = []
       end
     end
 
