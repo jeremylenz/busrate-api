@@ -82,9 +82,6 @@ class BusLine < ApplicationRecord
           line_ref = current_batch.first.line_ref
           direction_ref = current_batch.first.direction_ref || 0
 
-          bus_line = BusLine.find_by(line_ref: line_ref)
-          stop_list = bus_line.ordered_stop_refs(direction_ref)
-
           result << {
             trip_identifier: current_batch_trip_identifier,
             line_ref: line_ref,
@@ -298,7 +295,7 @@ class BusLine < ApplicationRecord
     end
 
     return if result.blank?
-    
+
     if direction_ref.present?
       result[direction_ref][:stop_refs]
     else
