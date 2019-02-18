@@ -732,7 +732,7 @@ class HistoricalDeparture < ApplicationRecord
       BusLine.interpolated_departures_to_create(its)
     end.flatten.compact
     logger.info "#{departures_to_create.length} departure objects complete after #{(Time.current - start_time).round(2)} seconds"
-    logger.info "Creating #{departures_to_create.length} departures"
+    logger.info "Creating #{departures_to_create.length} interpolated departures"
     fast_insert_objects('historical_departures', departures_to_create)
     logger.info "interpolate_recent complete in #{(Time.current - start_time).round(2)} seconds"
   end
