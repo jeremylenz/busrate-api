@@ -86,6 +86,7 @@ class BusLine < ApplicationRecord
 
           bus_line = BusLine.find_by(line_ref: line_ref)
           stop_refs = bus_line.ordered_stop_refs(direction_ref)
+          stop_refs = bus_line.ordered_stop_refs(0) if stop_refs.blank? # The B74 has only one direction_ref but the MTA uses 1 and not 0! [eye_roll_emoji]
 
           if stop_refs.blank?
             logger.info "Can't find ordered_stop_refs for #{line_ref}, direction #{direction_ref}"
