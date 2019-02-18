@@ -205,7 +205,7 @@ class BusLine < ApplicationRecord
     stop_refs.each do |stop_ref|
       # make set from trip sequence, trying stop_ref as the key_stop_ref
       current_trip_sequence = trip_sequence(trip_view, stop_ref)
-      sequence_set = Set.new(current_trip_sequence)
+      sequence_set = Set.new(current_trip_sequence[:trip_sequence])
       # see if it's a subset of any of the unique vehicle trips
       if unique_vehicle_trips.any? { |unique_vehicle_trip| sequence_set.subset?(unique_vehicle_trip) }
         # if it's a subset, throw it away
@@ -220,7 +220,7 @@ class BusLine < ApplicationRecord
     # disregard results where we don't have a departure for at least half the stops
     min_length = stop_refs.length / 2
 
-    result.select { |trip_sequence| trip_sequence.count { |ts| ts[:departure_time].present? } >= min_length }
+    result.select { |trip_sequence| trip_sequence[:trip_sequence].count { |ts| ts[:departure_time].present? } >= min_length }
   end
 
   def self.interpolate_timestamps(start_time, end_time, num_of_results = 1)
