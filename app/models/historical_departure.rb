@@ -690,11 +690,43 @@ class HistoricalDeparture < ApplicationRecord
     stop_refs_to_update = result.select { |elem| elem.class != String }
     stop_refs_to_update.each do |dep|
       print "Processing headways for #{dep.stop_ref}...  \r"
+      # Recalculate & overwrite all headways in order to incorporate the interpolated departure
       self.process_batch(self.for_route_and_stop(line_ref, dep.stop_ref).limit(8).reload, false)
     end
     logger.info "Created #{stop_refs_to_update.length} interpolated departures"
     logger.info "interpolate_for_route_and_stop complete in #{(Time.current - start_time).round(2)} seconds"
     result
+  end
+
+  def interpolate_recent(age_in_secs)
+    # Take recent HistoricalDepartures and interpolate any that were missed.
+    logger.info "Querying DB..."
+    recent_departures = HistoricalDeparture.newer_than(age_in_secs)
+    # make aggregate_trip_view
+    logger.info "making aggregate_trip_view"
+    aggregate_trip_view = BusLine.aggregate_trip_view(recent_departures)
+    # make a flat list of trip sequences
+    logger.info "making trip sequences"
+    trip_sequences = []
+    aggregate_trip_view.each do |trip_view|
+      trip_sequences_to_add = BusLine.all_trip_sequences(trip_view)
+      trip_sequences_to_add.each { |ts| trip_sequences << ts }
+    end
+    logger.info "interpolating trip sequences"
+    interpolated_trip_sequences = trip_sequences.map do |trip_sequence|
+      BusLine.interpolate_trip_sequence(trip_sequence)
+    end
+    logger.info "making departure objects"
+    departures_to_create = interpolated_trip_sequences.map do |its|
+      BusLine.interpolated_departures_to_create(its)
+    end.flatten
+    # logger.info "Creating #{departures_to_create.length} departures"
+    # departures_to_create.each do |dep_obj|
+    #   new_departure = HistoricalDeparture.create(dep_object)
+    #   if new_departure.errors.any?
+    #     logger.info new_departure.errors.full_messages.join("; ")
+    #   end # if
+    # end # each
   end
 
   # Instance methods

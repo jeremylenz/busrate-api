@@ -110,6 +110,7 @@ class BusLine < ApplicationRecord
   end
 
   def self.build_matching_departures_hash(stop_refs, vehicle_ref, departures)
+    # Returns an array. Ha.
     return unless stop_refs.present?
     stop_refs.map do |stop_ref|
       if departures.class == ActiveRecord::Relation
