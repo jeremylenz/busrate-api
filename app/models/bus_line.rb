@@ -54,7 +54,7 @@ class BusLine < ApplicationRecord
     current_batch = []
     current_batch_trip_identifier = nil
 
-    sorted_departures.each_record do |current_departure|
+    sorted_departures.each_instance do |current_departure|
       if current_batch_trip_identifier.blank?
         # we are the beginning of a new batch
         current_batch_trip_identifier = current_departure.trip_identifier
