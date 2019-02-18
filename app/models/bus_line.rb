@@ -113,6 +113,11 @@ class BusLine < ApplicationRecord
     # Try to determine which departures are from the same vehicle trip.
     # Thus, we will know which departures we need to interpolate.
 
+    trip_identifier = trip_view[:trip_identifier]
+    line_ref = trip_view[:line_ref]
+    vehicle_ref = trip_view[:vehicle_ref]
+    direction_ref = trip_view[:direction_ref]
+
     result = []
     key_reached = false
     prev_departure_time = nil
@@ -152,7 +157,14 @@ class BusLine < ApplicationRecord
 
     end
 
-    result
+    {
+      trip_identifier: trip_identifier,
+      line_ref: line_ref,
+      vehicle_ref: vehicle_ref,
+      direction_ref: direction_ref,
+      trip_sequence: result,
+    }
+
   end
 
   def self.all_trip_sequences(trip_view, destination_ref)
