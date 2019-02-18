@@ -461,6 +461,7 @@ class HistoricalDeparture < ApplicationRecord
     total_count = 0
     batch_elapsed_time = 0
     update_time = 0
+    interp_recalcs = 0
     # 2 hours worth of historical_departures is typically 180,000+ records.
     # Here we're using the postgresql_cursor gem (each_row and each_instance methods)
     # to process all of them, hopefully without running out of memory or getting the process killed.
@@ -491,6 +492,7 @@ class HistoricalDeparture < ApplicationRecord
           non_nils_skipped += batch_result[:non_nils_skipped]
           batch_elapsed_time += batch_result[:elapsed_time]
           update_time += batch_result[:update_time]
+          interp_recalcs += batch_result[:interp_recalcs]
 
           # check time limit
           if (Time.current - start_time) > 300
