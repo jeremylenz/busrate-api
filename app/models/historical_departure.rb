@@ -728,7 +728,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "making departure objects"
     departures_to_create = interpolated_trip_sequences.map do |its|
       BusLine.interpolated_departures_to_create(its)
-    end.flatten
+    end.flatten.compact
     logger.info "#{departures_to_create.length} departure objects complete after #{(Time.current - start_time).round(2)} seconds"
     logger.info "Creating #{departures_to_create.length} departures"
     fast_insert_objects('historical_departures', departures_to_create)
