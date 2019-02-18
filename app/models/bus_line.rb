@@ -66,16 +66,18 @@ class BusLine < ApplicationRecord
       else
         # Process batch and update stats
         logger.info "current batch length: #{current_batch.length}"
-        next if current_batch.length < 2
 
-        vehicle_ref = current_batch.first.vehicle_ref
-        line_ref = current_batch.first.line_ref
-        direction_ref = current_batch.first.direction_ref || 0
-        result << {
-          trip_identifier: current_batch_trip_identifier,
-          line_ref: line_ref,
-          vehicle_ref: vehicle_ref,
-        }
+        sample_departure = current_batch.first
+        if sample_departure.present?
+          vehicle_ref = current_batch.first.vehicle_ref
+          line_ref = current_batch.first.line_ref
+          direction_ref = current_batch.first.direction_ref || 0
+          result << {
+            trip_identifier: current_batch_trip_identifier,
+            line_ref: line_ref,
+            vehicle_ref: vehicle_ref,
+          }
+        end
 
         # reset
         current_batch_trip_identifier = current_departure.trip_identifier
