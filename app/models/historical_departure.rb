@@ -516,6 +516,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "#{skip_non_nils ? 'Updated' : 'Updated & overwrote'} #{successful_count} headways."
     logger.info "Processed #{batch_count} stop_ref/line_ref combinations"
     logger.info "Skipped #{non_nils_skipped} headways that were already present" if skip_non_nils
+    logger.info "Recalculated #{interp_recalcs} headways to account for new interpolated departures"
     logger.info "Update failed for #{error_count} headways" if error_count > 0
     logger.info "Total headways processed: #{successful_count + batch_count + non_nils_skipped + error_count}"
     logger.info "calculate_headways done after #{(Time.current - start_time).round(2)} seconds"
@@ -534,10 +535,12 @@ class HistoricalDeparture < ApplicationRecord
     error_count = 0
     successful_count = 0
     non_nils_skipped = 0
+    interp_recalcs = 0
 
     # If this batch includes any new interpolated departures, all headways must be recalculated
     if departure_arr.any? { |dep| dep.interpolated && dep.headway.nil? }
       skip_non_nils = false
+      interp_recalcs = departure_arr.length
     end
 
     departure_arr.each_with_index do |current_departure, idx|
@@ -577,6 +580,7 @@ class HistoricalDeparture < ApplicationRecord
       error_count: error_count,
       successful_count: successful_count,
       non_nils_skipped: non_nils_skipped,
+      interp_recalcs: interp_recalcs,
       elapsed_time: Time.current - start_time,
       update_time: update_time,
     }
