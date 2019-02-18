@@ -721,9 +721,11 @@ class HistoricalDeparture < ApplicationRecord
       trip_sequences_to_add.each { |ts| trip_sequences << ts }
     end
     logger.info "interpolating trip sequences"
+    int_time = Time.current
     interpolated_trip_sequences = trip_sequences.map do |trip_sequence|
       BusLine.interpolate_trip_sequence(trip_sequence)
     end
+    logger.info "interpolating complete in #{(Time.current - int_time).round(2)} seconds"
     puts
     logger.info "making departure objects"
     departures_to_create = interpolated_trip_sequences.map do |its|

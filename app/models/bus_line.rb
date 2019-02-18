@@ -59,6 +59,7 @@ class BusLine < ApplicationRecord
   def self.aggregate_trip_view(departures)
     # Sort departures by trip identifier, and return a list of trip views
     # in the same format as self.trip_view
+    start_time = Time.current
     sorted_departures = departures.order("block_ref DESC, dated_vehicle_journey_ref DESC, vehicle_ref")
     result = []
 
@@ -107,6 +108,7 @@ class BusLine < ApplicationRecord
       end
     end
     puts # because of the print after else on 79
+    logger.info "aggregate_trip_view complete in #{(Time.current - start_time).round(2)} seconds"
     result
   end
 
