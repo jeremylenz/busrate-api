@@ -289,6 +289,25 @@ class BusLine < ApplicationRecord
     }
   end
 
+  def self.interpolated_departures_to_create(interpolated_trip_sequence)
+    skinny_objects = interpolated_trip_sequence[:interpolated_trip_sequence].select { |dep_obj| dep_obj[:interpolated_departure_time].present? }
+    skinny_objects.map do |skinny|
+      bus_stop_id = BusStop.find_by(stop_ref: skinny[:stop_ref])
+
+      {
+        bus_stop_id: bus_stop.id,
+        stop_ref: skinny[:stop_ref],
+        line_ref: interpolated_trip_sequence[:line_ref],
+        direction_ref: interpolated_trip_sequence[:direction_ref],
+        vehicle_ref: interpolated_trip_sequence[:vehicle_ref],
+        block_ref: interpolated_trip_sequence[:trip_identifier],
+        dated_vehicle_journey_ref: nil,
+        departure_time: skinny[:interpolated_departure_time],
+        interpolated: true,
+      }
+    end
+  end
+
   def ordered_stop_refs(direction_ref = nil)
     return nil if self.stop_refs_response.nil?
 
