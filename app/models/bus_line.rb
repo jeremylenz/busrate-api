@@ -57,7 +57,7 @@ class BusLine < ApplicationRecord
   end
 
   def self.aggregate_trip_view(departures)
-    sorted_departures = departures.order("block_ref DESC, dated_vehicle_journey_ref DESC")
+    sorted_departures = departures.order("block_ref DESC, dated_vehicle_journey_ref DESC, vehicle_ref")
     result = []
 
     current_batch = []
