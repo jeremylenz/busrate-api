@@ -130,7 +130,10 @@ class BusLine < ApplicationRecord
       end
     end
 
-    result
+    # disregard results where we don't have a departure for at least half the stops
+    min_length = stop_refs.length / 2
+
+    result.select { |trip_sequence| trip_sequence.length >= min_length }
   end
 
   def self.interpolate_timestamps(start_time, end_time, num_of_results = 1)
