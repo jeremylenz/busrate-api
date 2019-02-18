@@ -60,6 +60,8 @@ class BusLine < ApplicationRecord
     # Sort departures by trip identifier, and return a list of trip views
     # in the same format as self.trip_view
     start_time = Time.current
+    db_time = 0.0
+    sr_time = 0.0
     sorted_departures = departures.order("block_ref DESC, dated_vehicle_journey_ref DESC, vehicle_ref")
     result = []
 
@@ -85,9 +87,14 @@ class BusLine < ApplicationRecord
           line_ref = current_batch.first.line_ref
           direction_ref = current_batch.first.direction_ref || 0
 
+          db_start = Time.current
           bus_line = BusLine.find_by(line_ref: line_ref)
+          db_time += (Time.current - db_start)
+
+          sr_start = Time.current
           stop_refs = bus_line.ordered_stop_refs(direction_ref)
           stop_refs = bus_line.ordered_stop_refs(0) if stop_refs.blank? # The B74 has only one direction_ref but the MTA uses 1 and not 0! [eye_roll_emoji]
+          sr_time += (Time.current - sr_start)
 
           if stop_refs.blank?
             logger.info "Can't find ordered_stop_refs for #{line_ref}, direction #{direction_ref}"
@@ -109,6 +116,8 @@ class BusLine < ApplicationRecord
     end
     puts # because of the print after else on 79
     logger.info "aggregate_trip_view complete in #{(Time.current - start_time).round(2)} seconds"
+    logger.info "including #{db_time.round(2)} seconds looking up BusLines"
+    logger.info "including #{sr_time.round(2)} seconds looking up ordered_stop_refs"
     result
   end
 
