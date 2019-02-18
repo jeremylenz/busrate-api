@@ -711,6 +711,7 @@ class HistoricalDeparture < ApplicationRecord
     trip_sequences = []
     aggregate_trip_view.each do |trip_view|
       trip_sequences_to_add = BusLine.all_trip_sequences(trip_view)
+      next if trip_sequences_to_add.blank?
       trip_sequences_to_add.each { |ts| trip_sequences << ts }
     end
     logger.info "interpolating trip sequences"
