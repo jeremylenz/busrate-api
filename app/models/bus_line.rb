@@ -115,7 +115,8 @@ class BusLine < ApplicationRecord
           vehicle_ref: vehicle_ref
         ).order(created_at: :desc).first
       else
-        matching_departure = departures.find { |dep| dep.stop_ref == stop_ref && dep.vehicle_ref == vehicle_ref }
+        # If departures is a regular array, it's an array of hashes passed in from aggregate_trip_view
+        matching_departure = departures.find { |dep| dep[:stop_ref] == stop_ref && dep[:vehicle_ref] == vehicle_ref }
       end
       if matching_departure.present?
         {
