@@ -724,7 +724,7 @@ class HistoricalDeparture < ApplicationRecord
     departures_to_create = interpolated_trip_sequences.map do |its|
       BusLine.interpolated_departures_to_create(its)
     end.flatten
-    logger.info "departure objects complete after #{(Time.current - start_time).round(2)} seconds"
+    logger.info "#{departures_to_create.length} departure objects complete after #{(Time.current - start_time).round(2)} seconds"
     # logger.info "Creating #{departures_to_create.length} departures"
     # departures_to_create.each do |dep_obj|
     #   new_departure = HistoricalDeparture.create(dep_object)
@@ -733,7 +733,6 @@ class HistoricalDeparture < ApplicationRecord
     #   end # if
     # end # each
     logger.info "interpolate_recent complete in #{(Time.current - start_time).round(2)} seconds"
-    departures_to_create
   end
 
   # Instance methods
