@@ -74,7 +74,7 @@ class BusLine < ApplicationRecord
         next
       else
         # Process batch and update stats
-        print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}"
+        print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}   \r"
 
         sample_departure = current_batch.first
         if sample_departure.present?
@@ -297,6 +297,8 @@ class BusLine < ApplicationRecord
       }
     end
 
+    return if result.blank?
+    
     if direction_ref.present?
       result[direction_ref][:stop_refs]
     else
