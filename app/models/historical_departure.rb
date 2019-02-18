@@ -699,6 +699,7 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def interpolate_recent(age_in_secs)
+    start_time = Time.current
     # Take recent HistoricalDepartures and interpolate any that were missed.
     logger.info "Querying DB..."
     recent_departures = HistoricalDeparture.newer_than(age_in_secs)
@@ -720,6 +721,7 @@ class HistoricalDeparture < ApplicationRecord
     departures_to_create = interpolated_trip_sequences.map do |its|
       BusLine.interpolated_departures_to_create(its)
     end.flatten
+    logger.info "departure objects complete after #{(Time.current - start_time).round(2)} seconds"
     # logger.info "Creating #{departures_to_create.length} departures"
     # departures_to_create.each do |dep_obj|
     #   new_departure = HistoricalDeparture.create(dep_object)
@@ -727,6 +729,8 @@ class HistoricalDeparture < ApplicationRecord
     #     logger.info new_departure.errors.full_messages.join("; ")
     #   end # if
     # end # each
+    logger.info "interpolate_recent complete in #{(Time.current - start_time).round(2)} seconds"
+    departures_to_create
   end
 
   # Instance methods
