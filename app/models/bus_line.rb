@@ -55,11 +55,9 @@ class BusLine < ApplicationRecord
     current_batch_trip_identifier = nil
 
     sorted_departures.each_instance do |current_departure|
-      logger.info current_departure.id
       if current_batch_trip_identifier.blank?
         # we are the beginning of a new batch
         current_batch_trip_identifier = current_departure.trip_identifier
-        print "#{current_batch_trip_identifier}"
       end
       if current_departure.trip_identifier == current_batch_trip_identifier
         # Add departures to current_batch until current_batch_trip_identifier no longer matches
@@ -79,6 +77,7 @@ class BusLine < ApplicationRecord
         }
 
         # reset
+        logger.info "current batch length: #{current_batch.length}"
         current_batch_trip_identifier = current_departure.trip_identifier
         current_batch = []
       end
