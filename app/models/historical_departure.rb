@@ -698,7 +698,7 @@ class HistoricalDeparture < ApplicationRecord
     result
   end
 
-  def interpolate_recent(age_in_secs)
+  def self.interpolate_recent(age_in_secs)
     start_time = Time.current
     # Take recent HistoricalDepartures and interpolate any that were missed.
     logger.info "Querying DB..."
