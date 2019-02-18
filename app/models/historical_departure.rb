@@ -706,13 +706,13 @@ class HistoricalDeparture < ApplicationRecord
   def self.interpolate_recent(age_in_secs)
     start_time = Time.current
     # Take recent HistoricalDepartures and interpolate any that were missed.
-    logger.info "Querying DB..."
+    logger.info "HistoricalDeparture.interpolate_recent starting..."
     recent_departures = HistoricalDeparture.newer_than(age_in_secs)
     # make aggregate_trip_view
-    logger.info "making aggregate_trip_view"
+    logger.info "Making aggregate_trip_view"
     aggregate_trip_view = BusLine.aggregate_trip_view(recent_departures)
     # make a flat list of trip sequences
-    logger.info "making trip sequences"
+    logger.info "Making trip sequences"
     trip_sequences = []
     aggregate_trip_view.each do |trip_view|
       print "#{trip_view[:trip_identifier]}      \r"
@@ -720,16 +720,16 @@ class HistoricalDeparture < ApplicationRecord
       next if trip_sequences_to_add.blank?
       trip_sequences_to_add.each { |ts| trip_sequences << ts }
     end
-    logger.info "interpolating trip sequences"
+    logger.info "Interpolating trip sequences"
     interpolated_trip_sequences = trip_sequences.map do |trip_sequence|
       BusLine.interpolate_trip_sequence(trip_sequence)
     end
     puts
-    logger.info "making departure objects"
+    logger.info "Making interpolated departure objects"
     departures_to_create = interpolated_trip_sequences.map do |its|
       BusLine.interpolated_departures_to_create(its)
     end.flatten.compact
-    logger.info "#{departures_to_create.length} departure objects complete after #{(Time.current - start_time).round(2)} seconds"
+    logger.info "#{departures_to_create.length} interpolated departure objects complete after #{(Time.current - start_time).round(2)} seconds"
     logger.info "Creating #{departures_to_create.length} interpolated departures"
     fast_insert_objects('historical_departures', departures_to_create)
     logger.info "interpolate_recent complete in #{(Time.current - start_time).round(2)} seconds"
