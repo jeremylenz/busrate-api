@@ -662,50 +662,41 @@ class HistoricalDeparture < ApplicationRecord
     key_departure = self.for_route_and_stop(line_ref, stop_ref).limit(8).last
     trip_identifier = key_departure.trip_identifier
     vehicle_ref = key_departure.vehicle_ref
+    direction_ref = key_departure.direction_ref
     logger.info "making trip view"
     # Make trip view
-    trip_view = BusLine.trip_view(trip_identifier, line_ref, vehicle_ref)
-    logger.info "choosing direction"
-    # Choose a direction
-    matching_departures = trip_view[:destinations] # [obj_a, obj_b]
-    destination_idx = nil
-    matching_departures.each_with_index do |dep_list, idx|
-      if dep_list[:matching_departures].find { |dep_obj| dep_obj[:stop_ref] == stop_ref }.present?
-        destination_idx = idx
-      end
-    end
-    if destination_idx.blank?
-      logger.info "couldn't find stop_ref #{stop_ref} in trip_view"
-      return
-    end
-    trip_view_list = trip_view[:destinations][destination_idx][:matching_departures]
-    logger.info "making trip sequence"
+    trip_view = BusLine.trip_view(trip_identifier, line_ref, vehicle_ref, direction_ref)
     # Make trip sequence
-    trip_sequence = BusLine.trip_sequence(trip_view_list, stop_ref)
+    logger.info "making trip sequences"
+    trip_sequences = BusLine.all_trip_sequences(trip_view)
     logger.info "interpolating sequence"
     # Interpolate sequence
-    interpolated_trip_sequence = BusLine.interpolate_trip_sequence(trip_sequence)
+    return if trip_sequences.blank?
+    interpolated_trip_sequences = trip_sequences.map { |ts| BusLine.interpolate_trip_sequence(ts) }
     logger.info "Creating departures..."
     # Make HistoricalDepartures based on results
-    interpolated_trip_sequence.each do |dep_object|
-      if dep_object[:interpolated_departure_time].present?
-        new_departure = HistoricalDeparture.create(
-          bus_stop: BusStop.find_by(stop_ref: stop_ref),
-          stop_ref: dep_object[:stop_ref],
-          line_ref: line_ref,
-          vehicle_ref: vehicle_ref,
-          departure_time: dep_object[:interpolated_departure_time],
-          block_ref: trip_identifier,
-          interpolated: true,
-        )
-        if new_departure.errors.any?
-          result << new_departure.errors.full_messages.join("; ")
+    interpolated_trip_sequences.each do |interpolated_trip_sequence|
+      new_departures_list = BusLine.interpolated_departures_to_create(interpolated_trip_sequence)
+      new_departures_list.each do |dep_object|
+        if dep_object[:interpolated_departure_time].present?
+          new_departure = HistoricalDeparture.create(
+            bus_stop: BusStop.find_by(stop_ref: stop_ref),
+            stop_ref: dep_object[:stop_ref],
+            line_ref: line_ref,
+            vehicle_ref: vehicle_ref,
+            departure_time: dep_object[:interpolated_departure_time],
+            block_ref: trip_identifier,
+            interpolated: true,
+          )
+          if new_departure.errors.any?
+            result << new_departure.errors.full_messages.join("; ")
+          else
+            result << new_departure
+          end
         else
-          result << new_departure
-        end
-      else
-        next
-      end # if
+          next
+        end # if
+      end # each
     end # each
     logger.info "processing headways"
     stop_refs_to_update = result.select { |elem| elem.class != String }
