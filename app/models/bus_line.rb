@@ -193,13 +193,13 @@ class BusLine < ApplicationRecord
 
   end
 
-  def self.all_trip_sequences(trip_view, destination_ref)
+  def self.all_trip_sequences(trip_view)
     # self.trip_sequence can return different vehicle trips depending on key_stop_ref.
     # Return all possible, useful trip sequences that can be gleaned from a given trip view.
 
     result = []
     unique_vehicle_trips = []
-    matching_departures = trip_view[:destinations][destination_ref][:matching_departures]
+    matching_departures = trip_view[:matching_departures]
     stop_refs = matching_departures.map { |d| d[:stop_ref] }
 
     stop_refs.each do |stop_ref|
