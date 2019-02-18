@@ -292,7 +292,8 @@ class BusLine < ApplicationRecord
   def self.interpolated_departures_to_create(interpolated_trip_sequence)
     skinny_objects = interpolated_trip_sequence[:interpolated_trip_sequence].select { |dep_obj| dep_obj[:interpolated_departure_time].present? }
     skinny_objects.map do |skinny|
-      bus_stop_id = BusStop.find_by(stop_ref: skinny[:stop_ref])
+      bus_stop = BusStop.find_by(stop_ref: skinny[:stop_ref])
+      next if bus_stop.blank?
 
       {
         bus_stop_id: bus_stop.id,
