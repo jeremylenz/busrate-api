@@ -109,8 +109,8 @@ class BusLine < ApplicationRecord
   end
 
   def self.trip_sequence(trip_view, key_stop_ref)
-    # Take a list of matching departures from self.trip_view[:destinations][idx][:matching_departures]
-    # Try to determine which departures are from the same vehicle trip.
+    # Take a trip_view and try to determine
+    # which departures are from the same vehicle trip.
     # Thus, we will know which departures we need to interpolate.
 
     trip_identifier = trip_view[:trip_identifier]
@@ -122,7 +122,7 @@ class BusLine < ApplicationRecord
     key_reached = false
     prev_departure_time = nil
 
-    trip_view.each do |dep_object|
+    trip_view[:matching_departures].each do |dep_object|
       # If we haven't reached the key_stop_ref yet, ignore the element
       if dep_object[:stop_ref] == key_stop_ref
         prev_departure_time = dep_object[:departure_time]
