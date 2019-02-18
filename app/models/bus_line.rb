@@ -85,6 +85,10 @@ class BusLine < ApplicationRecord
           bus_line = BusLine.find_by(line_ref: line_ref)
           stop_refs = bus_line.ordered_stop_refs(direction_ref)
 
+          if stop_refs.blank?
+            logger.info "Can't find ordered_stop_refs for #{line_ref}, direction #{direction_ref}"
+          end
+
           result << {
             trip_identifier: current_batch_trip_identifier,
             line_ref: line_ref,
@@ -104,6 +108,7 @@ class BusLine < ApplicationRecord
   end
 
   def self.build_matching_departures_hash(stop_refs, vehicle_ref, departures)
+    return unless stop_refs.present?
     stop_refs.map do |stop_ref|
       if departures.class == ActiveRecord::Relation
         matching_departure = departures.where(
