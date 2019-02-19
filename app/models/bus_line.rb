@@ -85,7 +85,7 @@ class BusLine < ApplicationRecord
 
         directions = current_batch.map { |d| [d.vehicle_ref, d.line_ref, d.direction_ref] }
         if Set.new(directions).length > 1
-          logger.info directions.inspect
+          logger.info directions.uniq.inspect
         end
 
         sample_departure = current_batch.first
