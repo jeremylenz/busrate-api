@@ -721,7 +721,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Making trip sequences"
     trip_sequences = []
     aggregate_trip_view.each do |trip_view|
-      print "#{trip_view[:trip_identifier]}      \r"
+      # print "#{trip_view[:trip_identifier]}      \r"
       trip_sequences_to_add = BusLine.all_trip_sequences(trip_view)
       next if trip_sequences_to_add.blank?
       trip_sequences_to_add.each { |ts| trip_sequences << ts }
