@@ -99,7 +99,7 @@ class BusLine < ApplicationRecord
         if sample_departure.present?
           vehicle_ref = current_batch.first.vehicle_ref
           line_ref = current_batch.first.line_ref
-          # direction_ref = current_batch.first.direction_ref || 0
+          current_batch = current_batch.select { |dep| dep.vehicle_ref == vehicle_ref }
 
           db_start = Time.current
           bus_line = BusLine.find_by(line_ref: line_ref)
