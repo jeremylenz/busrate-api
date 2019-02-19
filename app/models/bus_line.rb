@@ -83,7 +83,7 @@ class BusLine < ApplicationRecord
         # Process batch and update stats
         print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
 
-        directions = current_batch.map { |d| d.direction_ref }
+        directions = current_batch.map { |d| [d.vehicle_ref, d.line_ref, d.direction_ref] }
         if Set.new(directions).length > 1
           logger.info directions.inspect
         end
