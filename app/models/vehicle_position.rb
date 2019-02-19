@@ -9,7 +9,7 @@ class VehiclePosition < ApplicationRecord
   scope :at_stop, -> { where(arrival_text: "at stop") }
   scope :older_than, -> (num) { where(["timestamp < ?", num.seconds.ago]) }
   scope :newer_than, -> (num) { where(["timestamp > ?", num.seconds.ago]) }
-  scope :active, -> { at_stop.older_than(30).newer_than(120) }
+  scope :for_vehicle, -> (vehicle_ref) { where(vehicle_ref: vehicle_ref) }
 
   def latest?
     self == self.vehicle.latest_position

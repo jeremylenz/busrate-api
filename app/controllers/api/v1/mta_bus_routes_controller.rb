@@ -63,7 +63,8 @@ class Api::V1::MtaBusRoutesController < ApplicationController
           # Since we're using Active Record, any duplicates will be taken care of by Rails validity check :)
           # logger.info "VehiclePosition errors: #{new_vehicle_position.errors.full_messages.join("; ")}"
         else
-          # logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
+          logger.info "Created new VehiclePosition: #{new_vehicle_position.inspect}"
+          HistoricalDeparture.scrape_from(VehiclePosition.for_vehicle(new_vehicle_position.vehicle_ref).newer_than(240))
         end
       end
 
