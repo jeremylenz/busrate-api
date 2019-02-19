@@ -7,8 +7,9 @@ Welcome to BusRate API!  This is the backend for BusRate NYC, an app designed to
 1. Every 30 seconds, BusRate API calls the [MTA BusTime API](http://bustime.mta.info/wiki/Developers/SIRIVehicleMonitoring) and gets the locations of every vehicle in the system.  For each vehicle, this data includes a stop reference (which bus stop) and an arrival text ("approaching", "at stop", "< 1 stop away", etc.)
 2. The vehicle locations are persisted to the database.
 3. Every minute, the BusRate API compares all of the _vehicle locations_ less than 4 minutes old.
-4. If two vehicle locations meet the criteria for a departure, a historical departure is recorded in the BusRate API database.  (For the specific rules, see the comments in the `is_departure?` method in `app/models/historical_departure.rb`)
+4. If two vehicle locations meet the criteria for a departure, a HistoricalDeparture is recorded in the BusRate API database.  (For the specific rules, see the comments in the `is_departure?` method in `app/models/historical_departure.rb`)
 5. Approximately 800 historical departures are created every minute.
+6. Most departures (> 90%) are created using the procedure above.  If a vehicle records departures for most stops on a route but not all, the system creates _interpolated_ HistoricalDepartures.  These are denoted by `interpolated: true`.
 
 ## Live demo
 
