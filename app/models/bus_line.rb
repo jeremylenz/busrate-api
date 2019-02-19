@@ -82,20 +82,18 @@ class BusLine < ApplicationRecord
       else
         # Process batch and update stats
         # print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
-        directions = current_batch.map { |d| d.direction_ref }
-        # All departures must be the same direction - pick whichever direction has more departures
+        directions = current_batch.map { |d| d.direction_ref }  # [0, 0, 1, 1, 1]
+        # All departures in the batch must be the same direction - pick whichever direction has more departures
         dir_0 = directions.select { |d| d == 0 }.length
         dir_1 = directions.select { |d| d == 1 }.length
         direction_ref = [dir_0, dir_1].find_index { |e| e == [dir_0, dir_1].max }
         current_batch = current_batch.select { |dep| dep.direction_ref == direction_ref }
-        logger.info "choosing direction_ref #{direction_ref}"
-        logger.info current_batch.map { |e| e.direction_ref }.inspect
-
 
         sample_departure = current_batch.first
         if sample_departure.present?
           vehicle_ref = current_batch.first.vehicle_ref
           line_ref = current_batch.first.line_ref
+          # All departures in the batch must have the same vehicle_ref
           current_batch = current_batch.select { |dep| dep.vehicle_ref == vehicle_ref }
 
           db_start = Time.current
