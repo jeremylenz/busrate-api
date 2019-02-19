@@ -88,7 +88,7 @@ class BusLine < ApplicationRecord
           # All departures must be the same direction - pick whichever direction has more departures
           dir_0 = directions.select { |d| d == 0 }.length
           dir_1 = directions.select { |d| d == 1 }.length
-          logger.info directions.uniq.inspect
+          logger.info directions.inspect
           direction_ref = [dir_0, dir_1].find_index { |e| e == [dir_0, dir_1].max }
           current_batch = current_batch.select { |dep| dep.direction_ref == direction_ref }
           logger.info "choosing direction_ref #{direction_ref}"
