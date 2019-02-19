@@ -82,7 +82,11 @@ class BusLine < ApplicationRecord
       else
         # Process batch and update stats
         print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
-        logger.info current_batch.map { |d| d.direction_ref }.inspect
+
+        directions = current_batch.map { |d| d.direction_ref }
+        if directions.length > directions.uniq.length
+          logger.info directions.inspect
+        end
 
         sample_departure = current_batch.first
         if sample_departure.present?
