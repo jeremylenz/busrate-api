@@ -82,7 +82,6 @@ class BusLine < ApplicationRecord
       else
         # Process batch and update stats
         print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
-
         directions = current_batch.map { |d| d.direction_ref }
         if Set.new(directions).length > 1
           # All departures must be the same direction - pick whichever direction has more departures
@@ -94,6 +93,8 @@ class BusLine < ApplicationRecord
           logger.info "choosing direction_ref #{direction_ref}"
           logger.info current_batch.map { |e| e.direction_ref }.inspect
         end
+
+        logger.info "direction_ref: #{direction_ref}"
 
         sample_departure = current_batch.first
         if sample_departure.present?
