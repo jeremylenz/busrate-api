@@ -94,7 +94,6 @@ class BusLine < ApplicationRecord
           logger.info current_batch.map { |e| e.direction_ref }.inspect
         end
 
-        logger.info "direction_ref: #{direction_ref}"
 
         sample_departure = current_batch.first
         if sample_departure.present?
@@ -106,6 +105,7 @@ class BusLine < ApplicationRecord
           bus_line = BusLine.find_by(line_ref: line_ref)
           db_time += (Time.current - db_start)
 
+          logger.info "direction_ref: #{direction_ref}"
           sr_start = Time.current
           stop_refs = bus_line.ordered_stop_refs(direction_ref)
           stop_refs = bus_line.ordered_stop_refs(0) if stop_refs.blank? # The B74 has only one direction_ref but the MTA uses 1 and not 0! [eye_roll_emoji]
