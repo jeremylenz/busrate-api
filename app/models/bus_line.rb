@@ -81,7 +81,7 @@ class BusLine < ApplicationRecord
         next
       else
         # Process batch and update stats
-        print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
+        # print "#{current_batch_trip_identifier} | current batch length: #{current_batch.length}       \r"
         directions = current_batch.map { |d| d.direction_ref }
         if Set.new(directions).length > 1
           # All departures must be the same direction - pick whichever direction has more departures
