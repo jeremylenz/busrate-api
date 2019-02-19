@@ -341,7 +341,7 @@ class BusLine < ApplicationRecord
     end
     # logger.info "getting new ordered_stop_refs"
 
-    if self.updated_at < 21.days.ago
+    if self.updated_at < 21.days.ago || self.updated_at.blank?
       logger.info "Refreshing stop_refs for #{self.line_ref}"
       self.update_stop_refs
     end
