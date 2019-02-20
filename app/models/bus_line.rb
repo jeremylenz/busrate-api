@@ -69,7 +69,9 @@ class BusLine < ApplicationRecord
 
     current_batch = []
     current_batch_trip_identifier = nil
-    bus_lines = BusLine.all
+    bus_lines = BusLine.all.each_with_object({}) do |bus_line, bus_lines_obj|
+      bus_lines_obj[bus_line.line_ref] = bus_line
+    end
 
     sorted_departures.each_instance do |current_departure|
       if current_batch_trip_identifier.blank?
@@ -98,7 +100,7 @@ class BusLine < ApplicationRecord
           current_batch = current_batch.select { |dep| dep.vehicle_ref == vehicle_ref }
 
           db_start = Time.current
-          bus_line = bus_lines.where(line_ref: line_ref).first
+          bus_line = bus_lines[line_ref]
           db_time += (Time.current - db_start)
 
           sr_start = Time.current
