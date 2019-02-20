@@ -69,6 +69,7 @@ class BusLine < ApplicationRecord
 
     current_batch = []
     current_batch_trip_identifier = nil
+    BusLine.all
 
     sorted_departures.each_instance do |current_departure|
       if current_batch_trip_identifier.blank?
