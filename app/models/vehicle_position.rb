@@ -29,9 +29,9 @@ class VehiclePosition < ApplicationRecord
   end
 
   def self.prevent_duplicates(objects_to_be_added, existing_vehicle_positions)
-    # Pass in a list of objects from which HistoricalDepartures will be created, and compare them to a list of existing HistoricalDeparture records.
+    # Pass in a list of objects from which VehiclePositions will be created, and compare them to a list of existing VehiclePosition records.
     # Return only the objects which would not be duplicates.
-    # Additionally, if duplicates are found within the existing HistoricalDepartures, delete them.
+    # Additionally, if duplicates are found within the existing VehiclePositions, delete them.
 
     start_time = Time.current
     logger.info "VehiclePosition prevent_duplicates starting..."
