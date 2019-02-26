@@ -376,6 +376,8 @@ class HistoricalDeparture < ApplicationRecord
         unless dep["id"].blank?
           # Always keep the HistoricalDeparture with the smaller ID, and delete the one with the larger ID.
           # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
+          id_to_delete = [dep["id"], already_seen[tracking_key]["id"]].max
+          logger.info "Of #{[dep["id"], already_seen[tracking_key]["id"]].inspect}, deleting #{id_to_delete}"
           ids_to_purge << [dep["id"], already_seen[tracking_key]["id"]].max
         end
       else
