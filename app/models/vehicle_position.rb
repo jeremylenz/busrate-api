@@ -55,7 +55,11 @@ class VehiclePosition < ApplicationRecord
       if already_seen[tracking_key]
         dup_count += 1
         # print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
-        ids_to_purge << dep["id"] unless dep["id"].nil?
+        unless dep["id"].nil?
+          # Always keep the VehiclePosition with the smaller ID, and delete the one with the larger ID.
+          # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
+          ids_to_purge << [dep["id"], already_seen[tracking_key]["id"]].max
+        end
       else
         # print "dups: #{dup_count} | new: #{tracking_key}            \r"
         already_seen[tracking_key] = dep
