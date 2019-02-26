@@ -354,21 +354,10 @@ class HistoricalDeparture < ApplicationRecord
 
     # Create a list of existing IDs to delete
     ids_to_purge = []
-    trip_identifier_dup_count = 0
 
     # Move through the object list and check for duplicates
     object_list.each do |dep|
-      # If a trip identifier is present, use it.  Otherwise, fall back to timestamp.
-      # NOTE: block_ref and dated_vehicle_journey_ref CAN be the same for yesterday's trip (I think.)  Therefore,
-      # prevent_duplicates shouldn't be used to compare with existing HistoricalDepartures more than ~20 hours old.
-      # Currently I'm only using it for those newer than 1200 seconds (20 minutes).
-      if dep['block_ref']
-        tracking_key = "#{dep["block_ref"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
-      elsif dep['dated_vehicle_journey_ref']
-        tracking_key = "#{dep["dated_vehicle_journey_ref"]} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
-      else
-        tracking_key = "#{dep["departure_time"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
-      end
+      tracking_key = "#{approximate_timestamp(dep["departure_time"])} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
         if dep['block_ref'] || dep['dated_vehicle_journey_ref']
           trip_identifier_dup_count += 1
@@ -400,12 +389,21 @@ class HistoricalDeparture < ApplicationRecord
     prevented_count = dep_objects_to_be_added.length - result.length
     unless prevented_count == 0
       logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures"
-      logger.info "prevent_duplicates: including #{trip_identifier_dup_count} duplicates found by trip identifier"
       logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
     end
     logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
 
     result
+  end
+
+  def self.approximate_timestamp(time)
+    # Returns an integer timestamp with a precision of 10 minutes.
+    # Given a time of 1:05 pm, will return the integer equivalent of 1:00 pm until 1:10.
+    time_integer = time.to_i
+    # Subtract 5 minutes from the given time
+    basis_time = time_integer - 300
+    # Now, round to the nearest 10 minutes (600 sec)
+    basis_time - (basis_time % 600)
   end
 
   def self.count_duplicates
@@ -626,21 +624,6 @@ class HistoricalDeparture < ApplicationRecord
   end
 
   def self.is_duplicate?(dep_a, dep_b)
-    # If a trip identifier is present, use it to check for duplicate.  If not, fall back to departure_time.
-    if dep_a.block_ref &&
-      dep_a.block_ref == dep_b.block_ref &&
-      dep_a.vehicle_ref == dep_b.vehicle_ref &&
-      dep_a.stop_ref == dep_b.stop_ref &&
-      self.timestamp_close_enough?(dep_a.departure_time, dep_b.departure_time)
-      return true
-    end
-    if dep_a.dated_vehicle_journey_ref &&
-      dep_a.dated_vehicle_journey_ref == dep_b.dated_vehicle_journey_ref &&
-      dep_a.vehicle_ref == dep_b.vehicle_ref &&
-      dep_a.stop_ref == dep_b.stop_ref &&
-      self.timestamp_close_enough?(dep_a.departure_time, dep_b.departure_time)
-      return true
-    end
     if dep_a.departure_time == dep_b.departure_time &&
       dep_a.vehicle_ref == dep_b.vehicle_ref &&
       dep_a.stop_ref == dep_b.stop_ref
