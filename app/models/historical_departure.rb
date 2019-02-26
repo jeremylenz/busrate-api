@@ -359,9 +359,6 @@ class HistoricalDeparture < ApplicationRecord
     object_list.each do |dep|
       tracking_key = "#{approximate_timestamp(dep["departure_time"])} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
       if already_seen[tracking_key]
-        if dep['block_ref'] || dep['dated_vehicle_journey_ref']
-          trip_identifier_dup_count += 1
-        end
         unless dep["id"].blank?
           # Always keep the HistoricalDeparture with the smaller ID, and delete the one with the larger ID.
           # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
