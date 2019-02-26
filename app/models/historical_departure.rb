@@ -398,11 +398,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.approximate_timestamp(time)
     # Returns an integer timestamp with a precision of 10 minutes.
-    # Given a time of 1:05 pm, will return the integer equivalent of 1:00 pm until 1:10.
-    time_integer = time.to_i
-    # Subtract 5 minutes from the given time
-    basis_time = time_integer - 300
-    # Now, round to the nearest 10 minutes (600 sec)
+    basis_time = time.to_i
     basis_time - (basis_time % 600)
   end
 
