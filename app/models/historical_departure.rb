@@ -535,6 +535,7 @@ class HistoricalDeparture < ApplicationRecord
     successful_count = 0
     non_nils_skipped = 0
     interp_recalcs = 0
+    destroyed_departure = nil
 
     # If this batch includes any new interpolated departures, all headways must be recalculated
     if departure_arr.any? { |dep| dep.interpolated && dep.headway.nil? }
