@@ -546,11 +546,26 @@ class HistoricalDeparture < ApplicationRecord
       # Compare each departure time with the next departure
       # The headway is the number of seconds between them
       next if idx == last_index
+      if destroyed_departure
+        # current_departure is the ruby instance of the destroyed departure; skip it!
+        destroyed_departure = nil
+        next
+      end
       if skip_non_nils && current_departure.headway.present?
         non_nils_skipped += 1
         next # thank u
       end
       previous_departure = departure_arr[idx + 1]
+      if current_departure.vehicle_ref == previous_departure.vehicle_ref
+        # we have a duplicate departure; eliminate it
+        logger.info "process_batch: Destroying duplicate departure #{destroyed_departure.id}, vehicle_ref #{destroyed_departure.vehicle_ref}, #{destroyed_departure.departure_time}"
+        logger.info destroyed_departure.inspect
+        logger.info "Was a duplicate of #{current_departure.id}, vehicle_ref #{current_departure.vehicle_ref}, #{current_departure.departure_time}"
+        destroyed_departure = previous_departure.destroy
+        # make sure we get the headway correct
+        previous_departure = departure_arr[idx + 2]
+      end
+      next if previous_departure.blank? # handle edge case two lines above
 
       headway = (current_departure.departure_time - previous_departure.departure_time).round.to_i
       # If headway rounds to 0, another vehicle left the stop the same second
