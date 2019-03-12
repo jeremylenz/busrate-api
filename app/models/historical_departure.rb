@@ -559,10 +559,10 @@ class HistoricalDeparture < ApplicationRecord
       previous_departure = departure_arr[idx + 1]
       if current_departure.vehicle_ref == previous_departure.vehicle_ref
         # we have a duplicate departure; eliminate it
+        destroyed_departure = previous_departure.destroy
         logger.info "process_batch: Destroying duplicate departure #{destroyed_departure.id}, vehicle_ref #{destroyed_departure.vehicle_ref}, #{destroyed_departure.departure_time}"
         logger.info destroyed_departure.inspect
         logger.info "Was a duplicate of #{current_departure.id}, vehicle_ref #{current_departure.vehicle_ref}, #{current_departure.departure_time}"
-        destroyed_departure = previous_departure.destroy
         # make sure we get the headway correct
         previous_departure = departure_arr[idx + 2]
       end
