@@ -296,7 +296,7 @@ class HistoricalDeparture < ApplicationRecord
           end
           if is_departure?(old_vehicle_position, new_vehicle_position)
             addl_count += 1 if old_vehicle_position.arrival_text != "at stop"
-            bus_stop = BusStop.find_or_create_by(stop_ref: new_vehicle_position.stop_ref)
+            bus_stop = BusStop.find_or_create_by(stop_ref: old_vehicle_position.stop_ref)
             logger.error "bus_stop not found: #{new_vehicle_position.stop_ref}" if bus_stop.blank?
             next unless bus_stop.present?
             new_departure = {
