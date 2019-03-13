@@ -88,6 +88,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       weekend_rating: weekend_rating,
       morning_rush_hour_rating: morning_rush_hour_rating,
       evening_rush_hour_rating: evening_rush_hour_rating,
+      response_timestamp: Time.zone.now.in_time_zone("EST"),
     }
 
   end
