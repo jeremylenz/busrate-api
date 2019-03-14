@@ -68,6 +68,7 @@ class HistoricalDeparture < ApplicationRecord
     if current_headway
       headways.unshift(current_headway)
       headways_in_minutes.unshift(current_headway / 60)
+      logger.info "current_headway: #{current_headway}"
     end
 
     # any arrival within 2 minutes of the previous vehicle counts as bunching
