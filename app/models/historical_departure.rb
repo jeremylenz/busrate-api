@@ -116,6 +116,8 @@ class HistoricalDeparture < ApplicationRecord
       actual_total: actual_total,
       raw_score: raw_score,
       busrate_score: busrate_score,
+      current_headway: current_headway,
+      score_incorporates_current_headway: current_headway.present?,
     }
   end
 
