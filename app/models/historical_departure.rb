@@ -60,11 +60,11 @@ class HistoricalDeparture < ApplicationRecord
   # BusRate Score methods
 
   def self.rating(departures, allowable_headway_in_minutes, current_headway = nil)
-    return nil if departures.blank? || departures.count < 2
     start_time = Time.current
 
     logger.info "HistoricalDeparture.rating: plucking headways..."
     headways = departures.pluck(:headway).compact
+    return nil if headways.blank? || headways.count < 2
     logger.info "calculating headways_in_minutes"
     headways_in_minutes = headways.map { |headway| (headway / 60).round }
 
