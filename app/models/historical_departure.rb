@@ -62,8 +62,8 @@ class HistoricalDeparture < ApplicationRecord
   def self.rating(departures, allowable_headway_in_minutes, current_headway = nil)
     return nil if departures.blank? || departures.count < 2
 
-    headways = departures.map(&:headway).compact
-    headways_in_minutes = departures.map(&:headway_in_minutes).compact
+    headways = departures.pluck(:headway).compact
+    headways_in_minutes = headways.map { |headway| (headway / 60).round }
 
     if current_headway
       headways.unshift(current_headway)
