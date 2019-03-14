@@ -65,16 +65,13 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "HistoricalDeparture.rating: plucking headways..."
     headways = departures.pluck(:headway).compact
     return nil if headways.blank? || headways.count < 2
-    logger.info "calculating headways_in_minutes"
     headways_in_minutes = headways.map { |headway| (headway / 60).round }
 
     if current_headway
       headways.unshift(current_headway)
       headways_in_minutes.unshift(current_headway / 60)
-      logger.info "current_headway: #{current_headway}"
     end
 
-    logger.info "calculating scores"
 
     # any arrival within 2 minutes of the previous vehicle counts as bunching
     unbunched_headways = headways.select { |headway| headway >= 120 } # Don't allow bus bunching to 'improve' average headway
@@ -94,7 +91,6 @@ class HistoricalDeparture < ApplicationRecord
       anti_bonus = 0
     end
 
-    logger.info "counting bunches"
     bunched_headways_count = headways.count { |headway| headway < 120 } # any arrival within 2 minutes of the previous vehicle counts as bunching
     bunched_headways_count *= 2 # count both departures in the bunch as bunched
     percent_of_deps_bunched = ((bunched_headways_count.to_f / headways.count.to_f) * 100.0).round(1)
@@ -110,7 +106,7 @@ class HistoricalDeparture < ApplicationRecord
     if busrate_score < 0
       busrate_score = 0
     end
-    logger.info "Done calculating score after #{(Time.current - start_time).round(2)} seconds"
+    logger.info "Done calculating BusRate score after #{(Time.current - start_time).round(2)} seconds"
 
     {
       # headways_in_minutes: headways_in_minutes,
