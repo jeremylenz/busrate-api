@@ -47,7 +47,9 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     # get most recent 8
     today = Time.zone.now.in_time_zone("EST").strftime('%A')
     recents = @historical_departures.first(8)
-    recents_rating = HistoricalDeparture.rating(recents, 8)
+    current_headway = Time.zone.now.in_time_zone("EST") - @historical_departures.first.departure_time
+    logger.info "current_headway: #{current_headway}"
+    recents_rating = HistoricalDeparture.rating(recents, 8, current_headway)
     overall_rating = HistoricalDeparture.rating(@historical_departures, 8)
     weekday_rating = HistoricalDeparture.rating(@historical_departures.weekdays_only, 8)
     weekend_rating = HistoricalDeparture.rating(@historical_departures.weekends_only, 8)

@@ -59,11 +59,16 @@ class HistoricalDeparture < ApplicationRecord
 
   # BusRate Score methods
 
-  def self.rating(departures, allowable_headway_in_minutes)
+  def self.rating(departures, allowable_headway_in_minutes, current_headway = nil)
     return nil if departures.blank? || departures.count < 2
 
     headways = departures.map(&:headway).compact
     headways_in_minutes = departures.map(&:headway_in_minutes).compact
+
+    if current_headway
+      headways.unshift(current_headway)
+      headways_in_minutes.unshift(current_headway / 60)
+    end
 
     # any arrival within 2 minutes of the previous vehicle counts as bunching
     unbunched_headways = headways.select { |headway| headway >= 120 } # Don't allow bus bunching to 'improve' average headway
