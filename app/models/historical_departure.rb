@@ -125,6 +125,16 @@ class HistoricalDeparture < ApplicationRecord
     }
   end
 
+  def self.recent_rating_for_route_and_stop(line_ref, stop_ref, allowable_headway = 8, age_in_secs = 14_400)
+    departures = HistoricalDeparture.for_route_and_stop(line_ref, stop_ref).newer_than(age_in_secs)
+    self.rating(departures, allowable_headway)
+  end
+
+  def self.recent_rating_for_route(line_ref, allowable_headway = 8, age_in_secs = 14_400)
+    departures = HistoricalDeparture.newer_than(age_in_secs).where(line_ref: line_ref)
+    self.rating(departures, allowable_headway)
+  end
+
   # Data creation methods
 
   def self.fast_insert_objects(table_name, object_list)
