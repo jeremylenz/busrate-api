@@ -420,6 +420,7 @@ class BusLine < ApplicationRecord
       self.update(
         stop_refs_response: JSON.generate(response['data'])
       )
+      self.touch # If we just saved the same response that was already there, the updated_at field won't be changed.  touch fixes this.
     end
   end
 
