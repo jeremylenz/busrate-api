@@ -130,8 +130,11 @@ class HistoricalDeparture < ApplicationRecord
     self.rating(departures, allowable_headway)
   end
 
-  def self.recent_rating_for_route(line_ref, allowable_headway = 8, age_in_secs = 14_400)
+  def self.recent_rating_for_route(line_ref, direction_ref = nil, allowable_headway = 8, age_in_secs = 14_400)
     departures = HistoricalDeparture.newer_than(age_in_secs).where(line_ref: line_ref)
+    if direction_ref
+      departures = departures.where(direction_ref: direction_ref)
+    end
     self.rating(departures, allowable_headway)
   end
 
