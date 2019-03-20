@@ -8,8 +8,8 @@ class Api::V1::RatingsController < ApplicationController
       # Rails sets params[:lineRef] to "MTA NYCT_M15 " (with a space instead of the +) which won't work.
       line_ref_param = line_ref_param.gsub(/%20/," ")
     end
-    stop_ref_param = params[:stopRef]
 
+    stop_ref = params[:stopRef]
     line_ref = BusLine.find_by(line_ref: line_ref_param)&.line_ref
 
     direction_ref = params[:directionRef]
