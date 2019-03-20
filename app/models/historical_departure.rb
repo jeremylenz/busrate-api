@@ -66,7 +66,7 @@ class HistoricalDeparture < ApplicationRecord
     num_headways = headways.count
     if headways.blank? || headways.count < 2
       return {
-        busrate_score: null,
+        busrate_score: nil,
         headways_count: num_headways,
       }
     end
