@@ -63,7 +63,13 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
 
     headways = departures.pluck(:headway).compact
-    return nil if headways.blank? || headways.count < 2
+    num_headways = headways.count
+    if headways.blank? || headways.count < 2
+      return {
+        busrate_score: null,
+        headways_count: num_headways,
+      }
+    end
     headways_in_minutes = headways.map { |headway| (headway / 60).round }
 
     if current_headway
@@ -79,7 +85,6 @@ class HistoricalDeparture < ApplicationRecord
     average_headway = unbunched_headways.mean.round(2)
     standard_deviation = headways.standard_deviation.round(2)
 
-    num_headways = headways.count
     allowable_headway = allowable_headway_in_minutes * 60 # convert to seconds
     allowable_total = (num_headways * allowable_headway).round
     actual_total = headways.sum
@@ -112,6 +117,7 @@ class HistoricalDeparture < ApplicationRecord
     {
       # headways_in_minutes: headways_in_minutes,
       average_headway: average_headway,
+      headways_count: num_headways,
       standard_deviation: standard_deviation,
       bunched_headways_count: bunched_headways_count,
       percent_of_deps_bunched: percent_of_deps_bunched,
