@@ -1,13 +1,28 @@
 class Api::V1::RatingsController < ApplicationController
 
   def show
-    line_ref = params[:id]
-    stop_ref = params[:stop_ref]
-    direction_ref = params[:direction_ref]
+    line_ref_param = request.url.split("/").last.split("?")[0]
+    if line_ref_param.present?
+      # Given a Select Bus Service lineRef such as "MTA NYCT_M15+", which comes in as "MTA%20NYCT_M15+",
+      # this is the only way I've found to remove the %20 but not remove the +.
+      # Rails sets params[:lineRef] to "MTA NYCT_M15 " (with a space instead of the +) which won't work.
+      line_ref_param = line_ref_param.gsub(/%20/," ")
+    end
+    stop_ref_param = params[:stopRef]
+
+    line_ref = BusLine.find_by(line_ref: line_ref_param)&.line_ref
+
+    direction_ref = params[:directionRef]
 
     if line_ref.blank?
-      render json: {error: "line_ref #{params[:line_ref]} not found"}, status: 422
+      render json: {error: "line_ref #{line_ref_param} not found"}, status: 422
       return
+    end
+    unless direction_ref.blank?
+      unless [0, 1].include?(direction_ref.to_i)
+        render json: {error: "directionRef #{direction_ref} not valid"}, status: 422
+        return
+      end
     end
 
     if stop_ref
