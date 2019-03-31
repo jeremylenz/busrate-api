@@ -24,3 +24,6 @@
 
 # Ignore whenever gem schedule.
 /config/schedule.rb
+
+# Ignore db archives
+/db/*.dump
