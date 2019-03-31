@@ -472,6 +472,16 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
+  def self.vacuum_full
+    start_time = Time.current
+    logger.info "Starting VACUUM FULL ..."
+    ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
+    logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
+  rescue(err)
+    logger.error err
+    false
+  end
+
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
     # convenience method for playing around in rails console
     hds = HistoricalDeparture.newer_than(age_in_secs)
