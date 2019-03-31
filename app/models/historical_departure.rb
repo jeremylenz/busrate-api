@@ -474,9 +474,11 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.vacuum_full
     start_time = Time.current
-    logger.info "Starting VACUUM FULL ..."
+    logger.info "Starting VACUUM FULL; ..."
+    system "df -h /"
     ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
+    system "df -h /"
   rescue(err)
     logger.error err
     false
