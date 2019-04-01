@@ -472,11 +472,11 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
-  def self.vacuum_full
+  def self.vacuum_full(wait = 120)
     start_time = Time.current
     logger.info "Shutting down cron jobs..."
     system "crontab -r"
-    sleep 120
+    sleep wait
     logger.info "Starting VACUUM FULL; ..."
     system "df -h /"
     ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
