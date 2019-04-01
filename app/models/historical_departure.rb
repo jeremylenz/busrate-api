@@ -481,12 +481,13 @@ class HistoricalDeparture < ApplicationRecord
     system "df -h /"
     ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
     system "df -h /"
-    logger.info "Restarting cron jobs..."
-    system "whenever --update-crontab"
-    logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   rescue => err
     logger.error err
     false
+  ensure
+    logger.info "Restarting cron jobs..."
+    system "whenever --update-crontab"
+    logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
