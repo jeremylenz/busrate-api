@@ -467,7 +467,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Starting ANALYZE; ..."
     ActiveRecord::Base.connection.execute("ANALYZE;")
     logger.info "ANALYZE complete in #{(Time.current - start_time).round(2)} seconds"
-  rescue(err)
+  rescue => err
     logger.error err
     false
   end
@@ -484,7 +484,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Restarting cron jobs..."
     system "whenever --update-crontab"
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
-  rescue(err)
+  rescue => err
     logger.error err
     false
   end
