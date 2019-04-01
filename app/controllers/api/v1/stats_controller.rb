@@ -70,4 +70,28 @@ class Api::V1::StatsController < ApplicationController
       render json: {response: response}
     end
   end
+
+  def system_health
+    @mta_api_call_records_count = MtaApiCallRecord.where(['created_at > ?', 300.seconds.ago]).count
+    @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
+    @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
+
+    healthy = true
+    healthy = false if @mta_api_call_records_count < 5
+    healthy = false if @vehicle_position_recent_count < 10
+    healthy = false if @historical_departure_recent_count < 10
+
+    health_check = {
+      mta_api_all_vehicles_calls: @mta_api_call_records_count,
+      vehicle_positions_per_minute: @vehicle_position_recent_count,
+      historical_departures_per_minute: @historical_departure_recent_count,
+    }
+    logger.info health_check.inspect
+
+    if healthy
+      render json: {healthy: true}
+    else
+      render json: {health_check: health_check}, status: 503
+    end
+  end
 end
