@@ -89,9 +89,9 @@ class Api::V1::StatsController < ApplicationController
     logger.info health_check.inspect
 
     if healthy
-      render json: {healthy: true}
+      render json: {healthy: true, health_check: health_check}
     else
-      render json: {health_check: health_check}, status: 503
+      render json: {healthy: false, health_check: health_check}, status: 503
     end
   end
 end
