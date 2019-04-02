@@ -486,7 +486,7 @@ class HistoricalDeparture < ApplicationRecord
     false
   ensure
     logger.info "Restarting cron jobs..."
-    system "whenever --update-crontab"
+    system "whenever --user jeremylenz --update-crontab"
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
