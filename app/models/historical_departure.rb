@@ -494,7 +494,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "Shutting down cron jobs..."
     system "crontab -r"
     logger.info "Restarting cron jobs..."
-    system "whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb"
+    system "whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb > log/production.log"
   end
 
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
