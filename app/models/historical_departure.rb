@@ -486,7 +486,7 @@ class HistoricalDeparture < ApplicationRecord
     false
   ensure
     logger.info "Restarting cron jobs..."
-    system "whenever --user jeremylenz --update-crontab"
+    system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb > log/production.log"
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
