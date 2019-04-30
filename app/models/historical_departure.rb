@@ -490,13 +490,6 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
-  def self.cron_test
-    logger.info "Shutting down cron jobs..."
-    system "crontab -r"
-    logger.info "Restarting cron jobs..."
-    system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb > log/production.log"
-  end
-
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
     # convenience method for playing around in rails console
     hds = HistoricalDeparture.newer_than(age_in_secs)
