@@ -49,12 +49,20 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     recents = @historical_departures.first(8)
     current_headway = Time.zone.now.in_time_zone("EST") - @historical_departures.first.departure_time
     logger.info "current_headway: #{current_headway}"
-    recents_rating = HistoricalDeparture.rating(recents, 8, current_headway)
-    overall_rating = HistoricalDeparture.rating(@historical_departures, 8)
-    weekday_rating = HistoricalDeparture.rating(@historical_departures.weekdays_only, 8)
-    weekend_rating = HistoricalDeparture.rating(@historical_departures.weekends_only, 8)
-    morning_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.morning_rush_hours_only, 8)
-    evening_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.evening_rush_hours_only, 8)
+    # recents_rating = HistoricalDeparture.rating(recents, 8, current_headway)
+    # overall_rating = HistoricalDeparture.rating(@historical_departures, 8)
+    # weekday_rating = HistoricalDeparture.rating(@historical_departures.weekdays_only, 8)
+    # weekend_rating = HistoricalDeparture.rating(@historical_departures.weekends_only, 8)
+    # morning_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.morning_rush_hours_only, 8)
+    # evening_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.evening_rush_hours_only, 8)
+    require './app/models/helpers/rating'
+
+    recents_rating = Rating.new(recents, 8, current_headway).score
+    overall_rating = Rating.new(@historical_departures, 8).score
+    weekday_rating = Rating.new(@historical_departures.weekdays_only, 8).score
+    weekend_rating = Rating.new(@historical_departures.weekends_only, 8).score
+    morning_rush_hour_rating = Rating.new(@historical_departures.morning_rush_hours_only, 8).score
+    evening_rush_hour_rating = Rating.new(@historical_departures.evening_rush_hours_only, 8).score
 
     if today == "Monday"
       compare_time = 72.hours.ago
