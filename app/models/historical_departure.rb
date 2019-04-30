@@ -503,13 +503,15 @@ class HistoricalDeparture < ApplicationRecord
     system dump_command
   end
 
-  def self.remove_old_departures_temp_table(age_in_weeks = 6, filename = "old_hds.dump")
+  def self.remove_old_departures_temp_table(filename = "old_hds.dump")
     system "rm #{filename}"
     sql = <<~HEREDOC
       DROP TABLE old_hds_temp;
     HEREDOC
     logger.info ActiveRecord::Base.connection.execute(sql)
+  end
 
+  def remove_old_departures(age_in_weeks = 6)
     sql = <<~HEREDOC
       DELETE FROM historical_departures WHERE (created_at < '#{age_in_weeks.weeks.ago}');
     HEREDOC
