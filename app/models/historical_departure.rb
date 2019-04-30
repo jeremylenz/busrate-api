@@ -490,6 +490,32 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
+  def self.dump_old_departures_to_file(filename = "old_hds.dump")
+    sql = <<~HEREDOC
+      CREATE TABLE old_hds_temp AS
+        SELECT * FROM "historical_departures" WHERE (created_at < #{6.weeks.ago});
+    HEREDOC
+    logger.info ActiveRecord::Base.connection.execute(sql)
+
+    dump_command = <<~HEREDOC
+      pg_dump -Fc -t old_hds_temp -v > #{filename} --username=busrate-api --dbname=busrate-api_production
+    HEREDOC
+    system dump_command
+  end
+
+  def self.remove_old_departures_temp_table(filename = "old_hds.dump")
+    system "rm #{filename}"
+    sql = <<~HEREDOC
+      DROP TABLE old_hds_temp;
+    HEREDOC
+    logger.info ActiveRecord::Base.connection.execute(sql)
+
+    sql = <<~HEREDOC
+      DELETE FROM historical_departures WHERE (created_at < #{6.weeks.ago});
+    HEREDOC
+    logger.info ActiveRecord::Base.connection.execute(sql)
+  end
+
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
     # convenience method for playing around in rails console
     hds = HistoricalDeparture.newer_than(age_in_secs)
