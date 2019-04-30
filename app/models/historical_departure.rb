@@ -493,7 +493,7 @@ class HistoricalDeparture < ApplicationRecord
   def self.dump_old_departures_to_file(filename = "old_hds.dump")
     sql = <<~HEREDOC
       CREATE TABLE old_hds_temp AS
-        SELECT * FROM "historical_departures" WHERE (created_at < #{6.weeks.ago});
+        SELECT * FROM "historical_departures" WHERE (created_at < '#{6.weeks.ago}');
     HEREDOC
     logger.info ActiveRecord::Base.connection.execute(sql)
 
@@ -511,7 +511,7 @@ class HistoricalDeparture < ApplicationRecord
     logger.info ActiveRecord::Base.connection.execute(sql)
 
     sql = <<~HEREDOC
-      DELETE FROM historical_departures WHERE (created_at < #{6.weeks.ago});
+      DELETE FROM historical_departures WHERE (created_at < '#{6.weeks.ago}');
     HEREDOC
     logger.info ActiveRecord::Base.connection.execute(sql)
   end
