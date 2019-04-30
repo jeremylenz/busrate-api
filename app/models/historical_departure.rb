@@ -490,10 +490,10 @@ class HistoricalDeparture < ApplicationRecord
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
-  def self.dump_old_departures_to_file(filename = "old_hds.dump")
+  def self.dump_old_departures_to_file(age_in_weeks = 6, filename = "old_hds.dump")
     sql = <<~HEREDOC
       CREATE TABLE old_hds_temp AS
-        SELECT * FROM "historical_departures" WHERE (created_at < '#{6.weeks.ago}');
+        SELECT * FROM "historical_departures" WHERE (created_at < '#{age_in_weeks.weeks.ago}');
     HEREDOC
     logger.info ActiveRecord::Base.connection.execute(sql)
 
