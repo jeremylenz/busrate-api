@@ -55,18 +55,18 @@ class Rating
       @allowable_total = (@num_headways * allowable_headway).round
       @actual_total = headways.sum
 
-      anti_bonus = (@standard_deviation - @average_headway) * @num_headways
+      @anti_bonus = (@standard_deviation - @average_headway) * @num_headways
       # If @standard_deviation > @average_headway, allowable_total will go DOWN.
-      if anti_bonus < 0
-        anti_bonus = 0
+      if @anti_bonus < 0
+        @anti_bonus = 0
       end
 
       @bunched_headways_count = headways.count { |headway| headway < 120 } # any arrival within 2 minutes of the previous vehicle counts as bunching
       @bunched_headways_count *= 2 # count both departures in the bunch as bunched
       @percent_of_deps_bunched = ((@bunched_headways_count.to_f / headways.count.to_f) * 100.0).round(1)
-      anti_bonus += (allowable_headway * @bunched_headways_count)
+      @anti_bonus += (allowable_headway * @bunched_headways_count)
 
-      @allowable_total -= anti_bonus
+      @allowable_total -= @anti_bonus
 
       @busrate_score = (@allowable_total / @actual_total * 100).round
       @raw_score = @busrate_score
