@@ -49,14 +49,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     recents = @historical_departures.first(8)
     current_headway = Time.zone.now.in_time_zone("EST") - @historical_departures.first.departure_time
     logger.info "current_headway: #{current_headway}"
-    # recents_rating = HistoricalDeparture.rating(recents, 8, current_headway)
-    # overall_rating = HistoricalDeparture.rating(@historical_departures, 8)
-    # weekday_rating = HistoricalDeparture.rating(@historical_departures.weekdays_only, 8)
-    # weekend_rating = HistoricalDeparture.rating(@historical_departures.weekends_only, 8)
-    # morning_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.morning_rush_hours_only, 8)
-    # evening_rush_hour_rating = HistoricalDeparture.rating(@historical_departures.evening_rush_hours_only, 8)
-    require './app/models/helpers/rating'
 
+    require './app/models/helpers/rating'
     recents_rating = Rating.new(recents, 8, current_headway).score
     overall_rating = Rating.new(@historical_departures, 8).score
     weekday_rating = Rating.new(@historical_departures.weekdays_only, 8).score
@@ -78,7 +72,7 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     compare_time += 10.minutes # how late was the bus this time yesterday?
 
     prev_departures = @historical_departures.where(['departure_time < ?', compare_time]).first(8)
-    prev_departures_rating = HistoricalDeparture.rating(prev_departures, 8)
+    prev_departures_rating = Rating.new(prev_departures, 8).score
 
     today_times = recents.map { |hd| hd.departure_time }
     prev_times = prev_departures.map { |hd| hd.departure_time }
