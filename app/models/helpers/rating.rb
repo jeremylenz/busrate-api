@@ -5,6 +5,7 @@ class Rating
     @current_headway = current_headway
 
     crunch_numbers
+    self.score
   end
 
   def score
