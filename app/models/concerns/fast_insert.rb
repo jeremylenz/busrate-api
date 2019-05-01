@@ -51,20 +51,3 @@ module FastInsert
   end # ClassMethods
 
 end
-
-module Wtf
-  def self.included(base)
-    base.extend ClassMethods
-  end
-
-  module ClassMethods
-
-    def mytest_wtf
-      logger.info "#{self}"
-      logger.info "#{self.class}"
-      byebug
-    end
-
-  end
-
-end
