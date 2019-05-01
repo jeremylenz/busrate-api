@@ -1,7 +1,6 @@
 class VehiclePosition < ApplicationRecord
 
   include FastInsert
-  include Wtf
 
   belongs_to :vehicle
   belongs_to :bus_line
