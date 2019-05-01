@@ -144,6 +144,81 @@ class VehiclePosition < ApplicationRecord
                                    .having("count(*) > 1")
   end
 
+  def self.grab_all
+    # Call MTA ALL_VEHICLES_URL endpoint and make vehicle positions.
+    # Per the MTA, must not run more than once every 30 seconds.
+    start_time = Time.current
+    logger = Logger.new('log/grab.log')
+    identifier = start_time.to_f.to_s.split(".")[1].first(4)
+    logger.info "Starting grab_all # #{identifier} at #{start_time.in_time_zone("EST")}"
+
+    # Check the previous API call
+    previous_call = MtaApiCallRecord.most_recent
+    last_id = 0
+    if previous_call.present?
+      logger.info "most recent timestamp: #{(Time.current - previous_call&.created_at).round(2)} seconds ago"
+      last_id = previous_call.id
+    end
+
+    # Check if it's < 30 seconds old
+    if previous_call.present? && previous_call.created_at > 30.seconds.ago # yes, > means younger than 30 seconds
+      # wait_time = 31 - (Time.current - previous_call.created_at).to_i
+      # wait_time += 4 if wait_time == 31
+      logger.info "skipping grab_all; must wait at least 30 seconds between API calls"
+      return
+      # logger.info "Waiting an additional #{wait_time} seconds"
+      # sleep(wait_time)
+      # return self.grab_all
+    end
+
+    # Make the call
+    MtaApiCallRecord.transaction do
+      MtaApiCallRecord.lock.create() # no fields needed; just uses created_at timestamp
+    end
+    new_record = MtaApiCallRecord.most_recent
+    if new_record.present? && new_record.id > last_id
+      logger.info "Making MTA API call to ALL_VEHICLES_URL at #{Time.current.in_time_zone("EST")}"
+      response = HTTParty.get(ApplicationController::ALL_VEHICLES_URL)
+    else
+      logger.info "Database lock encountered; skipping grab_all # #{identifier}"
+      return
+    end
+
+    # Process the data and write to db
+    object_list = VehiclePosition.extract_from_response(response)
+
+    # Prevent duplicates
+    uniq_object_list = VehiclePosition.prevent_duplicates(object_list, VehiclePosition.newer_than(1_200).reload)
+
+    # Use Fast Inserter gem
+    logger.info "Using fast inserter gem"
+    fast_insert_objects('vehicle_positions', uniq_object_list)
+
+    # Use regular ActiveRecord - checks for dups before saving
+    # logger.info "Using Active Record to insert vehicle positions"
+    # error_count = 0
+    # uniq_object_list.each do |vp_attrs|
+    #   new_vp = VehiclePosition.create(vp_attrs)
+    #   if new_vp.errors.any?
+    #     error_count += 1
+    #   end
+    #   new_vp
+    # end
+    #
+    # logger.info "#{error_count} duplicate vehicle positions avoided"
+    logger.info "grab_all # #{identifier} complete in #{(Time.current - start_time).round(2)} seconds."
+  end
+
+  def self.wait_and_grab(wait_time = 32)
+    # Wait 30 seconds, then run grab_all.  This is so grab_all can run every 30 seconds, even though
+    # the minimum interval supported by cron is 1 minute.
+    logger = Logger.new('log/grab.log')
+    logger.info "Waiting #{wait_time} seconds"
+    sleep(wait_time)
+    logger.info "Starting grab_all after waiting #{wait_time} seconds"
+    grab_all
+  end
+
   def self.grab_all_for_route(route_id)
     # Get all vehicle positions for a given bus line
     url_addon = ERB::Util.url_encode(route_id)

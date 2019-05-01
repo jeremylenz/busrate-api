@@ -55,7 +55,7 @@ Send a request to `[API_URL]/api/v1/mta/routes`.  This calls the BusTime API and
 
 ### 4. Get MTA vehicle data
 
-In the terminal, run `rails console` and then type `HistoricalDeparture.grab_all`.  After the API call is complete, `VehiclePosition.all.count` should be nonzero.  This will confirm that the app is working and calling the MTA BusTime API properly.
+In the terminal, run `rails console` and then type `VehiclePosition.grab_all`.  After the API call is complete, `VehiclePosition.all.count` should be nonzero.  This will confirm that the app is working and calling the MTA BusTime API properly.
 
 ### 5. Set up the Whenever gem
 

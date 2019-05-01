@@ -30,15 +30,15 @@ every 8.minutes do
 end
 
 every 1.minute do
- runner "HistoricalDeparture.grab_all"
+ runner "VehiclePosition.grab_all"
 end
 
 every 1.minute do
-  runner "HistoricalDeparture.wait_and_grab(32)"
+  runner "VehiclePosition.wait_and_grab(32)"
 end
 
 every 1.minute do
-  runner "HistoricalDeparture.wait_and_grab(15)"
+  runner "VehiclePosition.wait_and_grab(15)"
 end
 
 every 1.minute do
