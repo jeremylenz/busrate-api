@@ -3,7 +3,7 @@ module FastInsert
   extend ActiveSupport::Concern
 
   included do
-
+    logger.info "including FastInsert for #{self.class}"
   end
 
   # Instance methods go here
