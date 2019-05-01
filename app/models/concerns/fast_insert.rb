@@ -12,7 +12,7 @@ module FastInsert
 
   module ClassMethods
 
-    def fast_insert_objects(table_name, object_list)
+    def fast_insert_objects(tabl_name, object_list)
       # Use the fast_inserter gem to write hundreds of rows to the table
       # with a single SQL statement.  (Active Record is too slow in this situation.)
       return if object_list.blank?
@@ -29,14 +29,14 @@ module FastInsert
         variable_columns: fast_inserter_variable_columns, # column names of values that are different for each record
         values: fast_inserter_values, # values that are different for each record
       }
-      model = table_name.classify.constantize # get Rails model class from table name
+      model = tabl_name.classify.constantize # get Rails model class from table name
       last_id = model.order(id: :desc).first&.id || 0
 
       inserter = FastInserter::Base.new(fast_inserter_params)
       logger.info "Fast-inserting #{self.table_name}"
       inserter.fast_insert
       # logger.info "#{table_name} fast_inserter complete in #{(Time.current - fast_inserter_start_time).round(2)} seconds"
-      model_name = table_name.classify
+      model_name = tabl_name.classify
       logger.info "#{fast_inserter_values.length} #{model_name}s fast-inserted"
       # Return an ActiveRecord relation with the objects just created
       model.where(['id > ?', last_id])
