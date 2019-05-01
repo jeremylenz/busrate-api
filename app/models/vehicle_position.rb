@@ -1,5 +1,7 @@
 class VehiclePosition < ApplicationRecord
 
+  include FastInsert
+
   belongs_to :vehicle
   belongs_to :bus_line
   belongs_to :bus_stop
@@ -149,7 +151,7 @@ class VehiclePosition < ApplicationRecord
 
     # Format the data
     vehicle_positions_a = VehiclePosition.extract_from_response(response)
-    HistoricalDeparture.fast_insert_objects('vehicle_positions', vehicle_positions_a)
+    fast_insert_objects('vehicle_positions', vehicle_positions_a)
   end
 
   def self.extract_single(data)
