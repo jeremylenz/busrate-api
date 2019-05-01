@@ -151,7 +151,7 @@ class VehiclePosition < ApplicationRecord
 
     # Format the data
     vehicle_positions_a = VehiclePosition.extract_from_response(response)
-    fast_insert_objects('vehicle_positions', vehicle_positions_a)
+    self.fast_insert_objects('vehicle_positions', vehicle_positions_a)
   end
 
   def self.extract_single(data)
