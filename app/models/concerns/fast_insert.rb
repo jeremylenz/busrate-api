@@ -4,7 +4,6 @@ module FastInsert
 
   included do
     logger.info "including FastInsert for #{self}"
-    @@tn = self.table_name
   end
 
   # Instance methods go here
@@ -34,7 +33,7 @@ module FastInsert
       last_id = model.order(id: :desc).first&.id || 0
 
       inserter = FastInserter::Base.new(fast_inserter_params)
-      logger.info "Fast-inserting #{@@tn}"
+      logger.info "Fast-inserting #{tabl_name}"
       inserter.fast_insert
       # logger.info "#{table_name} fast_inserter complete in #{(Time.current - fast_inserter_start_time).round(2)} seconds"
       model_name = tabl_name.classify
