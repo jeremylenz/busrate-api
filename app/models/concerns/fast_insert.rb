@@ -42,6 +42,12 @@ module FastInsert
       model.where(['id > ?', last_id])
     end
 
+    def mytest
+      logger.info "#{self}"
+      logger.info "#{self.class}"
+      byebug
+    end
+
   end # ClassMethods
 
 end
