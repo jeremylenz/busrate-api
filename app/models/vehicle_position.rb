@@ -191,7 +191,7 @@ class VehiclePosition < ApplicationRecord
 
     # Use Fast Inserter gem
     logger.info "Using fast inserter gem"
-    fast_insert_objects('vehicle_positions', uniq_object_list)
+    fast_insert_objects(uniq_object_list)
 
     # Use regular ActiveRecord - checks for dups before saving
     # logger.info "Using Active Record to insert vehicle positions"
@@ -226,7 +226,7 @@ class VehiclePosition < ApplicationRecord
 
     # Format the data
     vehicle_positions_a = VehiclePosition.extract_from_response(response)
-    self.fast_insert_objects('vehicle_positions', vehicle_positions_a)
+    self.fast_insert_objects(vehicle_positions_a)
   end
 
   def self.extract_single(data)

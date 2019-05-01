@@ -216,7 +216,7 @@ class HistoricalDeparture < ApplicationRecord
 
     departure_object_list = self.prevent_duplicates(departures.compact.uniq, HistoricalDeparture.newer_than(1_200).reload)
 
-    fast_insert_objects('historical_departures', departure_object_list)
+    fast_insert_objects(departure_object_list)
     VehiclePosition.delete(ids_to_purge.take(65_535))
 
     logger.info "!------------- #{departure_object_list.length} historical departures created -------------!"
@@ -674,7 +674,7 @@ class HistoricalDeparture < ApplicationRecord
     unique_departures_to_create = self.prevent_duplicates(departures_to_create, recent_departures)
     logger.info "#{unique_departures_to_create.length} interpolated departure objects complete after #{(Time.current - start_time).round(2)} seconds"
     logger.info "Creating #{unique_departures_to_create.length} interpolated departures"
-    fast_insert_objects('historical_departures', unique_departures_to_create)
+    fast_insert_objects(unique_departures_to_create)
     logger.info "interpolate_recent complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
