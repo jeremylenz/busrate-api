@@ -1,6 +1,7 @@
 class HistoricalDeparture < ApplicationRecord
 
   include FastInsert
+  include Wtf
 
   DAYS_OF_WEEK = {
     sunday: 0,
