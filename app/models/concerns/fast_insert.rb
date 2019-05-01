@@ -33,7 +33,7 @@ module FastInsert
       last_id = model.order(id: :desc).first&.id || 0
 
       inserter = FastInserter::Base.new(fast_inserter_params)
-      logger.info "Fast-inserting #{self.class.table_name}"
+      logger.info "Fast-inserting #{self.table_name}"
       inserter.fast_insert
       # logger.info "#{table_name} fast_inserter complete in #{(Time.current - fast_inserter_start_time).round(2)} seconds"
       model_name = table_name.classify
