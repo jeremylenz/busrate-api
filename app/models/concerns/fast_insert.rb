@@ -20,7 +20,7 @@ module FastInsert
       fast_inserter_variable_columns = object_list.first.keys.map(&:to_s)
       fast_inserter_values = object_list.map { |nvpp| nvpp.values }
       fast_inserter_params = {
-        table: table_name,
+        table: tabl_name,
         static_columns: {}, # values that are the same for each record
         options: {
           timestamps: true, # write created_at / updated_at
