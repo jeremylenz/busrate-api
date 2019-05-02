@@ -14,7 +14,7 @@ module PreventDuplicates
 
       start_time = Time.current
       model_name = self.to_s
-      logger.info "#{model_name} prevent_duplicates starting [concern]..."
+      logger.info "#{model_name} prevent_duplicates starting..."
 
       # Coming in, we have an array of hashes and an ActiveRecord::Relation.
       # Combine both lists into one array of hashes, with the existing departures first.
@@ -58,8 +58,8 @@ module PreventDuplicates
         logger.info "prevent_duplicates: Deleted #{ids_to_purge.length} existing duplicate #{model_name.pluralize}"
       end
       unless prevented_count == 0
-        logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate #{model_name.pluralize}"
         logger.info "prevent_duplicates: #{objects_to_be_added.length} candidates filtered to #{result.length} unique objects"
+        logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate #{model_name.pluralize}"
       end
       logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
 
