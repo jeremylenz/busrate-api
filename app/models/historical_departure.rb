@@ -1,6 +1,7 @@
 class HistoricalDeparture < ApplicationRecord
 
   include FastInsert
+  include PreventDuplicates
 
   DAYS_OF_WEEK = {
     sunday: 0,
@@ -201,62 +202,62 @@ class HistoricalDeparture < ApplicationRecord
     "#{approximate_timestamp(dep["departure_time"])} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
   end
 
-  def self.prevent_duplicates(dep_objects_to_be_added, existing_historical_departures)
-    # Pass in a list of objects from which HistoricalDepartures will be created, and compare them to a list of existing HistoricalDeparture records.
-    # Return only the objects which would not be duplicates.
-    # Additionally, if duplicates are found within the existing HistoricalDepartures, delete them.
-
-    start_time = Time.current
-    logger.info "HistoricalDeparture prevent_duplicates starting..."
-
-    # Coming in, we have an array of hashes and an ActiveRecord::Relation.
-    # Combine both lists into one array of hashes, with the existing departures first.
-    # Use transform_keys on dep_objects_to_be_added to ensure that all keys are strings and not symbols.
-    object_list = existing_historical_departures.map(&:attributes) + dep_objects_to_be_added.map { |d| d.transform_keys { |k| k.to_s } }
-
-    # Create a tracking hash to remember which departures we've already seen
-    already_seen = {}
-
-    # Create a list of existing IDs to delete
-    ids_to_purge = []
-
-    # Move through the object list and check for duplicates
-    object_list.each do |dep|
-      tracking_key = "#{approximate_timestamp(dep["departure_time"])} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
-      if already_seen[tracking_key]
-        unless dep["id"].blank?
-          # Always keep the HistoricalDeparture with the smaller ID, and delete the one with the larger ID.
-          # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
-          id_to_delete = [dep["id"], already_seen[tracking_key]["id"]].max
-          logger.info "Of #{[dep["id"], already_seen[tracking_key]["id"]].inspect}, deleting #{id_to_delete}"
-          ids_to_purge << [dep["id"], already_seen[tracking_key]["id"]].max
-        end
-      else
-        already_seen[tracking_key] = dep
-      end
-    end
-
-    # Delete pre-existing duplicates
-    unless ids_to_purge.length == 0
-      logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
-      self.delete(ids_to_purge)
-    end
-
-    # Assemble result
-    # Return the unique list of values, but only keep values having no ID.
-    # This ensures we don't try to re-create existing records.
-    result = already_seen.values.select { |dep| dep["id"].nil? }
-
-    # Log results
-    prevented_count = dep_objects_to_be_added.length - result.length
-    unless prevented_count == 0
-      logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures"
-      logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
-    end
-    logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
-
-    result
-  end
+  # def self.prevent_duplicates(dep_objects_to_be_added, existing_historical_departures)
+  #   # Pass in a list of objects from which HistoricalDepartures will be created, and compare them to a list of existing HistoricalDeparture records.
+  #   # Return only the objects which would not be duplicates.
+  #   # Additionally, if duplicates are found within the existing HistoricalDepartures, delete them.
+  #
+  #   start_time = Time.current
+  #   logger.info "HistoricalDeparture prevent_duplicates starting..."
+  #
+  #   # Coming in, we have an array of hashes and an ActiveRecord::Relation.
+  #   # Combine both lists into one array of hashes, with the existing departures first.
+  #   # Use transform_keys on dep_objects_to_be_added to ensure that all keys are strings and not symbols.
+  #   object_list = existing_historical_departures.map(&:attributes) + dep_objects_to_be_added.map { |d| d.transform_keys { |k| k.to_s } }
+  #
+  #   # Create a tracking hash to remember which departures we've already seen
+  #   already_seen = {}
+  #
+  #   # Create a list of existing IDs to delete
+  #   ids_to_purge = []
+  #
+  #   # Move through the object list and check for duplicates
+  #   object_list.each do |dep|
+  #     tracking_key = "#{approximate_timestamp(dep["departure_time"])} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+  #     if already_seen[tracking_key]
+  #       unless dep["id"].blank?
+  #         # Always keep the HistoricalDeparture with the smaller ID, and delete the one with the larger ID.
+  #         # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
+  #         id_to_delete = [dep["id"], already_seen[tracking_key]["id"]].max
+  #         logger.info "Of #{[dep["id"], already_seen[tracking_key]["id"]].inspect}, deleting #{id_to_delete}"
+  #         ids_to_purge << [dep["id"], already_seen[tracking_key]["id"]].max
+  #       end
+  #     else
+  #       already_seen[tracking_key] = dep
+  #     end
+  #   end
+  #
+  #   # Delete pre-existing duplicates
+  #   unless ids_to_purge.length == 0
+  #     logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate HistoricalDepartures"
+  #     self.delete(ids_to_purge)
+  #   end
+  #
+  #   # Assemble result
+  #   # Return the unique list of values, but only keep values having no ID.
+  #   # This ensures we don't try to re-create existing records.
+  #   result = already_seen.values.select { |dep| dep["id"].nil? }
+  #
+  #   # Log results
+  #   prevented_count = dep_objects_to_be_added.length - result.length
+  #   unless prevented_count == 0
+  #     logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate HistoricalDepartures"
+  #     logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
+  #   end
+  #   logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
+  #
+  #   result
+  # end
 
   def self.approximate_timestamp(time)
     # Returns an integer timestamp with a precision of 10 minutes.
