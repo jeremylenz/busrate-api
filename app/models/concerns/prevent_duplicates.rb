@@ -6,7 +6,7 @@ module PreventDuplicates
   end
 
   module ClassMethods
-    def self.prevent_duplicates(objects_to_be_added, existing_records)
+    def prevent_duplicates(objects_to_be_added, existing_records)
       # Pass in a list of attribute hashes from which instances of ActiveRecord models will be created,
       # and compare them to a list of existing records.
       # Return only the objects which would not be duplicates.
