@@ -42,7 +42,8 @@ module PreventDuplicates
       end
 
       # Delete pre-existing duplicates
-      unless ids_to_purge.length == 0
+      deleted_count = ids_to_purge.length
+      unless deleted_count == 0
         self.delete(ids_to_purge)
       end
 
@@ -53,10 +54,12 @@ module PreventDuplicates
 
       # Log results
       prevented_count = objects_to_be_added.length - result.length
-      unless prevented_count == 0
+      unless deleted_count == 0
         logger.info "prevent_duplicates: Deleted #{ids_to_purge.length} existing duplicate #{model_name.pluralize}"
+      end
+      unless prevented_count == 0
         logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate #{model_name.pluralize}"
-        logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
+        logger.info "prevent_duplicates: #{objects_to_be_added.length} candidates filtered to #{result.length} unique objects"
       end
       logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
 
