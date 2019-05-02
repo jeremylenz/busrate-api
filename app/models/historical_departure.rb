@@ -197,6 +197,10 @@ class HistoricalDeparture < ApplicationRecord
 
   end
 
+  def self.tracking_key(dep)
+    "#{approximate_timestamp(dep["departure_time"])} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+  end
+
   def self.prevent_duplicates(dep_objects_to_be_added, existing_historical_departures)
     # Pass in a list of objects from which HistoricalDepartures will be created, and compare them to a list of existing HistoricalDeparture records.
     # Return only the objects which would not be duplicates.

@@ -1,6 +1,7 @@
 class VehiclePosition < ApplicationRecord
 
   include FastInsert
+  include PreventDuplicates
 
   belongs_to :vehicle
   belongs_to :bus_line
@@ -30,67 +31,71 @@ class VehiclePosition < ApplicationRecord
     self.count_duplicates
   end
 
-  def self.prevent_duplicates(objects_to_be_added, existing_vehicle_positions)
-    # Pass in a list of objects from which VehiclePositions will be created, and compare them to a list of existing VehiclePosition records.
-    # Return only the objects which would not be duplicates.
-    # Additionally, if duplicates are found within the existing VehiclePositions, delete them.
-
-    start_time = Time.current
-    logger.info "VehiclePosition prevent_duplicates starting..."
-
-    # Coming in, we have an array of hashes and an ActiveRecord::Relation.
-    # Combine both lists into one array of hashes, with the existing departures first.
-    # Use transform_keys on objects_to_be_added to ensure that all keys are strings and not symbols.
-    object_list = existing_vehicle_positions.map(&:attributes) + objects_to_be_added.map { |d| d.transform_keys { |k| k.to_s } }
-
-    # Create a tracking hash to remember which departures we've already seen
-    already_seen = {}
-
-    # Create a list of existing IDs to delete
-    ids_to_purge = []
-
-    dup_count = 0
-
-    # Move through the object list and check for duplicates
-    object_list.each do |dep|
-      tracking_key = "#{dep["timestamp"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
-      if already_seen[tracking_key]
-        dup_count += 1
-        # print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
-        unless dep["id"].nil?
-          # Always keep the VehiclePosition with the smaller ID, and delete the one with the larger ID.
-          # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
-          ids_to_purge << [dep["id"], already_seen[tracking_key]["id"]].max
-        end
-      else
-        # print "dups: #{dup_count} | new: #{tracking_key}            \r"
-        already_seen[tracking_key] = dep
-      end
-    end
-    logger.info "#{dup_count} duplicates found"
-    puts
-
-    # Delete pre-existing duplicates
-    unless ids_to_purge.length == 0
-      logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate VehiclePositions"
-      self.delete(ids_to_purge)
-    end
-
-    # Assemble result
-    # Return the unique list of values, but only keep values having no ID.
-    # This ensures we don't try to re-create existing records.
-    result = already_seen.values.select { |dep| dep["id"].nil? }
-
-    # Log results
-    prevented_count = objects_to_be_added.length - result.length
-    unless prevented_count == 0
-      logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate VehiclePositions"
-      logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
-    end
-    logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
-
-    result
+  def self.tracking_key(dep)
+    "#{dep["timestamp"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
   end
+
+  # def self.prevent_duplicates(objects_to_be_added, existing_vehicle_positions)
+  #   # Pass in a list of objects from which VehiclePositions will be created, and compare them to a list of existing VehiclePosition records.
+  #   # Return only the objects which would not be duplicates.
+  #   # Additionally, if duplicates are found within the existing VehiclePositions, delete them.
+  #
+  #   start_time = Time.current
+  #   logger.info "VehiclePosition prevent_duplicates starting..."
+  #
+  #   # Coming in, we have an array of hashes and an ActiveRecord::Relation.
+  #   # Combine both lists into one array of hashes, with the existing departures first.
+  #   # Use transform_keys on objects_to_be_added to ensure that all keys are strings and not symbols.
+  #   object_list = existing_vehicle_positions.map(&:attributes) + objects_to_be_added.map { |d| d.transform_keys { |k| k.to_s } }
+  #
+  #   # Create a tracking hash to remember which departures we've already seen
+  #   already_seen = {}
+  #
+  #   # Create a list of existing IDs to delete
+  #   ids_to_purge = []
+  #
+  #   dup_count = 0
+  #
+  #   # Move through the object list and check for duplicates
+  #   object_list.each do |dep|
+  #     tracking_key = "#{dep["timestamp"].to_i} #{dep["vehicle_ref"]} #{dep["stop_ref"]}"
+  #     if already_seen[tracking_key]
+  #       dup_count += 1
+  #       # print "dups: #{dup_count} | already seen: #{tracking_key}                \r"
+  #       unless dep["id"].nil?
+  #         # Always keep the VehiclePosition with the smaller ID, and delete the one with the larger ID.
+  #         # If this method happens to be running in 2 processes with the same 2 duplicates, this way we always pick the same one to delete.
+  #         ids_to_purge << [dep["id"], already_seen[tracking_key]["id"]].max
+  #       end
+  #     else
+  #       # print "dups: #{dup_count} | new: #{tracking_key}            \r"
+  #       already_seen[tracking_key] = dep
+  #     end
+  #   end
+  #   logger.info "#{dup_count} duplicates found"
+  #   puts
+  #
+  #   # Delete pre-existing duplicates
+  #   unless ids_to_purge.length == 0
+  #     logger.info "prevent_duplicates: Deleting #{ids_to_purge.length} duplicate VehiclePositions"
+  #     self.delete(ids_to_purge)
+  #   end
+  #
+  #   # Assemble result
+  #   # Return the unique list of values, but only keep values having no ID.
+  #   # This ensures we don't try to re-create existing records.
+  #   result = already_seen.values.select { |dep| dep["id"].nil? }
+  #
+  #   # Log results
+  #   prevented_count = objects_to_be_added.length - result.length
+  #   unless prevented_count == 0
+  #     logger.info "prevent_duplicates: Prevented #{prevented_count} duplicate VehiclePositions"
+  #     logger.info "prevent_duplicates: Filtered to #{result.length} unique objects"
+  #   end
+  #   logger.info "prevent_duplicates complete after #{(Time.current - start_time).round(2)} seconds"
+  #
+  #   result
+  # end
 
   def self.count_duplicates
     dup_count = self.duplicates.length
