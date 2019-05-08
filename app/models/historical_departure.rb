@@ -252,7 +252,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.vacuum_full(wait = 120)
     start_time = Time.current
-    self.shut_down_nonessential_cron_jobs(wait)
+    self.shut_down_cron_jobs(wait)
     logger.info "Starting VACUUM FULL; ..."
     ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
   rescue => err
@@ -261,6 +261,14 @@ class HistoricalDeparture < ApplicationRecord
   ensure
     self.resume_cron_jobs
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
+  end
+
+  def self.vacuum_lite(wait = 120)
+    self.shut_down_nonessential_cron_jobs(wait)
+    logger.info "Starting VACUUM ANALYZE; ..."
+    ActiveRecord::Base.connection.execute("VACUUM ANALYZE #{self.table_name};")
+  rescue => err
+    logger.error err
   end
 
   def self.shut_down_cron_jobs(wait = 120)
