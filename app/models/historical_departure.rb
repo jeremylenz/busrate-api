@@ -252,29 +252,44 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.vacuum_full(wait = 120)
     start_time = Time.current
-    logger.info "Shutting down cron jobs..."
-    system "crontab -r"
-    sleep wait
+    self.shut_down_cron_jobs(wait)
     logger.info "Starting VACUUM FULL; ..."
-    system "df -h /"
     ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
-    system "df -h /"
   rescue => err
     logger.error err
     false
   ensure
-    logger.info "Restarting cron jobs..."
-    system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb > log/production.log"
+    self.resume_cron_jobs
     logger.info "VACUUM FULL complete in #{(Time.current - start_time).round(2)} seconds"
   end
 
-  def self.dump_old_departures_to_file(age_in_weeks = 6, filename = "old_hds.dump")
+  def self.shut_down_cron_jobs(wait = 120)
+    logger.info "Shutting down cron jobs..."
+    system "crontab -r"
+    sleep wait
+  end
+
+  def self.resume_cron_jobs
+    logger.info "Restarting cron jobs..."
+    system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb > log/production.log"
+  end
+
+  def self.shut_down_nonessential_cron_jobs(wait = 120)
+    logger.info "Shutting down nonessential cron jobs..."
+    system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule_minimal.rb > log/production.log"
+    sleep wait
+  end
+
+  def self.create_old_departures_temp_table(age_in_weeks = 6)
     sql = <<~HEREDOC
       CREATE TABLE old_hds_temp AS
         SELECT * FROM "historical_departures" WHERE (created_at < '#{age_in_weeks.weeks.ago}');
     HEREDOC
     logger.info ActiveRecord::Base.connection.execute(sql)
+  end
 
+  def self.dump_old_departures_to_file(filename = "old_hds.dump")
+    # Prompts for a password
     dump_command = <<~HEREDOC
       pg_dump -Fc -t old_hds_temp -v > #{filename} --username=busrate-api --dbname=busrate-api_production
     HEREDOC
