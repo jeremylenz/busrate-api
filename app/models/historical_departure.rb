@@ -265,7 +265,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.shut_down_cron_jobs(wait = 120)
     logger.info "Shutting down cron jobs..."
-    system "crontab -r"
+    system "crontab -r" # clear out crontab
     sleep wait
   end
 
@@ -276,6 +276,8 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.shut_down_nonessential_cron_jobs(wait = 120)
     logger.info "Shutting down nonessential cron jobs..."
+    system "crontab -r" # Clear out the crontab
+    # Below command will ADD cron jobs in schedule_minimal.rb to the crontab.  So we must ensure crontab is blank when we do this.
     system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule_minimal.rb > log/production.log"
     sleep wait
   end
