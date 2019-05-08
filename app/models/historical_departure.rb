@@ -271,6 +271,7 @@ class HistoricalDeparture < ApplicationRecord
 
   def self.resume_cron_jobs
     logger.info "Restarting cron jobs..."
+    system "crontab -r" # clear out crontab - ensure we're starting clean
     system "/usr/local/bin/whenever --user jeremylenz --update-crontab -f /home/jeremylenz/code/busrate-api/config/schedule.rb > log/production.log"
   end
 
