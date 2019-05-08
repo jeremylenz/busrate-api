@@ -74,16 +74,20 @@ class Api::V1::StatsController < ApplicationController
   def system_health
     @mta_api_call_records_count = MtaApiCallRecord.where(['created_at > ?', 300.seconds.ago]).count
     @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
+    @vehicle_position_count = VehiclePosition.all.count
     @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
 
     healthy = true
     healthy = false if @mta_api_call_records_count < 5
     healthy = false if @vehicle_position_recent_count < 10
+    # If we've shut down nonessential cron jobs and forgotten to restart them, VehiclePosition.clean_up won't run.
+    healthy = false if @vehicle_position_count > 30_000
     healthy = false if @historical_departure_recent_count < 10
 
     health_check = {
       mta_api_all_vehicles_calls: @mta_api_call_records_count,
       vehicle_positions_per_minute: @vehicle_position_recent_count,
+      vehicle_positions: @vehicle_position_count,
       historical_departures_per_minute: @historical_departure_recent_count,
     }
     logger.info health_check.inspect
