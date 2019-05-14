@@ -81,7 +81,7 @@ class Api::V1::StatsController < ApplicationController
     healthy = false if @mta_api_call_records_count < 5
     healthy = false if @vehicle_position_recent_count < 10
     # If we've shut down nonessential cron jobs and forgotten to restart them, VehiclePosition.clean_up won't run.
-    healthy = false if @vehicle_position_count > 30_000
+    healthy = false if @vehicle_position_count > 42_000
     healthy = false if @historical_departure_recent_count < 10
 
     health_check = {
