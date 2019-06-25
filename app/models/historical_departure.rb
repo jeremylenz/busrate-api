@@ -345,7 +345,7 @@ class HistoricalDeparture < ApplicationRecord
     # scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump "/Volumes/Jer Data Archive/old_hds_043019.dump"
   end
 
-  def clean_up_rotate_departures(age_in_weeks = 6)
+  def self.clean_up_rotate_departures(age_in_weeks = 6)
     logger "remove_old_departures"
     remove_old_departures(age_in_weeks)
     logger "remove_old_departures_temp_table"
