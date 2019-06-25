@@ -349,10 +349,8 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
     logger.info "remove_old_departures"
     remove_old_departures(age_in_weeks)
-    logger.info "remove_old_departures_temp_table"
+    logger.info "remove_old_departures_temp_table and rm old_hds.dump"
     remove_old_departures_temp_table
-    logger.info "rm old_hds.dump"
-    system "rm old_hds.dump"
     logger.info "Now you should run sudo logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
     logger.info "Done in #{(Time.current - start_time).round(2)} seconds"
   end
