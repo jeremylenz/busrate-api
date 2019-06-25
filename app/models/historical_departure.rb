@@ -336,7 +336,8 @@ class HistoricalDeparture < ApplicationRecord
     logger "dump_old_departures_to_file"
     dump_old_departures_to_file # Prompts for password
     logger "Now copy the file to your local machine:"
-    filename = 
+    filename = "old_hds_#{Time.current.strftime('%m%d%y')}.dump"
+    logger "scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump \"/Volumes/Jer Data Archive/#{filename}\""
     logger "Then run clean_up_rotate_departures"
     logger "Done in #{(Time.current - start_time).round(2)} seconds"
 
