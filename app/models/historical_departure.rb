@@ -353,8 +353,7 @@ class HistoricalDeparture < ApplicationRecord
     remove_old_departures_temp_table
     logger.info "rm old_hds.dump"
     system "rm old_hds.dump"
-    logger.info "Running logrotate..."
-    system "logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
+    logger.info "Now you should run sudo logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
     logger.info "Done in #{(Time.current - start_time).round(2)} seconds"
   end
 
