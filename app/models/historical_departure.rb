@@ -329,30 +329,30 @@ class HistoricalDeparture < ApplicationRecord
   def self.rotate_departures(age_in_weeks = 6)
     # Combining the 4 methods above, in the order they need to happen
     start_time = Time.current
-    logger "Rotating departures ..."
-    logger "create_old_departures_temp_table"
+    logger.info "Rotating departures ..."
+    logger.info "create_old_departures_temp_table"
     create_old_departures_temp_table(age_in_weeks)
 
-    logger "dump_old_departures_to_file"
+    logger.info "dump_old_departures_to_file"
     dump_old_departures_to_file # Prompts for password
-    logger "Now copy the file to your local machine:"
+    logger.info "Now copy the file to your local machine:"
     filename = "old_hds_#{Time.current.strftime('%m%d%y')}.dump"
-    logger "scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump \"/Volumes/Jer Data Archive/#{filename}\""
-    logger "Then run clean_up_rotate_departures"
-    logger "Done in #{(Time.current - start_time).round(2)} seconds"
+    logger.info "scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump \"/Volumes/Jer Data Archive/#{filename}\""
+    logger.info "Then run clean_up_rotate_departures"
+    logger.info "Done in #{(Time.current - start_time).round(2)} seconds"
 
     # -- On local machine:
     # scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump "/Volumes/Jer Data Archive/old_hds_043019.dump"
   end
 
   def self.clean_up_rotate_departures(age_in_weeks = 6)
-    logger "remove_old_departures"
+    logger.info "remove_old_departures"
     remove_old_departures(age_in_weeks)
-    logger "remove_old_departures_temp_table"
+    logger.info "remove_old_departures_temp_table"
     remove_old_departures_temp_table
-    logger "rm old_hds.dump"
+    logger.info "rm old_hds.dump"
     system "rm old_hds.dump"
-    logger "Running logrotate..."
+    logger.info "Running logrotate..."
     system "logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
   end
 
