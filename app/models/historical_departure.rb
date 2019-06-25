@@ -326,6 +326,35 @@ class HistoricalDeparture < ApplicationRecord
     logger.info ActiveRecord::Base.connection.execute(sql)
   end
 
+  def self.rotate_departures(age_in_weeks = 6)
+    # Combining the 4 methods above, in the order they need to happen
+    start_time = Time.current
+    logger "Rotating departures ..."
+    logger "create_old_departures_temp_table"
+    create_old_departures_temp_table(age_in_weeks)
+
+    logger "dump_old_departures_to_file"
+    dump_old_departures_to_file # Prompts for password
+    logger "Now copy the file to your local machine:"
+    filename = 
+    logger "Then run clean_up_rotate_departures"
+    logger "Done in #{(Time.current - start_time).round(2)} seconds"
+
+    # -- On local machine:
+    # scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump "/Volumes/Jer Data Archive/old_hds_043019.dump"
+  end
+
+  def clean_up_rotate_departures(age_in_weeks = 6)
+    logger "remove_old_departures"
+    remove_old_departures(age_in_weeks)
+    logger "remove_old_departures_temp_table"
+    remove_old_departures_temp_table
+    logger "rm old_hds.dump"
+    system "rm old_hds.dump"
+    logger "Running logrotate..."
+    system "logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
+  end
+
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
     # convenience method for playing around in rails console
     hds = HistoricalDeparture.newer_than(age_in_secs)
