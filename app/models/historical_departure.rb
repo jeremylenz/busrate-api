@@ -254,7 +254,7 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
     self.shut_down_cron_jobs(wait)
     logger.info "Starting VACUUM FULL; ..."
-    ActiveRecord::Base.connection.execute("VACUUM FULL #{self.table_name};")
+    ActiveRecord::Base.connection.execute("VACUUM FULL;")
   rescue => err
     logger.error err
     false
@@ -267,7 +267,7 @@ class HistoricalDeparture < ApplicationRecord
     start_time = Time.current
     self.shut_down_nonessential_cron_jobs(wait)
     logger.info "Starting VACUUM ANALYZE; ..."
-    ActiveRecord::Base.connection.execute("VACUUM ANALYZE #{self.table_name};")
+    ActiveRecord::Base.connection.execute("VACUUM ANALYZE;")
   rescue => err
     logger.error err
   ensure
