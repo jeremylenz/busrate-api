@@ -76,6 +76,8 @@ class Api::V1::StatsController < ApplicationController
     @vehicle_position_recent_count = VehiclePosition.newer_than(1200).count / 20
     @vehicle_position_count = VehiclePosition.all.count
     @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
+    @headways_recent_count = HistoricalDeparture.newer_than(3_600).where.not(headway: nil).count
+    @interpolated_recent_count = HistoricalDeparture.newer_than(3_600).interpolated.count
 
     healthy = true
     healthy = false if @mta_api_call_records_count < 5
@@ -83,12 +85,16 @@ class Api::V1::StatsController < ApplicationController
     # If we've shut down nonessential cron jobs and forgotten to restart them, VehiclePosition.clean_up won't run.
     healthy = false if @vehicle_position_count > 46_000
     healthy = false if @historical_departure_recent_count < 10
+    healthy = false if @headways_recent_count < 10
+    healthy = false if @interpolated_recent_count < 10
 
     health_check = {
       mta_api_all_vehicles_calls: @mta_api_call_records_count,
       vehicle_positions_per_minute: @vehicle_position_recent_count,
       vehicle_positions: @vehicle_position_count,
       historical_departures_per_minute: @historical_departure_recent_count,
+      headways_past_hour: @headways_recent_count,
+      interpolated_deps_past_hour: @interpolated_recent_count,
     }
     logger.info health_check.inspect
 
