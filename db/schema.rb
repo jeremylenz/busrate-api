@@ -43,8 +43,6 @@ ActiveRecord::Schema.define(version: 2019_02_17_222206) do
     t.string "dated_vehicle_journey_ref"
     t.boolean "interpolated"
     t.integer "direction_ref"
-    t.index ["block_ref"], name: "index_historical_departures_on_block_ref"
-    t.index ["dated_vehicle_journey_ref"], name: "index_historical_departures_on_dated_vehicle_journey_ref"
     t.index ["departure_time"], name: "by_departure_time", order: :desc
     t.index ["stop_ref", "line_ref"], name: "by_stop_line_ref"
   end
