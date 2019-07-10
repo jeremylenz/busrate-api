@@ -30,6 +30,8 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     @historical_departures.reload
 
     start_time = Time.current
+    index_time = params[:index_time]
+    logger.info("index_time: #{index_time}")
 
     # Update any headways we may be about to display to the user.
     # Don't want any nil headways to show up on the front end.
@@ -45,9 +47,12 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     end
 
     # get most recent 8
-    today = Time.zone.now.in_time_zone("EST").strftime('%A')
-    recents = @historical_departures.first(8)
-    current_headway = Time.zone.now.in_time_zone("EST") - @historical_departures.first.departure_time
+    if index_time.blank?
+      index_time = Time.current
+      current_headway = index_time.in_time_zone("EST") - @historical_departures.first.departure_time
+    end
+    today = index_time.in_time_zone("EST").strftime('%A')
+    recents = @historical_departures.where(['departure_time < ?', index_time]).first(8)
     logger.info "current_headway: #{current_headway}"
 
     require './app/models/helpers/rating'
@@ -59,16 +64,14 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     evening_rush_hour_rating = Rating.new(@historical_departures.evening_rush_hours_only, 8).score
 
     if today == "Monday"
-      compare_time = 72.hours.ago
-      prev_text = "Friday"
+      compare_time = index_time - 72.hours
     elsif today == "Sunday" || today == "Saturday"
-      compare_time = 7.days.ago
-      prev_text = "Last #{today}"
+      compare_time = index_time - 7.days
     else
-      compare_time = 24.hours.ago
-      prev_text = "Yesterday"
+      compare_time = index_time - 24.hours
     end
 
+    prev_text = compare_time.in_time_zone("EST").strftime('%A, %B %-d')
     compare_time += 10.minutes # how late was the bus this time yesterday?
 
     prev_departures = @historical_departures.where(['departure_time < ?', compare_time]).first(8)
