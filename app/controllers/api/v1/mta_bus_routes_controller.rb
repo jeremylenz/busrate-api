@@ -4,7 +4,7 @@ class Api::V1::MtaBusRoutesController < ApplicationController
 
   def mta_bus_list
     memoized_bus_list = MtaBusLineList.latest
-    if memoized_bus_list.blank? || memoized_bus_list.created_at < 21.days.ago
+    if memoized_bus_list.blank? || memoized_bus_list.created_at < 7.days.ago
       logger.info "Fetching new bus list from MTA API"
       mta = HTTParty.get(LIST_OF_MTA_BUS_ROUTES_URL)
       nyct = HTTParty.get(LIST_OF_NYCT_BUS_ROUTES_URL)
