@@ -30,8 +30,12 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
     @historical_departures.reload
 
     start_time = Time.current
-    index_time = params[:index_time]
+    index_time = Time.zone.parse(params[:index_time] || "")
+    if index_time
+      index_time = index_time.change(zone: "EST")
+    end
     logger.info("index_time: #{index_time}")
+
 
     # Update any headways we may be about to display to the user.
     # Don't want any nil headways to show up on the front end.
