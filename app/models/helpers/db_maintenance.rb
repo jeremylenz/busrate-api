@@ -1,6 +1,8 @@
 module DBMaintenance
-  logger = Rails.logger
-  
+  def self.logger
+    Rails.logger
+  end
+
   def self.vacuum_full(wait = 120)
     start_time = Time.current
     self.shut_down_cron_jobs(wait)
