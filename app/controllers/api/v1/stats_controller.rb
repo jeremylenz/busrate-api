@@ -78,15 +78,34 @@ class Api::V1::StatsController < ApplicationController
     @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
     @headways_recent_count = HistoricalDeparture.newer_than(3_600).where.not(headway: nil).count
     @interpolated_recent_count = HistoricalDeparture.newer_than(3_600).interpolated.count
+    reasons = []
 
     healthy = true
-    healthy = false if @mta_api_call_records_count < 5
-    healthy = false if @vehicle_position_recent_count < 10
+    if @mta_api_call_records_count < 5
+      healthy = false
+      reasons << "Not enough calls to MTA API"
+    end
+    if @vehicle_position_recent_count < 10
+      healthy = false
+      reasons << "No vehicle_positions being created"
+    end
     # If we've shut down nonessential cron jobs and forgotten to restart them, VehiclePosition.clean_up won't run.
-    healthy = false if @vehicle_position_count > 46_000
-    healthy = false if @historical_departure_recent_count < 10
-    healthy = false if @headways_recent_count < 10
-    healthy = false if @interpolated_recent_count < 10
+    if @vehicle_position_count > 60_000
+      healthy = false
+      reasons << "Too many old vehicle_positions in system"
+    end
+    if @historical_departure_recent_count < 10
+      healthy = false
+      reasons << "No historical departures are being created"
+    end
+    if @headways_recent_count < 10
+      healthy = false
+      reasons << "No headways being added to historical departures"
+    end
+    if @interpolated_recent_count < 10
+      healthy = false
+      reasons << "No interpolated departures being created"
+    end
 
     health_check = {
       mta_api_all_vehicles_calls: @mta_api_call_records_count,
@@ -95,6 +114,7 @@ class Api::V1::StatsController < ApplicationController
       historical_departures_per_minute: @historical_departure_recent_count,
       headways_past_hour: @headways_recent_count,
       interpolated_deps_past_hour: @interpolated_recent_count,
+      reasons: reasons,
     }
     logger.info health_check.inspect
 
