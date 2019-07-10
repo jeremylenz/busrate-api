@@ -69,9 +69,10 @@ class Api::V1::HistoricalDeparturesController < ApplicationController
       compare_time = index_time - 7.days
     else
       compare_time = index_time - 24.hours
+      prev_text = "Yesterday"
     end
 
-    prev_text = compare_time.in_time_zone("EST").strftime('%A, %B %-d')
+    prev_text ||= compare_time.in_time_zone("EST").strftime('%A, %B %-d')
     compare_time += 10.minutes # how late was the bus this time yesterday?
 
     prev_departures = @historical_departures.where(['departure_time < ?', compare_time]).first(8)
