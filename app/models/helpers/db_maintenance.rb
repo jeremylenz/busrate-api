@@ -136,4 +136,15 @@ module DBMaintenance
     # -- On local machine:
     # scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump "/Volumes/Jer Data Archive/old_hds_043019.dump"
   end
+
+  def self.clean_up_rotate_departures(age_in_weeks = 6)
+    start_time = Time.current
+    logger.info "remove_old_departures"
+    remove_old_departures(age_in_weeks)
+    logger.info "remove_old_departures_temp_table and rm old_hds.dump"
+    remove_old_departures_temp_table
+    logger.info "Now you should run sudo logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
+    logger.info "Done in #{(Time.current - start_time).round(2)} seconds"
+  end
+
 end

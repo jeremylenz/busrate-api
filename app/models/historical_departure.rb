@@ -250,16 +250,6 @@ class HistoricalDeparture < ApplicationRecord
     false
   end
 
-  def self.clean_up_rotate_departures(age_in_weeks = 6)
-    start_time = Time.current
-    logger.info "remove_old_departures"
-    remove_old_departures(age_in_weeks)
-    logger.info "remove_old_departures_temp_table and rm old_hds.dump"
-    remove_old_departures_temp_table
-    logger.info "Now you should run sudo logrotate /home/jeremylenz/code/busrate-api/log/logrotate.conf"
-    logger.info "Done in #{(Time.current - start_time).round(2)} seconds"
-  end
-
   def self.doit(age_in_secs, skip_non_nils = true, block_size = 2000)
     # convenience method for playing around in rails console
     hds = HistoricalDeparture.newer_than(age_in_secs)
