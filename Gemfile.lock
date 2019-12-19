@@ -91,7 +91,7 @@ GEM
     postgresql_cursor (0.6.2)
       activerecord (>= 3.1.0)
     puma (3.12.0)
-    rack (2.0.6)
+    rack (2.0.8)
     rack-cors (1.0.2)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
