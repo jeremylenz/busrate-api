@@ -96,9 +96,9 @@ module DBMaintenance
   end
 
   def self.dump_old_departures_to_file(filename = "old_hds.dump")
-    # Prompts for a password
+    # --no-password requires Postgres password in ~/.pgpass
     dump_command = <<~HEREDOC
-      pg_dump -Fc -t old_hds_temp -v > #{filename} --username=busrate-api --dbname=busrate-api_production
+      pg_dump -Fc -t old_hds_temp -v > #{filename} --username=busrate-api --dbname=busrate-api_production --no-password
     HEREDOC
     system dump_command
   end
@@ -126,7 +126,7 @@ module DBMaintenance
     create_old_departures_temp_table(age_in_weeks)
 
     logger.info "dump_old_departures_to_file"
-    dump_old_departures_to_file # Prompts for password
+    dump_old_departures_to_file
     logger.info "Now copy the file to your local machine:"
     filename = "old_hds_#{Time.current.strftime('%m%d%y')}.dump"
     logger.info "scp jeremylenz@142.93.7.189:~/code/busrate-api/old_hds.dump \"/Volumes/Jer Data Archive/#{filename}\""
