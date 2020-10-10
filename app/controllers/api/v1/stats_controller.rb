@@ -77,7 +77,7 @@ class Api::V1::StatsController < ApplicationController
     @vehicle_position_count = VehiclePosition.all.count
     @historical_departure_recent_count = HistoricalDeparture.newer_than(1200).count / 20
     @headways_recent_count = HistoricalDeparture.newer_than(3_600).where.not(headway: nil).count
-    @interpolated_recent_count = HistoricalDeparture.newer_than(3_600).interpolated.count
+    @interpolated_recent_count = HistoricalDeparture.newer_than(7_200).interpolated.count
     reasons = []
 
     healthy = true
@@ -102,7 +102,7 @@ class Api::V1::StatsController < ApplicationController
       healthy = false
       reasons << "No headways being added to historical departures"
     end
-    if @interpolated_recent_count < 10
+    if @interpolated_recent_count < 1
       healthy = false
       reasons << "No interpolated departures being created"
     end
